@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realtime Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+    #chat {
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 8px;
+      margin-bottom: 10px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+    }
+    input {
+      padding: 10px;
+      width: calc(100% - 22px);
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #ff5e00;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      #chat {
+        margin: 20px;
+        padding: 10px;
+      }
+      input {
+        width: calc(100% - 20px);
+      }
+    }
+  </style>
+  
+</head>
+<body>
+  <div id="chat">
+    <ul id="messages"></ul>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" /><button>Send</button>
+    </form>
+    <h3>Online Users:</h3>
+    <ul id="users"></ul> <!-- This will list the online users -->
+    <p id="typing"></p> <!-- Typing indicator -->
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var username = prompt('Enter your username:');
+    var socket = io();
+
+    // Send the username to the server
+    socket.emit('set username', username);
+
+    // Handle form submission for messages
+    var form = document.getElementById('form');
+    var input = document.getElementById('input');
+
+    // Typing event
+    input.addEventListener('input', function() {
+      socket.emit('typing', username); // Notify server that user is typing
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(function() {
+        socket.emit('stop typing'); // Stop typing event after 1 second of inactivity
+      }, 1000);
+    });
+
+    // Listen for typing event
+    socket.on('typing', function(username) {
+      document.getElementById('typing').textContent = username + ' is typing...';
+    });
+
+    // Listen for stop typing event
+    socket.on('stop typing', function() {
+      document.getElementById('typing').textContent = '';
+    });
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', username + ': ' + input.value);
+        input.value = '';
+        socket.emit('stop typing'); // Stop typing when message is sent
+      }
+    });
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', username + ': ' + input.value);
+        input.value = '';
+      }
+    });
+
+    // Display chat messages
+    socket.on('chat message', function(msg) {
+      var item = document.createElement('li');
+      item.textContent = msg;
+      document.getElementById('messages').appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    // Update the user list
+    socket.on('user list', function(users) {
+      var usersList = document.getElementById('users');
+      usersList.innerHTML = ''; // Clear the current list
+      users.forEach(function(user) {
+        var item = document.createElement('li');
+        item.textContent = user;
+        usersList.appendChild(item);
+      });
+    });
+  </script>
+  
+</body>
+</html>
