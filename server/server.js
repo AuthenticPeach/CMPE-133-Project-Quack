@@ -1,50 +1,128 @@
 const express = require('express');
+const bodyParser = require('body-parser'); // For parsing form data
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const { MongoClient } = require('mongodb');
 
-// Serve static files from /client folder
-app.use(express.static('client'));
+// MongoDB connection string from MongoDB Atlas
+const uri = 'mongodb+srv://travispeach:OI4G8xqZJvWcKFgl@quackcluster1.hwojm.mongodb.net/';
+const client = new MongoClient(uri);
 
-// Handle a new WebSocket connection
-const users = {}; // Track users by socket ID
+let usersCollection, messagesCollection;
+
+// Middleware to parse form data
+app.use(bodyParser.urlencoded({ extended: true })); // For URL-encoded form data
+app.use(bodyParser.json()); // For JSON data
+app.use(express.static('client')); // Serve static files from the client folder
+
+// Route to serve index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client', 'index.html'));
+});
+
+// Route for the signup page
+app.get('/signup', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client', 'signup.html')); // Serve signup.html from client folder
+});
+
+app.get('/favicon.ico', (req, res) => res.status(204));
+
+// Route to handle signup form POST request
+app.post('/signup', async (req, res) => {
+  console.log('Received data:', req.body); // Log incoming request data
+
+  const { firstName, lastName, username, email, password, confirmPassword } = req.body;
+
+  // Simple validation
+  if (password !== confirmPassword) {
+    return res.json({ success: false, message: 'Passwords do not match' });
+  }
+
+  try {
+    // Ensure MongoDB connection and collection is valid
+    if (!usersCollection) {
+      console.log('MongoDB connection failed or usersCollection is undefined');
+      return res.json({ success: false, message: 'Database connection failed' });
+    }
+
+    console.log('Processing signup for username:', username);
+
+    // Check if the username already exists
+    const existingUser = await usersCollection.findOne({ username });
+    console.log('Result of findOne for username:', existingUser);
+
+    if (existingUser) {
+      return res.json({ success: false, message: 'Username already exists' });
+    }
+
+    console.log('Inserting new user:', { firstName, lastName, username, email, password });
+
+    // Create a new user and insert into the database
+    await usersCollection.insertOne({ firstName, lastName, username, email, password });
+    console.log('New user created:', username);
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Error signing up:', err);
+    res.status(500).json({ success: false, message: 'An error occurred. Please try again.' });
+  }
+});
+
+// Track users
+const users = {};
 
 io.on('connection', (socket) => {
-  console.log('A user connected');
+  // Handle signup data from signup.html
+  socket.on('signup', async (data) => {
+    const { firstName, lastName, username, email, password, confirmPassword } = data;
 
-  // Broadcast to all users that a user connected
-  socket.broadcast.emit('chat message', 'A user has connected');
+    // Simple validation
+    if (password !== confirmPassword) {
+      socket.emit('signup response', { success: false, message: 'Passwords do not match' });
+      return;
+    }
 
-  // Ask for the username when the user connects
-  socket.on('set username', (username) => {
-    users[socket.id] = username; // Store username based on socket ID
-    io.emit('user list', Object.values(users)); // Send the list of users to everyone
-  });
+    try {
+      // Check if the username already exists
+      const existingUser = await usersCollection.findOne({ username });
 
-  socket.on('disconnect', () => {
-    delete users[socket.id]; // Remove user on disconnect
-    console.log('User disconnected');
-    io.emit('user list', Object.values(users)); // Update the user list
-  });
+      if (existingUser) {
+        socket.emit('signup response', { success: false, message: 'Username already exists' });
+        return;
+      }
 
-  socket.on('chat message', (msg) => {
-    const timestamp = new Date().toLocaleTimeString(); // Get the current time
-    io.emit('chat message', `${timestamp} - ${msg}`); // Send message with timestamp
+      // Create a new user and insert into the database
+      await usersCollection.insertOne({ firstName, lastName, username, email, password });
+      console.log('New user created:', username);
+
+      socket.emit('signup response', { success: true });
+    } catch (err) {
+      console.error('Error signing up:', err);
+      socket.emit('signup response', { success: false, message: 'An error occurred. Please try again.' });
+    }
   });
-  socket.on('typing', (username) => {
-    socket.broadcast.emit('typing', username); // Broadcast typing event to others
-  });
-  
-  socket.on('stop typing', () => {
-    socket.broadcast.emit('stop typing'); // Notify when typing stops
-  });
-  
 });
 
 
+// Connect to MongoDB once when the server starts
+async function connectDB() {
+  try {
+    await client.connect();
+    const db = client.db('chatApp');
+    usersCollection = db.collection('users');
+    messagesCollection = db.collection('messages');
+    console.log('Connected to MongoDB and collections initialized');
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
+  }
+}
 
+
+connectDB();
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

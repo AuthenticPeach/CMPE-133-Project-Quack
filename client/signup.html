@@ -1,94 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup Form</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: white;
-        }
-        .container {
-            display: flex;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .left-panel {
-            background-color: #226C5C;
-            color: white;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 50vh;
-            min-height: 50vh;
-        }
-        .left-panel img {
-            width: 80%;
-        }
-        .right-panel {
-            background-color: #fff;
-            padding: 30px;
-            min-width: 50vh;
-            min-height: 50vh;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-        input {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button, .signin-button {
-            background-color: #226C5C;
-            color: white;
-            border: 2px solid white;
-            padding: 10px 30px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 25px; /* Rounded edges */
-        }
-        button:hover, .signin-button:hover {
-            background-color: #226C5C; /* Changes background to white */
-            color: white; /* Changes text color to green */
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signup Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: white;
+    }
+    .container {
+      display: flex;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .left-panel {
+      background-color: #226C5C;
+      color: white;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 50vh;
+      min-height: 50vh;
+    }
+    .left-panel img {
+      width: 80%;
+    }
+    .right-panel {
+      background-color: #fff;
+      padding: 30px;
+      min-width: 50vh;
+      min-height: 50vh;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    input {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #226C5C;
+      color: white;
+      border: none;
+      padding: 10px 30px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 25px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="left-panel">
-            <img src="duckPhoto.png" alt="Duck Icon">
-            <p>QUACK.</p>
-            <p>Already have an account?</p>
-            <button class="signin-button">SIGN IN</button>
-        </div>
-        <div class="right-panel">
-            <h2>Create Account</h2>
-            <form>
-                <input type="text" placeholder="First Name" required>
-                <input type="text" placeholder="Last Name" required>
-                <input type="text" placeholder="Username" required>
-                <input type="email" placeholder="Email" required>
-                <input type="password" placeholder="Password" required>
-                <input type="password" placeholder="Confirm Password" required>
-                <button type="submit">SIGN UP</button>
-            </form>
-        </div>
+  <div class="container">
+    <div class="left-panel">
+      <img src="duckPhoto.png" alt="Duck Icon">
+      <p>QUACK.</p>
+      <p>Already have an account?</p>
     </div>
+    <div class="right-panel">
+      <h2>Create Account</h2>
+      <form id="signup-form">
+        <input type="text" id="firstName" placeholder="First Name" required>
+        <input type="text" id="lastName" placeholder="Last Name" required>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+        <button type="submit">SIGN UP</button>
+        <p id="error-message" style="color: red;"></p> <!-- Error message display -->
+      </form>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const signupForm = document.getElementById('signup-form');
+    const errorMessage = document.getElementById('error-message');
+    const socket = io();
+
+    signupForm.addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent the form from doing a traditional submit
+
+      const data = {
+        firstName: document.getElementById('firstName').value,
+        lastName: document.getElementById('lastName').value,
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        confirmPassword: document.getElementById('confirmPassword').value
+      };
+
+      // Emit the signup data via Socket.IO
+      socket.emit('signup', data);
+
+      socket.on('signup response', function(response) {
+        if (response.success) {
+          window.location.href = '/'; // Redirect to the main page after successful signup
+        } else {
+          errorMessage.textContent = response.message; // Show the error message
+        }
+      });
+    });
+  </script>
 </body>
 </html>

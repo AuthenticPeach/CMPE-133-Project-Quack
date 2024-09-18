@@ -57,56 +57,20 @@
   
 </head>
 <body>
-  <div id="chat">
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" /><button>Send</button>
-    </form>
-    <h3>Online Users:</h3>
-    <ul id="users"></ul> <!-- This will list the online users -->
-    <p id="typing"></p> <!-- Typing indicator -->
-  </div>
-
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    var username = prompt('Enter your username:');
-    var socket = io();
 
-    // Send the username to the server
+    // Ask for username after joining room
+    var username = prompt('Enter your username:');    
+    var socket = io();
+    var room = '';
+
     socket.emit('set username', username);
 
-    // Handle form submission for messages
+    // Handle sending messages
     var form = document.getElementById('form');
     var input = document.getElementById('input');
-
-    // Typing event
-    input.addEventListener('input', function() {
-      socket.emit('typing', username); // Notify server that user is typing
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(function() {
-        socket.emit('stop typing'); // Stop typing event after 1 second of inactivity
-      }, 1000);
-    });
-
-    // Listen for typing event
-    socket.on('typing', function(username) {
-      document.getElementById('typing').textContent = username + ' is typing...';
-    });
-
-    // Listen for stop typing event
-    socket.on('stop typing', function() {
-      document.getElementById('typing').textContent = '';
-    });
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', username + ': ' + input.value);
-        input.value = '';
-        socket.emit('stop typing'); // Stop typing when message is sent
-      }
-    });
-
+    
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       if (input.value) {
@@ -115,13 +79,22 @@
       }
     });
 
-    // Display chat messages
+    // Display messages
     socket.on('chat message', function(msg) {
       var item = document.createElement('li');
       item.textContent = msg;
       document.getElementById('messages').appendChild(item);
       window.scrollTo(0, document.body.scrollHeight);
     });
+
+  // Display chat history
+  socket.on('chat history', function(messages) {
+    messages.forEach(function(message) {
+      var item = document.createElement('li');
+      item.textContent = message.timestamp + ' - ' + message.username + ': ' + message.message;
+      document.getElementById('messages').appendChild(item);
+    });
+  });
 
     // Update the user list
     socket.on('user list', function(users) {
@@ -132,6 +105,19 @@
         item.textContent = user;
         usersList.appendChild(item);
       });
+    });
+
+    // Typing indicator
+    input.addEventListener('input', function() {
+      socket.emit('typing', username); // Notify the server that the user is typing
+    });
+    
+    socket.on('typing', function(username) {
+      document.getElementById('typing').textContent = username + ' is typing...';
+    });
+
+    socket.on('stop typing', function() {
+      document.getElementById('typing').textContent = '';
     });
   </script>
   
