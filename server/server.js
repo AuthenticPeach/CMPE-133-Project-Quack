@@ -31,6 +31,12 @@ app.get('/signup', (req, res) => {
 
 app.get('/favicon.ico', (req, res) => res.status(204));
 
+// Serve the chat page
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client', 'chat.html'));
+});
+
+
 // Route to handle signup form POST request
 app.post('/signup', async (req, res) => {
   console.log('Received data:', req.body); // Log incoming request data
@@ -72,11 +78,16 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+app.get('/signin', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client', 'signin.html'));
+});
+
+
 // Track users
 const users = {};
 
 io.on('connection', (socket) => {
-  // Handle signup data from signup.html
+  // Handle signup data
   socket.on('signup', async (data) => {
     const { firstName, lastName, username, email, password, confirmPassword } = data;
 
@@ -105,7 +116,44 @@ io.on('connection', (socket) => {
       socket.emit('signup response', { success: false, message: 'An error occurred. Please try again.' });
     }
   });
+
+  // Handle sign-in data
+  socket.on('signin', async (data) => {
+    const { username, password } = data;
+
+    try {
+      // Find the user in the database
+      const user = await usersCollection.findOne({ username });
+
+      if (!user || user.password !== password) {
+        socket.emit('signin response', { success: false, message: 'Invalid username or password' });
+        return;
+      }
+
+      // Sign-in successful
+      console.log('User signed in:', username);
+      socket.emit('signin response', { success: true });
+    } catch (err) {
+      console.error('Error signing in:', err);
+      socket.emit('signin response', { success: false, message: 'An error occurred. Please try again.' });
+    }
+  });
+
+  // Handle chat-related events (you likely have this already for chat functionality)
+  socket.on('chat message', (msg) => {
+    io.emit('chat message', msg); // Broadcast message to all clients
+  });
+
+  socket.on('typing', () => {
+    socket.broadcast.emit('typing', users[socket.id]);
+  });
+
+  socket.on('disconnect', () => {
+    delete users[socket.id];
+    io.emit('user list', Object.values(users));
+  });
 });
+
 
 
 // Connect to MongoDB once when the server starts
