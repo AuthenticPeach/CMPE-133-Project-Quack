@@ -63,6 +63,12 @@
       cursor: pointer;
       border-radius: 25px;
     }
+    .signup-link {
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -70,6 +76,8 @@
     <div class="left-panel">
       <img src="duckPhoto.png" alt="Duck Icon">
       <p>QUACK.</p>
+      <p>Don't have an account?</p>
+      <a href="/signup" class="signup-link"><button class="signup-button">SIGN UP</button></a>
     </div>
     <div class="right-panel">
       <h2>Sign In</h2>
@@ -99,13 +107,14 @@
       // Emit the signin data via Socket.IO
       socket.emit('signin', data);
 
-      socket.on('signin response', function(response) {
+        socket.on('signin response', function(response) {
         if (response.success) {
-          window.location.href = '/chat'; // Redirect to chat.html after successful signin
+            window.location.href = '/chat?username=' + encodeURIComponent(data.username); // Pass username to chat.html
         } else {
-          errorMessage.textContent = response.message; // Show the error message
+            errorMessage.textContent = response.message; // Show the error message
         }
-      });
+        });
+
     });
   </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Realtime Chat</title>
+  <title>Quack Chat</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -44,6 +44,13 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    #signout {
+      background-color: #ff0000;
+      margin-top: 20px;
+      padding: 10px 20px;
+      color: white;
+      cursor: pointer;
+    }
     @media (max-width: 600px) {
       #chat {
         margin: 20px;
@@ -64,35 +71,46 @@
       <button>Send</button>
     </form>
     <p id="typing"></p>
+    <button id="signout">Sign Out</button> <!-- Add Sign Out button -->
+  </div>
+    <h3>Users Online:</h3>
+    <ul id="users"></ul> <!-- List of connected users -->
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     var socket = io();
 
-    // Send a message
+    // Extract the username from the URL query parameter
+    var urlParams = new URLSearchParams(window.location.search);
+    var username = urlParams.get('username');
+
+    // Send the username to the server
+    socket.emit('set username', username);
+
+    // Send a message with the username
     var form = document.getElementById('form');
     var input = document.getElementById('input');
 
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       if (input.value) {
-        socket.emit('chat message', input.value);
+        socket.emit('chat message', { username: username, message: input.value });
         input.value = '';
       }
     });
 
-    // Receive a message
+    // Receive and display messages with timestamps and usernames
     socket.on('chat message', function(msg) {
       var item = document.createElement('li');
-      item.textContent = msg;
+      item.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
       document.getElementById('messages').appendChild(item);
       window.scrollTo(0, document.body.scrollHeight);
     });
 
     // Typing indicator
     input.addEventListener('input', function() {
-      socket.emit('typing');
+      socket.emit('typing', username);
     });
 
     socket.on('typing', function(username) {
@@ -101,6 +119,25 @@
 
     socket.on('stop typing', function() {
       document.getElementById('typing').textContent = '';
+    });
+
+    // Handle Sign Out
+    var signoutButton = document.getElementById('signout');
+    signoutButton.addEventListener('click', function() {
+      socket.disconnect();  // Disconnect the user
+      window.location.href = '/signin';  // Redirect to signin page
+    });
+
+    // Receive and display the user list
+    socket.on('user list', function(users) {
+      var usersList = document.getElementById('users');
+      usersList.innerHTML = '';  // Clear the current list
+
+      users.forEach(function(user) {
+        var item = document.createElement('li');
+        item.textContent = user;
+        usersList.appendChild(item);
+      });
     });
   </script>
 </body>

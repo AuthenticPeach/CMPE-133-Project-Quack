@@ -63,6 +63,9 @@
       cursor: pointer;
       border-radius: 25px;
     }
+    .error-message {
+      color: red;
+    }
   </style>
 </head>
 <body>
@@ -71,18 +74,19 @@
       <img src="duckPhoto.png" alt="Duck Icon">
       <p>QUACK.</p>
       <p>Already have an account?</p>
+      <a href="/signin" class="signin-link"><button class="signin-button">SIGN IN</button></a>
     </div>
     <div class="right-panel">
       <h2>Create Account</h2>
       <form id="signup-form">
-        <input type="text" id="firstName" placeholder="First Name" required>
-        <input type="text" id="lastName" placeholder="Last Name" required>
-        <input type="text" id="username" placeholder="Username" required>
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
-        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+        <input type="text" id="firstName" placeholder="First Name" required maxlength="50" pattern="[A-Za-z ]{1,50}">
+        <input type="text" id="lastName" placeholder="Last Name" required maxlength="50" pattern="[A-Za-z ]{1,50}">
+        <input type="text" id="username" placeholder="Username" required maxlength="30" pattern="[A-Za-z0-9]{3,30}">
+        <input type="email" id="email" placeholder="Email" required maxlength="100">
+        <input type="password" id="password" placeholder="Password" required minlength="6" maxlength="50">
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6" maxlength="50">
         <button type="submit">SIGN UP</button>
-        <p id="error-message" style="color: red;"></p> <!-- Error message display -->
+        <p id="error-message" class="error-message"></p>
       </form>
     </div>
   </div>
@@ -94,28 +98,38 @@
     const socket = io();
 
     signupForm.addEventListener('submit', function(e) {
-      e.preventDefault(); // Prevent the form from doing a traditional submit
+  e.preventDefault(); // Prevent the form from doing a traditional submit
 
-      const data = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        username: document.getElementById('username').value,
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value,
-        confirmPassword: document.getElementById('confirmPassword').value
-      };
+  const password = document.getElementById('password').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
 
-      // Emit the signup data via Socket.IO
-      socket.emit('signup', data);
+  // Check if passwords match
+  if (password !== confirmPassword) {
+    errorMessage.textContent = 'Passwords do not match';
+    return;
+  }
 
-      socket.on('signup response', function(response) {
-        if (response.success) {
-          window.location.href = '/'; // Redirect to the main page after successful signup
-        } else {
-          errorMessage.textContent = response.message; // Show the error message
-        }
-      });
-    });
+  const data = {
+    firstName: document.getElementById('firstName').value.trim(),
+    lastName: document.getElementById('lastName').value.trim(),
+    username: document.getElementById('username').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: password.trim(),
+  };
+
+  // Emit the signup data via Socket.IO
+  socket.emit('signup', data);
+
+  socket.on('signup response', function(response) {
+    if (response.success) {
+      // Redirect to chat.html with the username as a query parameter
+      window.location.href = '/chat?username=' + encodeURIComponent(data.username);
+    } else {
+      errorMessage.textContent = response.message; // Show the error message
+    }
+  });
+});
+
   </script>
 </body>
 </html>
