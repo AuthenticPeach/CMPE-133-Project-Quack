@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser'); // For parsing form data
 const http = require('http');
 const { Server } = require('socket.io');
+const multer = require('multer');
 const path = require('path');
 const app = express();
 const server = http.createServer(app);
@@ -11,6 +12,18 @@ const { MongoClient } = require('mongodb');
 // MongoDB connection string from MongoDB Atlas
 const uri = 'mongodb+srv://travispeach:ebr4SFmM7vLTp9p@quackcluster1.hwojm.mongodb.net/';
 const client = new MongoClient(uri);
+
+// Set up Multer storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Save files in the 'uploads' folder
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Use timestamp to make filenames unique
+  }
+});
+
+const upload = multer({ storage: storage });
 
 let usersCollection, messagesCollection;
 
@@ -22,11 +35,33 @@ app.use(express.static('client', {
 }));
 
 
+// Serve the profile image from the uploads folder
+app.use('/uploads', express.static('uploads'));
+
+// Route for uploading a profile picture
+app.post('/upload-profile-pic', upload.single('profilePic'), async (req, res) => {
+  const username = req.body.username; // Assuming you're passing the username
+
+  // Save the file path to MongoDB for the user's profile
+  const profilePicPath = `/uploads/${req.file.filename}`;
+
+  try {
+    // Update the user's profile picture in MongoDB
+    await usersCollection.updateOne(
+      { username: username },
+      { $set: { profilePic: profilePicPath } }
+    );
+    res.json({ success: true, profilePic: profilePicPath });
+  } catch (error) {
+    console.error('Error updating profile picture:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload profile picture.' });
+  }
+});
+
 // Route to serve signin.html as the default page
 app.get('/', (req, res) => {
   res.redirect('/signin');
 });
-
 
 // Route for the signup page
 app.get('/signup', (req, res) => {
@@ -84,6 +119,22 @@ app.post('/signup', async (req, res) => {
 
 app.get('/signin', (req, res) => {
   res.sendFile(path.join(__dirname, '../client', 'signin.html'));
+});
+
+// Serve the profile page
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client', 'profile.html'));
+});
+
+// Get user profile data
+app.get('/get-user-profile', async (req, res) => {
+  const username = req.query.username;
+  const user = await usersCollection.findOne({ username });
+  if (user) {
+    res.json({ profilePic: user.profilePic });
+  } else {
+    res.status(404).json({ message: 'User not found' });
+  }
 });
 
 // Track users
@@ -189,17 +240,25 @@ socket.on('signup', async (data) => {
     io.emit('user list', Object.values(users));  // Send the list of usernames
   });
 
-  // Handle incoming chat messages
-  socket.on('chat message', (data) => {
-    const { username, message } = data;
+ // Handle chat messages
+socket.on('chat message', async (data) => {
+  const { username, message, roomName } = data;
 
-    // Get the current timestamp and format it
-    const timestamp = formatTimestamp(new Date());
+  // Get the current timestamp and format it
+  const timestamp = formatTimestamp(new Date());
 
-    // Broadcast the message with the formatted timestamp
-    io.emit('chat message', { username, message, timestamp });
+  // Retrieve the user's profile picture from MongoDB
+  const user = await usersCollection.findOne({ username });
+  const profilePic = user ? user.profilePic : null;
+
+  // Broadcast the message with the profile picture
+  io.to(roomName).emit('chat message', {
+    username,
+    message,
+    timestamp,
+    profilePic // Include the profile picture in the message
   });
-
+});
   // Typing indicator
   socket.on('typing', (username) => {
     socket.broadcast.emit('typing', username);
@@ -232,7 +291,7 @@ async function connectDB() {
 
 connectDB();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

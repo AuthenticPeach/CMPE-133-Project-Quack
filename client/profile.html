@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: white;
+    }
+    .container {
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+    img {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #226C5C;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Your Profile</h2>
+    <img id="profile-pic" src="" alt="Profile Picture">
+    <form id="upload-form" enctype="multipart/form-data">
+      <input type="file" name="profilePic" id="profilePic" required>
+      <button type="submit">Upload Profile Picture</button>
+    </form>
+    <p id="message"></p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const uploadForm = document.getElementById('upload-form');
+    const profilePicElement = document.getElementById('profile-pic');
+    const messageElement = document.getElementById('message');
+
+    // Load the existing profile picture
+    const username = new URLSearchParams(window.location.search).get('username');
+    fetch(`/get-user-profile?username=${username}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.profilePic) {
+          profilePicElement.src = data.profilePic; // Load existing profile pic
+        } else {
+          profilePicElement.src = '/default-avatar.png'; // Use default avatar if none
+        }
+      });
+
+    uploadForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append('profilePic', document.getElementById('profilePic').files[0]);
+      formData.append('username', username);
+
+      fetch('/upload-profile-pic', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          profilePicElement.src = data.profilePic; // Update the profile picture in UI
+          messageElement.textContent = 'Profile picture updated successfully!';
+        } else {
+          messageElement.textContent = 'Failed to update profile picture.';
+        }
+      })
+      .catch(error => {
+        messageElement.textContent = 'An error occurred.';
+        console.error(error);
+      });
+    });
+  </script>
+</body>
+</html>

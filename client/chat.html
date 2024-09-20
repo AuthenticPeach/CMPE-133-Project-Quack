@@ -100,13 +100,34 @@
       }
     });
 
-    // Receive and display messages with timestamps and usernames
-    socket.on('chat message', function(msg) {
-      var item = document.createElement('li');
-      item.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
-      document.getElementById('messages').appendChild(item);
-      window.scrollTo(0, document.body.scrollHeight);
-    });
+// Receive and display messages with timestamps and usernames
+socket.on('chat message', function(msg) {
+  // Create a new list item for the message
+  const item = document.createElement('li');
+
+  // Create an image element for the profile picture
+  const profileImg = document.createElement('img');
+  profileImg.src = msg.profilePic || '/default-avatar.png'; // Use default if no profile pic
+  profileImg.style.width = '40px';
+  profileImg.style.height = '40px';
+  profileImg.style.borderRadius = '50%';
+  profileImg.style.marginRight = '10px';
+
+  // Create a text element for the message content
+  const text = document.createElement('span');
+  text.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
+
+  // Append the profile image and the message text to the list item
+  item.appendChild(profileImg);
+  item.appendChild(text);
+
+  // Append the list item to the message list
+  document.getElementById('messages').appendChild(item);
+
+  // Scroll to the bottom of the page to show the latest message
+  window.scrollTo(0, document.body.scrollHeight);
+  });
+
 
     // Typing indicator
     input.addEventListener('input', function() {
