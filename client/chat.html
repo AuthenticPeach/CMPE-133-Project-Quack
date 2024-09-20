@@ -10,14 +10,22 @@
       background-color: #f0f0f0;
       margin: 0;
       padding: 0;
+      position: relative;
+      display: flex;
+      justify-content: space-between; /* Separate sections */
     }
-    #chat {
+    #chat-section {
       max-width: 600px;
       margin: 50px auto;
       background-color: white;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      flex-grow: 2; /* Main chat section grows */
+    }
+    #users-section {
+      width: 25%; /* Right third section */
+      margin: 50px 20px;
     }
     ul {
       list-style-type: none;
@@ -45,14 +53,32 @@
       cursor: pointer;
     }
     #signout {
+      position: absolute;
+      top: 10px;
+      right: 10px; /* Move to top-right */
       background-color: #ff0000;
-      margin-top: 20px;
       padding: 10px 20px;
       color: white;
       cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+    #links {
+      position: absolute;
+      top: 10px;
+      left: 10px; /* Move links to the top-left */
+    }
+    #links a {
+      margin-right: 20px;
+      color: #ff5e00;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #links a:hover {
+      text-decoration: underline;
     }
     @media (max-width: 600px) {
-      #chat {
+      #chat-section {
         margin: 20px;
         padding: 10px;
       }
@@ -63,16 +89,24 @@
   </style>
 </head>
 <body>
-  <div id="chat">
-    <h2>Welcome to the chat!</h2>
+  <div id="links"> <!-- Links to profile.html and user-dashboard.html -->
+    <a href="/profile.html">Profile</a>
+    <a href="/user-dashboard.html">Dashboard</a>
+  </div>
+
+  <button id="signout">Sign Out</button> <!-- Sign Out button moved to top-right -->
+
+  <div id="chat-section">
+    <h2>Welcome to Quack chat!</h2>
     <ul id="messages"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type a message..." />
       <button>Send</button>
     </form>
     <p id="typing"></p>
-    <button id="signout">Sign Out</button> <!-- Add Sign Out button -->
   </div>
+
+  <div id="users-section">
     <h3>Users Online:</h3>
     <ul id="users"></ul> <!-- List of connected users -->
   </div>
@@ -84,6 +118,15 @@
     // Extract the username from the URL query parameter
     var urlParams = new URLSearchParams(window.location.search);
     var username = urlParams.get('username');
+    var roomName = urlParams.get('room');
+
+    if (!username) {
+    // If no username is found, redirect to sign-in page
+    window.location.href = '/signin';
+    } else {
+    // Send the username to the server
+    socket.emit('set username', username);
+    }
 
     // Send the username to the server
     socket.emit('set username', username);
@@ -92,42 +135,41 @@
     var form = document.getElementById('form');
     var input = document.getElementById('input');
 
+    // Join the specified room
+    socket.emit('join room', roomName);
+
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       if (input.value) {
-        socket.emit('chat message', { username: username, message: input.value });
+        socket.emit('chat message', { 
+          username: username, 
+          message: input.value, 
+          roomName: roomName // Include the room name when sending the message
+        });
         input.value = '';
       }
     });
 
-// Receive and display messages with timestamps and usernames
-socket.on('chat message', function(msg) {
-  // Create a new list item for the message
-  const item = document.createElement('li');
+    // Receive and display messages with timestamps and usernames
+    socket.on('chat message', function(msg) {
+      const item = document.createElement('li');
 
-  // Create an image element for the profile picture
-  const profileImg = document.createElement('img');
-  profileImg.src = msg.profilePic || '/default-avatar.png'; // Use default if no profile pic
-  profileImg.style.width = '40px';
-  profileImg.style.height = '40px';
-  profileImg.style.borderRadius = '50%';
-  profileImg.style.marginRight = '10px';
+      const profileImg = document.createElement('img');
+      profileImg.src = msg.profilePic || '/uploads/default-avatar.png'; // Use default if no profile pic
+      profileImg.style.width = '40px';
+      profileImg.style.height = '40px';
+      profileImg.style.borderRadius = '50%';
+      profileImg.style.marginRight = '10px';
 
-  // Create a text element for the message content
-  const text = document.createElement('span');
-  text.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
+      const text = document.createElement('span');
+      text.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
 
-  // Append the profile image and the message text to the list item
-  item.appendChild(profileImg);
-  item.appendChild(text);
+      item.appendChild(profileImg);
+      item.appendChild(text);
 
-  // Append the list item to the message list
-  document.getElementById('messages').appendChild(item);
-
-  // Scroll to the bottom of the page to show the latest message
-  window.scrollTo(0, document.body.scrollHeight);
-  });
-
+      document.getElementById('messages').appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
 
     // Typing indicator
     input.addEventListener('input', function() {
@@ -151,15 +193,33 @@ socket.on('chat message', function(msg) {
 
     // Receive and display the user list
     socket.on('user list', function(users) {
-      var usersList = document.getElementById('users');
-      usersList.innerHTML = '';  // Clear the current list
+    var usersList = document.getElementById('users');
+    usersList.innerHTML = '';  // Clear the current list
 
-      users.forEach(function(user) {
+    users.forEach(function(user) {
         var item = document.createElement('li');
-        item.textContent = user;
+
+        // Create the profile picture element
+        const profileImg = document.createElement('img');
+        profileImg.src = user.profilePic || '/uploads/default-avatar.png'; // Use default avatar if no profile pic
+        profileImg.style.width = '40px';
+        profileImg.style.height = '40px';
+        profileImg.style.borderRadius = '50%';
+        profileImg.style.marginRight = '10px';
+
+        // Create the username element
+        const text = document.createElement('span');
+        text.textContent = user.username;
+
+        // Append the profile picture and username to the list item
+        item.appendChild(profileImg);
+        item.appendChild(text);
+
+        // Append the list item to the users list
         usersList.appendChild(item);
-      });
     });
+});
+
   </script>
 </body>
 </html>

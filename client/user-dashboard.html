@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User View</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      position: relative;
+      display: flex;
+      justify-content: space-between; /* Separate sections */
+    }
+    #container {
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 8px;
+      margin-bottom: 10px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+    }
+    #users-section {
+      width: 25%; /* Right third section */
+      margin: 50px 20px;
+    }    
+    button {
+      padding: 10px 20px;
+      background-color: #ff5e00;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #signout {
+      position: absolute;
+      top: 10px;
+      right: 10px; /* Move to top-right */
+      background-color: #ff0000;
+      padding: 10px 20px;
+      color: white;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }  
+    #links {
+      position: absolute;
+      top: 10px;
+      left: 10px; /* Move links to the top-left */
+    }
+    #links a {
+      margin-right: 20px;
+      color: #ff5e00;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #links a:hover {
+      text-decoration: underline;
+    }      
+  </style>
+</head>
+<body>
+  <div id="links"> <!-- Links to profile.html -->
+    <a href="/profile.html">Profile</a>
+  </div>
+
+  <button id="signout">Sign Out</button> <!-- Sign Out button moved to top-right -->
+
+  
+  <div id="container">
+    <h2>Welcome to Quack chat!</h2>
+
+    <!-- Section for Private 1-on-1 Chats -->
+    <h3>Start a Private Chat</h3>
+    <ul id="user-list"></ul>
+
+    <!-- Section for Group Rooms -->
+    <h3>Join a Group Chat Room</h3>
+    <ul id="room-list">
+      <li><button onclick="joinRoom('general')">General Room</button></li>
+      <li><button onclick="joinRoom('random')">Random Room</button></li>
+    </ul>
+
+    <p id="message"></p>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+  
+    // Get the username from localStorage
+    var username = localStorage.getItem('username');
+    if (!username) {
+      // If no username is found, redirect to sign-in page
+      window.location.href = '/signin';
+    } else {
+      // Send the username to the server
+      socket.emit('set username', username);
+  
+      // Display the welcome message
+      document.querySelector('h2').textContent = `Welcome to the chat, ${username}!`;
+    }
+  
+    // Handle Sign Out
+    var signoutButton = document.getElementById('signout');
+    signoutButton.addEventListener('click', function() {
+      socket.disconnect();  // Disconnect the user
+      localStorage.removeItem('username'); // Clear username from localStorage
+      window.location.href = '/signin';  // Redirect to sign-in page
+    });
+  
+    // Display the list of users for private chats
+    socket.on('user list', function(users) {
+      var userList = document.getElementById('user-list');
+      userList.innerHTML = ''; // Clear the list
+  
+      users.forEach(function(user) {
+        if (user !== username) { // Don't show the current user in the list
+          var item = document.createElement('li');
+          item.innerHTML = `<button onclick="startPrivateChat('${user}')">Chat with ${user}</button>`;
+          userList.appendChild(item);
+        }
+      });
+    });
+  
+    // Start a private chat
+    function startPrivateChat(toUser) {
+      socket.emit('private chat', { fromUser: username, toUser: toUser });
+      // Redirect to chat room page for private chats
+      window.location.href = `/chat?room=${username}-${toUser}&username=${encodeURIComponent(username)}`;
+    }
+  
+    // Join a room
+    function joinRoom(roomName) {
+      socket.emit('join room', roomName);
+      // Redirect to the room chat page
+      window.location.href = `/chat?room=${roomName}&username=${encodeURIComponent(username)}`;
+    }
+  </script>
+  
+</body>
+</html>

@@ -24,6 +24,8 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage: storage });
+// Serve the /uploads folder to make images publicly accessible
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 let usersCollection, messagesCollection;
 
@@ -75,6 +77,10 @@ app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, '../client', 'chat.html'));
 });
 
+// Serve the user view page
+app.get('/user-dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client', 'user-dashboard.html'));
+});
 
 // Route to handle signup form POST request
 app.post('/signup', async (req, res) => {
@@ -117,6 +123,33 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+// Route to handle saving the bio
+app.post('/save-bio', async (req, res) => {
+  const { username, bio } = req.body;
+
+  if (!username || !bio) {
+    return res.status(400).json({ success: false, message: 'Invalid data' });
+  }
+
+  try {
+    // Find the user in the database and update the bio
+    const result = await usersCollection.updateOne(
+      { username: username },
+      { $set: { bio: bio } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, message: 'Bio updated successfully' });
+  } catch (error) {
+    console.error('Error saving bio:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
+  }
+});
+
+
 app.get('/signin', (req, res) => {
   res.sendFile(path.join(__dirname, '../client', 'signin.html'));
 });
@@ -137,8 +170,8 @@ app.get('/get-user-profile', async (req, res) => {
   }
 });
 
-// Track users
-const users = {};
+const users = {}; // Track users by socket ID
+const rooms = {}; // Track rooms by room name
 
 // Utility function to format timestamps
 function formatTimestamp(date) {
@@ -209,38 +242,73 @@ socket.on('signup', async (data) => {
   }
 });
 
-  // Handle sign-in data
-  socket.on('signin', async (data) => {
-    const { username, password } = data;
+// Handle sign-in data
+socket.on('signin', async (data) => {
+  const { username, password } = data;
 
-    try {
+  try {
       // Find the user in the database
       const user = await usersCollection.findOne({ username });
 
       if (!user || user.password !== password) {
-        socket.emit('signin response', { success: false, message: 'Invalid username or password' });
-        return;
+          socket.emit('signin response', { success: false, message: 'Invalid username or password' });
+          return;
       }
 
       // Sign-in successful
       console.log('User signed in:', username);
+      users[socket.id] = username; // Set the username in the users object here
       socket.emit('signin response', { success: true });
-    } catch (err) {
+
+      // Emit the set username event immediately after sign-in
+      io.to(socket.id).emit('set username', username); // Emit it directly to this socket
+  } catch (err) {
       console.error('Error signing in:', err);
       socket.emit('signin response', { success: false, message: 'An error occurred. Please try again.' });
-    }
-  });
+  }
+});
+
 
   // Handle when a username is set
-  socket.on('set username', (username) => {
-    users[socket.id] = username;
-    console.log(`${username} has joined the chat`);
+  socket.on('set username', async (username) => {
+    const user = await usersCollection.findOne({ username });
+        // Add the user and their profile picture to the users object
 
-    // Emit the updated list of users to all clients
-    io.emit('user list', Object.values(users));  // Send the list of usernames
+    // Add the user and their profile picture to the users object
+    users[socket.id] = {
+      username: user.username,
+      profilePic: user.profilePic || '/uploads/default-avatar.png' // Use default avatar if no profile pic
+    };
+      console.log(`${username} has joined the chat`);
+      io.emit('user list', Object.values(users)); // Broadcast the user list
+
   });
 
- // Handle chat messages
+  // Handle private 1-on-1 chat
+  socket.on('private chat', (data) => {
+    const { toUser, fromUser } = data;
+
+    // Create a room name based on the two usernames to make it unique
+    const roomName = [fromUser, toUser].sort().join('-');
+    
+    // Add both users to the private chat room
+    socket.join(roomName);
+    console.log(`${fromUser} has joined a private chat room with ${toUser}`);
+
+    // Notify the users they are in the same room
+    io.to(roomName).emit('private chat start', { roomName, users: [fromUser, toUser] });
+  });
+
+  // Handle group chat room
+  socket.on('join room', (roomName) => {
+    socket.join(roomName);
+    console.log(`${users[socket.id]} has joined room ${roomName}`);
+
+    // Notify the room that a new user has joined
+    io.to(roomName).emit('room message', `${users[socket.id]} has joined the room.`);
+  });
+
+// Handle chat messages
 socket.on('chat message', async (data) => {
   const { username, message, roomName } = data;
 
@@ -249,30 +317,28 @@ socket.on('chat message', async (data) => {
 
   // Retrieve the user's profile picture from MongoDB
   const user = await usersCollection.findOne({ username });
-  const profilePic = user ? user.profilePic : null;
+  const profilePic = user ? user.profilePic : '/uploads/default-avatar.png'; // Fallback to default avatar
 
   // Broadcast the message with the profile picture
   io.to(roomName).emit('chat message', {
     username,
     message,
     timestamp,
-    profilePic // Include the profile picture in the message
+    profilePic // Use the profilePic fetched from the database
   });
 });
+
   // Typing indicator
   socket.on('typing', (username) => {
     socket.broadcast.emit('typing', username);
   });
 
-  // Handle disconnection
+  // Handle disconnect
   socket.on('disconnect', () => {
     const username = users[socket.id];
-    console.log(`${username} has left the chat`);
-
-    delete users[socket.id];  // Remove user from the list
-
-    // Emit the updated user list to all clients
-    io.emit('user list', Object.values(users));
+    console.log(`${username || 'undefined'} has left the chat`);
+    delete users[socket.id];
+    io.emit('user list', Object.values(users)); // Broadcast updated user list
   });
 });
 

@@ -107,13 +107,17 @@
       // Emit the signin data via Socket.IO
       socket.emit('signin', data);
 
-        socket.on('signin response', function(response) {
+    // After receiving a successful sign-in response, emit the 'set username' event
+    socket.on('signin response', function(response) {
         if (response.success) {
-            window.location.href = '/chat?username=' + encodeURIComponent(data.username); // Pass username to chat.html
+            const username = document.getElementById('username').value; // Get the username from the input field
+            localStorage.setItem('username', username); // Store the username in localStorage
+            socket.emit('set username', username); // Emit the set username event
+            window.location.href = '/user-dashboard.html'; // Redirect to the user dashboard
         } else {
             errorMessage.textContent = response.message; // Show the error message
         }
-        });
+    });
 
     });
   </script>
