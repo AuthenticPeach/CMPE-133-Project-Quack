@@ -125,15 +125,17 @@
     socket.on('user list', function(users) {
       var userList = document.getElementById('user-list');
       userList.innerHTML = ''; // Clear the list
-  
+
       users.forEach(function(user) {
-        if (user !== username) { // Don't show the current user in the list
+        // Ensure we access the username property of the user object
+        if (user.username !== username) { // Don't show the current user in the list
           var item = document.createElement('li');
-          item.innerHTML = `<button onclick="startPrivateChat('${user}')">Chat with ${user}</button>`;
+          item.innerHTML = `<button onclick="startPrivateChat('${user.username}')">Chat with ${user.username}</button>`;
           userList.appendChild(item);
         }
       });
     });
+
   
     // Start a private chat
     function startPrivateChat(toUser) {

@@ -46,13 +46,13 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      z-index: 10; /* Ensure it's above other content */
+      z-index: 10;
     }
     #links {
       position: absolute;
       top: 10px;
       left: 10px;
-      z-index: 10; /* Ensure it's above other content */
+      z-index: 10;
     }
     #links a {
       margin-right: 20px;
@@ -70,6 +70,15 @@
       padding: 10px;
       margin-top: 20px;
       border: 1px solid #ccc;
+      display: none;
+    }
+    .bio-display {
+      font-size: 16px;
+      color: #333;
+      margin: 20px 0;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -91,10 +100,10 @@
     <p id="message"></p>
 
     <h3>Your Bio</h3>
-    <form id="bio-form">
-      <textarea id="bio" placeholder="Tell us something about yourself..."></textarea>
-      <button type="submit">Save Bio</button>
-    </form>
+    <p id="bio-display" class="bio-display"></p> <!-- Non-editable bio display -->
+    <textarea id="bio" placeholder="Tell us something about yourself..."></textarea>
+    <button id="edit-bio-btn">Edit Bio</button> <!-- Edit Bio button -->
+    <button id="save-bio-btn" class="hidden">Save Bio</button> <!-- Save Bio button, hidden initially -->
     <p id="bio-message"></p>
   </div>
 
@@ -103,9 +112,11 @@
     const uploadForm = document.getElementById('upload-form');
     const profilePicElement = document.getElementById('profile-pic');
     const messageElement = document.getElementById('message');
-    const bioForm = document.getElementById('bio-form');
     const bioElement = document.getElementById('bio');
+    const bioDisplayElement = document.getElementById('bio-display'); // Bio display element
     const bioMessageElement = document.getElementById('bio-message');
+    const editBioBtn = document.getElementById('edit-bio-btn');
+    const saveBioBtn = document.getElementById('save-bio-btn');
 
     // Retrieve the username from localStorage
     const username = localStorage.getItem('username');
@@ -122,44 +133,26 @@
         if (data.profilePic) {
           profilePicElement.src = data.profilePic; // Load existing profile pic
         } else {
-          profilePicElement.src = '/default-avatar.png'; // Use default avatar if none
+          profilePicElement.src = '/uploads/default-avatar.png'; // Use default avatar if none
         }
         if (data.bio) {
-          bioElement.value = data.bio; // Load existing bio
-        }
-      });
-
-    // Handle profile picture upload
-    uploadForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const formData = new FormData();
-      formData.append('profilePic', document.getElementById('profilePic').files[0]);
-      formData.append('username', username);
-
-      fetch('/upload-profile-pic', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          profilePicElement.src = data.profilePic; // Update the profile picture in UI
-          messageElement.textContent = 'Profile picture updated successfully!';
+          bioDisplayElement.textContent = data.bio; // Display the saved bio in non-editable format
         } else {
-          messageElement.textContent = 'Failed to update profile picture.';
+          bioDisplayElement.textContent = 'No bio available'; // Default message if no bio is available
         }
-      })
-      .catch(error => {
-        messageElement.textContent = 'An error occurred.';
-        console.error(error);
       });
+
+    // Show the editable bio text area when "Edit Bio" is clicked
+    editBioBtn.addEventListener('click', function() {
+      bioElement.value = bioDisplayElement.textContent; // Set the text area to the current bio text
+      bioElement.style.display = 'block'; // Show the editable text area
+      bioDisplayElement.style.display = 'none'; // Hide the non-editable display
+      editBioBtn.style.display = 'none'; // Hide the "Edit Bio" button
+      saveBioBtn.style.display = 'block'; // Show the "Save Bio" button
     });
 
-    // Handle bio submission
-    bioForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
+    // Handle saving the bio
+    saveBioBtn.addEventListener('click', function() {
       const bioData = {
         username: username,
         bio: bioElement.value.trim()
@@ -176,6 +169,11 @@
       .then(data => {
         if (data.success) {
           bioMessageElement.textContent = 'Bio saved successfully!';
+          bioDisplayElement.textContent = bioElement.value; // Update the non-editable bio display
+          bioElement.style.display = 'none'; // Hide the editable text area
+          bioDisplayElement.style.display = 'block'; // Show the updated bio display
+          editBioBtn.style.display = 'block'; // Show the "Edit Bio" button
+          saveBioBtn.style.display = 'none'; // Hide the "Save Bio" button
         } else {
           bioMessageElement.textContent = 'Failed to save bio.';
         }

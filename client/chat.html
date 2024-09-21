@@ -77,6 +77,17 @@
     #links a:hover {
       text-decoration: underline;
     }
+    #emoji-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      margin-left: 10px;
+      padding: 0 10px;
+    }
+    #emoji-button:hover {
+      color: #ff5e00;
+    }
     @media (max-width: 600px) {
       #chat-section {
         margin: 20px;
@@ -101,7 +112,8 @@
     <ul id="messages"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type a message..." />
-      <button>Send</button>
+      <button id="emoji-button" type="button">😀</button> <!-- Emoji Button -->
+      <button type="submit">Send</button>
     </form>
     <p id="typing"></p>
   </div>
@@ -112,6 +124,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/emoji-button@latest"></script>
   <script>
     var socket = io();
 
@@ -121,21 +134,35 @@
     var roomName = urlParams.get('room');
 
     if (!username) {
-    // If no username is found, redirect to sign-in page
-    window.location.href = '/signin';
+      // If no username is found, redirect to sign-in page
+      window.location.href = '/signin';
     } else {
-    // Send the username to the server
-    socket.emit('set username', username);
+      // Send the username to the server
+      socket.emit('set username', username);
     }
 
-    // Send the username to the server
-    socket.emit('set username', username);
+    const input = document.getElementById('input');
+    const emojiButton = document.getElementById('emoji-button');
+
+    // Initialize the emoji picker
+    const picker = new EmojiButton();
+    console.log('Emoji picker initialized');  // Debugging statement
+
+    // Toggle the emoji picker when the button is clicked
+    emojiButton.addEventListener('click', () => {
+      console.log('Emoji button clicked');  // Debugging statement
+      picker.togglePicker(emojiButton);
+    });
+
+    // When an emoji is selected, add it to the input field
+    picker.on('emoji', emoji => {
+      console.log('Emoji selected:', emoji);  // Debugging statement
+      input.value += emoji;
+    });
 
     // Send a message with the username
     var form = document.getElementById('form');
-    var input = document.getElementById('input');
 
-    // Join the specified room
     socket.emit('join room', roomName);
 
     form.addEventListener('submit', function(e) {
@@ -193,10 +220,11 @@
 
     // Receive and display the user list
     socket.on('user list', function(users) {
-    var usersList = document.getElementById('users');
-    usersList.innerHTML = '';  // Clear the current list
+      var usersList = document.getElementById('users');
+      usersList.innerHTML = '';  // Clear the current list
 
-    users.forEach(function(user) {
+      users.forEach(function(user) {
+        // Create a list item for each user
         var item = document.createElement('li');
 
         // Create the profile picture element
@@ -209,7 +237,7 @@
 
         // Create the username element
         const text = document.createElement('span');
-        text.textContent = user.username;
+        text.textContent = user.username || 'Unknown User'; // Display 'Unknown User' if username is missing
 
         // Append the profile picture and username to the list item
         item.appendChild(profileImg);
@@ -217,8 +245,8 @@
 
         // Append the list item to the users list
         usersList.appendChild(item);
+      });
     });
-});
 
   </script>
 </body>

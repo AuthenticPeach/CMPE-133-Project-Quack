@@ -159,16 +159,30 @@ app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, '../client', 'profile.html'));
 });
 
-// Get user profile data
+// Route to fetch user profile including bio and profile picture
 app.get('/get-user-profile', async (req, res) => {
   const username = req.query.username;
-  const user = await usersCollection.findOne({ username });
-  if (user) {
-    res.json({ profilePic: user.profilePic });
-  } else {
-    res.status(404).json({ message: 'User not found' });
+
+  try {
+    // Find the user in the database by username
+    const user = await usersCollection.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Return the user profile including the bio and profile picture
+    res.json({
+      success: true,
+      profilePic: user.profilePic || '/uploads/default-avatar.png',
+      bio: user.bio || '' // Send the bio, default to empty if not set
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
   }
 });
+
 
 const users = {}; // Track users by socket ID
 const rooms = {}; // Track rooms by room name
@@ -244,44 +258,53 @@ socket.on('signup', async (data) => {
 
 // Handle sign-in data
 socket.on('signin', async (data) => {
-  const { username, password } = data;
-
-  try {
-      // Find the user in the database
-      const user = await usersCollection.findOne({ username });
-
-      if (!user || user.password !== password) {
-          socket.emit('signin response', { success: false, message: 'Invalid username or password' });
-          return;
-      }
-
-      // Sign-in successful
-      console.log('User signed in:', username);
-      users[socket.id] = username; // Set the username in the users object here
-      socket.emit('signin response', { success: true });
-
-      // Emit the set username event immediately after sign-in
-      io.to(socket.id).emit('set username', username); // Emit it directly to this socket
-  } catch (err) {
-      console.error('Error signing in:', err);
-      socket.emit('signin response', { success: false, message: 'An error occurred. Please try again.' });
+  if (!usersCollection) {
+    socket.emit('signin response', { success: false, message: 'Database connection not established.' });
+    return;
   }
+  
+  const { username, password } = data;
+  const user = await usersCollection.findOne({ username });
+  
+  if (!user || user.password !== password) {
+    socket.emit('signin response', { success: false, message: 'Invalid username or password' });
+    return;
+  }
+  
+  console.log('User signed in:', username);
+  users[socket.id] = username; 
+  socket.emit('signin response', { success: true });
 });
-
 
   // Handle when a username is set
   socket.on('set username', async (username) => {
-    const user = await usersCollection.findOne({ username });
-        // Add the user and their profile picture to the users object
+    // Ensure usersCollection is defined
+    if (!usersCollection) {
+      console.error('MongoDB connection is not established.');
+      return;
+    }
 
-    // Add the user and their profile picture to the users object
+    // Fetch user from the database
+    const user = await usersCollection.findOne({ username });
+    if (!user) {
+      console.error('User not found in the database.');
+      return;
+    }
+
+    // Add user details to the users object
     users[socket.id] = {
       username: user.username,
       profilePic: user.profilePic || '/uploads/default-avatar.png' // Use default avatar if no profile pic
     };
-      console.log(`${username} has joined the chat`);
-      io.emit('user list', Object.values(users)); // Broadcast the user list
 
+    // Emit the updated list of users, ensuring each user has both username and profilePic
+    io.emit('user list', Object.values(users));
+  });
+
+  // Handle disconnection
+  socket.on('disconnect', () => {
+    delete users[socket.id]; // Remove user from the list
+    io.emit('user list', Object.values(users)); // Emit the updated list of users
   });
 
   // Handle private 1-on-1 chat
@@ -357,7 +380,7 @@ async function connectDB() {
 
 connectDB();
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
