@@ -158,9 +158,9 @@
       } else if (!(/\d/.test(password))) {
         passwordStrength.style.display = 'block';
         passwordStrength.textContent = '✖ Should contain number (0-9)';
-      } else if (!(/[@$!%*?&]/.test(password))) {
+      } else if (!(/[!@#$%^&*(),.?":{}|<>]/.test(password))) {
         passwordStrength.style.display = 'block';
-        passwordStrength.textContent = '✖ Should contain symbol ';
+        passwordStrength.textContent = '✖ Should contain special character ';
       } else {
         passwordStrength.style.display = 'none';
       }    
