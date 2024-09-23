@@ -66,12 +66,19 @@
     .error-message {
       color: red;
     }
+
+    #password-strength {
+      display: none;
+      color: red;
+      margin-top: -5px;
+      font-size: 15px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="left-panel">
-      <img src="duckPhoto.png" alt="Duck Icon">
+      <img src="/img/duckPhoto.png" alt="Duck Icon">
       <p>QUACK.</p>
       <p>Already have an account?</p>
       <a href="/signin" class="signin-link"><button class="signin-button">SIGN IN</button></a>
@@ -83,8 +90,8 @@
         <input type="text" id="lastName" placeholder="Last Name" required maxlength="50" pattern="[A-Za-z ]{1,50}">
         <input type="text" id="username" placeholder="Username" required maxlength="30" pattern="[A-Za-z0-9]{3,30}">
         <input type="email" id="email" placeholder="Email" required maxlength="100">
-        <input type="password" id="password" placeholder="Password" required minlength="6" maxlength="50">
-        <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="6" maxlength="50">
+        <input type="password" id="password" placeholder="Password" required minlength="8" maxlength="50" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?:{}|])[A-Za-z\d!@#$%^&*(),.?:{}|]{8,}"><p id="password-strength"></p>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="8" maxlength="50">
         <button type="submit">SIGN UP</button>
         <p id="error-message" class="error-message"></p>
       </form>
@@ -130,6 +137,34 @@
   });
 });
 
+  </script>
+  
+  <script>
+    const passwordInput = document.getElementById('password');
+    const passwordStrength = document.getElementById('password-strength');
+  
+    passwordInput.addEventListener('input', function() {
+      const password = passwordInput.value;  
+      
+      if (password.length <= 8) {
+        passwordStrength.style.display = 'block';
+        passwordStrength.textContent = '✖ At least 8 characters in length';
+      } else if ((!/[A-Z]/.test(password))) {
+        passwordStrength.style.display = 'block';
+        passwordStrength.textContent = '✖ Should contain upper case letters (A-Z)';
+      } else if (!(/[a-z]/.test(password))) {
+        passwordStrength.style.display = 'block';
+        passwordStrength.textContent = '✖ Should contain lower case letters (a-z)';
+      } else if (!(/\d/.test(password))) {
+        passwordStrength.style.display = 'block';
+        passwordStrength.textContent = '✖ Should contain number (0-9)';
+      } else if (!(/[!@#$%^&*(),.?:{}|]/.test(password))) {
+        passwordStrength.style.display = 'block';
+        passwordStrength.textContent = '✖ Should contain special character ';
+      } else {
+        passwordStrength.style.display = 'none';
+      }    
+    });
   </script>
 </body>
 </html>

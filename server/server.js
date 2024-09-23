@@ -9,6 +9,16 @@ const server = http.createServer(app);
 const io = new Server(server);
 const { MongoClient } = require('mongodb');
 
+app.get('/img/:filename', (req, res) => {
+  const filePath = path.join(__dirname, '../img', req.params.filename); // Adjusted path
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error sending file:', err);
+      res.status(err.status).end();
+    }
+  });
+});
+
 // MongoDB connection string from MongoDB Atlas
 const uri = 'mongodb+srv://travispeach:ebr4SFmM7vLTp9p@quackcluster1.hwojm.mongodb.net/';
 const client = new MongoClient(uri);
@@ -105,7 +115,6 @@ app.post('/signup', async (req, res) => {
     // Check if the username already exists
     const existingUser = await usersCollection.findOne({ username });
     console.log('Result of findOne for username:', existingUser);
-
     if (existingUser) {
       return res.json({ success: false, message: 'Username already exists' });
     }
