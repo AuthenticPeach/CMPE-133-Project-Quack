@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User View</title>
+  <title>User Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,7 +12,7 @@
       padding: 0;
       position: relative;
       display: flex;
-      justify-content: space-between; /* Separate sections */
+      justify-content: space-between;
     }
     #container {
       max-width: 600px;
@@ -33,9 +33,9 @@
       border-radius: 5px;
     }
     #users-section {
-      width: 25%; /* Right third section */
+      width: 25%;
       margin: 50px 20px;
-    }    
+    }
     button {
       padding: 10px 20px;
       background-color: #ff5e00;
@@ -47,38 +47,51 @@
     #signout {
       position: absolute;
       top: 10px;
-      right: 10px; /* Move to top-right */
+      right: 10px;
       background-color: #ff0000;
       padding: 10px 20px;
       color: white;
       cursor: pointer;
       border: none;
       border-radius: 5px;
-    }  
-    #links {
-      position: absolute;
-      top: 10px;
-      left: 10px; /* Move links to the top-left */
     }
-    #links a {
-      margin-right: 20px;
-      color: #ff5e00;
-      text-decoration: none;
+    #profile-link {
+      position: absolute;
+      top: 15px;
+      left: 70px; /* Place next to profile picture */
       font-weight: bold;
     }
-    #links a:hover {
+    #profile-link a {
+      color: #ff5e00;
+      text-decoration: none;
+    }
+    #profile-link a:hover {
       text-decoration: underline;
-    }      
+    }
+    #profile-pic {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 50px; /* Adjust size */
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 10px;
+      border: 2px solid #fff; /* Add a white border around the image */
+    }
   </style>
 </head>
 <body>
-  <div id="links"> <!-- Links to profile.html -->
+
+  <!-- Profile Picture at the top-left corner -->
+  <img id="profile-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
+
+  <!-- Profile Link next to Profile Picture -->
+  <div id="profile-link">
     <a href="/profile.html">Profile</a>
   </div>
 
-  <button id="signout">Sign Out</button> <!-- Sign Out button moved to top-right -->
+  <button id="signout">Sign Out</button>
 
-  
   <div id="container">
     <h2>Welcome to Quack chat!</h2>
 
@@ -103,32 +116,39 @@
     // Get the username from localStorage
     var username = localStorage.getItem('username');
     if (!username) {
-      // If no username is found, redirect to sign-in page
       window.location.href = '/signin';
     } else {
-      // Send the username to the server
       socket.emit('set username', username);
-  
-      // Display the welcome message
-      document.querySelector('h2').textContent = `Welcome to the chat, ${username}!`;
+      document.querySelector('h2').textContent = `Welcome to Quack Chat, ${username}!`;
+
+      // Fetch the profile data including profile picture
+      fetch(`/get-user-profile?username=${username}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('profile-pic').src = data.profilePic;
+          } else {
+            console.error('Failed to load profile data');
+          }
+        })
+        .catch(error => console.error('Error fetching profile:', error));
     }
-  
+
     // Handle Sign Out
     var signoutButton = document.getElementById('signout');
     signoutButton.addEventListener('click', function() {
-      socket.disconnect();  // Disconnect the user
-      localStorage.removeItem('username'); // Clear username from localStorage
-      window.location.href = '/signin';  // Redirect to sign-in page
+      socket.disconnect();
+      localStorage.removeItem('username');
+      window.location.href = '/signin';
     });
-  
+
     // Display the list of users for private chats
     socket.on('user list', function(users) {
       var userList = document.getElementById('user-list');
-      userList.innerHTML = ''; // Clear the list
+      userList.innerHTML = '';
 
       users.forEach(function(user) {
-        // Ensure we access the username property of the user object
-        if (user.username !== username) { // Don't show the current user in the list
+        if (user.username !== username) {
           var item = document.createElement('li');
           item.innerHTML = `<button onclick="startPrivateChat('${user.username}')">Chat with ${user.username}</button>`;
           userList.appendChild(item);
@@ -136,21 +156,16 @@
       });
     });
 
-  
-    // Start a private chat
     function startPrivateChat(toUser) {
       socket.emit('private chat', { fromUser: username, toUser: toUser });
-      // Redirect to chat room page for private chats
       window.location.href = `/chat?room=${username}-${toUser}&username=${encodeURIComponent(username)}`;
     }
-  
-    // Join a room
+
     function joinRoom(roomName) {
       socket.emit('join room', roomName);
-      // Redirect to the room chat page
       window.location.href = `/chat?room=${roomName}&username=${encodeURIComponent(username)}`;
     }
   </script>
-  
+
 </body>
 </html>

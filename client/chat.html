@@ -112,6 +112,7 @@
     <ul id="messages"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type a message..." />
+      <input type="file" id="image-input" accept="image/*" />
       <button id="emoji-button" type="button">😀</button> <!-- Emoji Button -->
       <button type="submit">Send</button>
     </form>
@@ -171,16 +172,36 @@
 
 form.addEventListener('submit', function(e) {
   e.preventDefault();
-  if (input.value) {
-    console.log(`Sending message to room ${roomName}:`, input.value); // Debug log when sending
-    socket.emit('chat message', { username: username, message: input.value, roomName: roomName });
+  const message = input.value;
+  const imageInput = document.getElementById('image-input');
+  const imageFile = imageInput.files[0];
 
-    // Place debugging code to verify if the message is sent and received
-    console.log("Message emitted to server:", { username: username, message: input.value, roomName: roomName });
+  // Proceed if there's a message or an image
+  if (message || imageFile) {
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('roomName', roomName);
+    if (message) {
+      formData.append('message', message);
+    }
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
 
-    input.value = ''; // Clear the input field
+    fetch('/upload-chat', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      input.value = ''; // Clear the input field
+      imageInput.value = ''; // Clear the file input field
+      // No need to emit 'chat message' here; the server does it
+    })
+    .catch(error => console.error('Error uploading image:', error));
   }
 });
+
 
 socket.on('chat message', function(msg) {
   console.log('Received message:', msg); // Ensure this log shows up
@@ -214,8 +235,6 @@ socket.on('chat message', function(msg) {
   document.getElementById('messages').appendChild(item);
   window.scrollTo(0, document.body.scrollHeight);
 });
-
-
 
 // Client-side: Display chat history when joining a room
 socket.on('chat history', function(messages) {
@@ -265,7 +284,7 @@ socket.on('stop typing', function() {
 
     // Handle Sign Out
     var signoutButton = document.getElementById('signout');
-    signoutButton.addEventListener('click', function() {
+signoutButton.addEventListener('click', function() {
       socket.disconnect();  // Disconnect the user
       window.location.href = '/signin';  // Redirect to signin page
     });

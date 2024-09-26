@@ -70,6 +70,51 @@ app.post('/upload-profile-pic', upload.single('profilePic'), async (req, res) =>
   }
 });
 
+app.post('/upload-chat', upload.single('image'), async (req, res) => {
+  const message = req.body.message || '';
+  const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
+  const username = req.body.username || 'Unknown User';
+  const roomName = req.body.roomName;
+
+  // Create a message object
+  const chatMessage = {
+    username: username,
+    message: message,
+    roomName: roomName,
+    image: imagePath,
+    timestamp: new Date()
+  };
+
+  try {
+    // Store the message in the database
+    await messagesCollection.insertOne(chatMessage);
+    console.log('Storing message in DB:', chatMessage);
+
+    // Fetch user profile from MongoDB
+    const user = await usersCollection.findOne({ username });
+    const profilePic = user ? user.profilePic || '/uploads/default-avatar.png' : '/uploads/default-avatar.png';
+
+    // Prepare the message to be sent to clients
+    const messageToSend = {
+      username: username,
+      message: message,
+      image: imagePath,
+      timestamp: new Date().toLocaleTimeString(),
+      profilePic: profilePic
+    };
+
+    // Emit the message to the room
+    io.to(roomName).emit('chat message', messageToSend);
+    console.log(`Emitting message to room ${roomName}:`, messageToSend);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error handling /upload-chat:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
 // Route to serve signin.html as the default page
 app.get('/', (req, res) => {
   res.redirect('/signin');
@@ -242,10 +287,10 @@ io.on('connection', (socket) => {
   
     socket.join(roomName);
   
-    // Fetch the last 50 messages from the database
+    // Fetch the last 25 messages from the database
     const messages = await messagesCollection.find({ roomName: roomName })
       .sort({ timestamp: 1 })
-      .limit(50)
+      .limit(25)
       .toArray();
   
     // Log the messages being sent as chat history
@@ -331,8 +376,9 @@ io.on('connection', (socket) => {
     io.to(roomName).emit('private chat start', { roomName, users: [fromUser, toUser] });
   });
 
-// Server-side: Handle incoming chat messages
-socket.on('chat message', async (data) => {
+  // Server-side: Handle incoming chat messages
+  socket.on('chat message', async (data) => {
+    
   const { username, message, roomName, image } = data;
 
   console.log(`Message from ${username} to room ${roomName}: ${message}`);
