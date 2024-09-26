@@ -23,7 +23,7 @@ app.get('/img/:filename', (req, res) => {
 const uri = 'mongodb+srv://travispeach:ebr4SFmM7vLTp9p@quackcluster1.hwojm.mongodb.net/';
 const client = new MongoClient(uri);
 
-// Set up Multer storage configuration
+// Set up Multer storage configuration with file type validation
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/'); // Save files in the 'uploads' folder
@@ -33,7 +33,26 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+// File filter to allow only specific file types
+const fileFilter = (req, file, cb) => {
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'text/plain',
+    'application/pdf'
+  ];
+
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only images, text files, and PDFs are allowed.'));
+  }
+};
+
+const upload = multer({ storage: storage, fileFilter: fileFilter });
+
 // Serve the /uploads folder to make images publicly accessible
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -45,6 +64,16 @@ app.use(bodyParser.json()); // For JSON data
 app.use(express.static('client', {
   index: false // Disable automatic serving of index.html
 }));
+
+
+// Error handling middleware for Multer
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError || err.message.startsWith('Invalid file type')) {
+    console.error('Multer error:', err.message);
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  next(err);
+});
 
 
 // Serve the profile image from the uploads folder

@@ -112,7 +112,7 @@
     <ul id="messages"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type a message..." />
-      <input type="file" id="image-input" accept="image/*" />
+      <input type="file" id="image-input" accept="image/*,.txt,.pdf" />
       <button id="emoji-button" type="button">😀</button> <!-- Emoji Button -->
       <button type="submit">Send</button>
     </form>
@@ -176,8 +176,9 @@ form.addEventListener('submit', function(e) {
   const imageInput = document.getElementById('image-input');
   const imageFile = imageInput.files[0];
 
-  // Proceed if there's a message or an image
   if (message || imageFile) {
+    console.log(`Sending message to room ${roomName}:`, message);
+
     const formData = new FormData();
     formData.append('username', username);
     formData.append('roomName', roomName);
@@ -192,19 +193,28 @@ form.addEventListener('submit', function(e) {
       method: 'POST',
       body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-      input.value = ''; // Clear the input field
-      imageInput.value = ''; // Clear the file input field
-      // No need to emit 'chat message' here; the server does it
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(err => Promise.reject(err));
+      }
+      return response.json();
     })
-    .catch(error => console.error('Error uploading image:', error));
+    .then(data => {
+      input.value = '';
+      imageInput.value = '';
+      // No need to emit 'chat message' here
+    })
+    .catch(error => {
+      console.error('Error uploading image:', error);
+      alert('Error: ' + (error.message || 'An error occurred while uploading the file.'));
+    });
   }
 });
 
 
+
 socket.on('chat message', function(msg) {
-  console.log('Received message:', msg); // Ensure this log shows up
+  console.log('Received message:', msg);
   const item = document.createElement('li');
 
   // Create profile image element
@@ -222,13 +232,36 @@ socket.on('chat message', function(msg) {
   item.appendChild(profileImg);
   item.appendChild(text);
 
-  // If there's an image in the message
-  if (msg.image) {
-    const chatImage = document.createElement('img');
-    chatImage.src = msg.image;
-    chatImage.style.maxWidth = '200px';
-    chatImage.style.display = 'block';
-    item.appendChild(chatImage);
+  // If there's a file in the message
+  if (msg.fileUrl) {
+    // Create a file element based on the file type
+    let fileElement;
+
+    if (msg.fileType.startsWith('image/')) {
+      // Display image
+      fileElement = document.createElement('img');
+      fileElement.src = msg.fileUrl;
+      fileElement.style.maxWidth = '200px';
+      fileElement.style.display = 'block';
+    } else if (msg.fileType === 'application/pdf') {
+      // Display PDF link
+      fileElement = document.createElement('a');
+      fileElement.href = msg.fileUrl;
+      fileElement.textContent = 'View PDF';
+      fileElement.target = '_blank';
+    } else if (msg.fileType === 'text/plain') {
+      // Display text file link
+      fileElement = document.createElement('a');
+      fileElement.href = msg.fileUrl;
+      fileElement.textContent = 'View Text File';
+      fileElement.target = '_blank';
+    } else {
+      // Handle other types (shouldn't occur due to server-side filtering)
+      fileElement = document.createElement('span');
+      fileElement.textContent = 'Unsupported file type.';
+    }
+
+    item.appendChild(fileElement);
   }
 
   // Append the message to the messages list
