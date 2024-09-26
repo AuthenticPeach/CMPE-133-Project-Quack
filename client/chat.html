@@ -126,6 +126,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/emoji-button@latest"></script>
   <script>
+  document.addEventListener('DOMContentLoaded', function() {    
     var socket = io();
 
     // Extract the username from the URL query parameter
@@ -139,6 +140,9 @@
     } else {
       // Send the username to the server
       socket.emit('set username', username);
+
+      // Join the specified room
+      socket.emit('join room', roomName);
     }
 
     const input = document.getElementById('input');
@@ -151,7 +155,9 @@
     // Toggle the emoji picker when the button is clicked
     emojiButton.addEventListener('click', () => {
       console.log('Emoji button clicked');  // Debugging statement
-      picker.togglePicker(emojiButton);
+      picker.pickerVisible ? picker.hidePicker() : picker.showPicker(emojiButton);
+      console.log('EmojiButton:', picker);
+
     });
 
     // When an emoji is selected, add it to the input field
@@ -163,51 +169,97 @@
     // Send a message with the username
     var form = document.getElementById('form');
 
-    socket.emit('join room', roomName);
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (input.value) {
+    console.log(`Sending message to room ${roomName}:`, input.value); // Debug log when sending
+    socket.emit('chat message', { username: username, message: input.value, roomName: roomName });
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', { 
-          username: username, 
-          message: input.value, 
-          roomName: roomName // Include the room name when sending the message
-        });
-        input.value = '';
-      }
+    // Place debugging code to verify if the message is sent and received
+    console.log("Message emitted to server:", { username: username, message: input.value, roomName: roomName });
+
+    input.value = ''; // Clear the input field
+  }
+});
+
+socket.on('chat message', function(msg) {
+  console.log('Received message:', msg); // Ensure this log shows up
+  const item = document.createElement('li');
+
+  // Create profile image element
+  const profileImg = document.createElement('img');
+  profileImg.src = msg.profilePic || '/uploads/default-avatar.png';
+  profileImg.style.width = '40px';
+  profileImg.style.height = '40px';
+  profileImg.style.borderRadius = '50%';
+  profileImg.style.marginRight = '10px';
+
+  // Create text element for the message content
+  const text = document.createElement('span');
+  text.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
+
+  item.appendChild(profileImg);
+  item.appendChild(text);
+
+  // If there's an image in the message
+  if (msg.image) {
+    const chatImage = document.createElement('img');
+    chatImage.src = msg.image;
+    chatImage.style.maxWidth = '200px';
+    chatImage.style.display = 'block';
+    item.appendChild(chatImage);
+  }
+
+  // Append the message to the messages list
+  document.getElementById('messages').appendChild(item);
+  window.scrollTo(0, document.body.scrollHeight);
+});
+
+
+
+// Client-side: Display chat history when joining a room
+socket.on('chat history', function(messages) {
+  messages.forEach(function(msg) {
+    const item = document.createElement('li');
+
+    const profileImg = document.createElement('img');
+    profileImg.src = msg.profilePic || '/uploads/default-avatar.png';
+    profileImg.style.width = '40px';
+    profileImg.style.height = '40px';
+    profileImg.style.borderRadius = '50%';
+    profileImg.style.marginRight = '10px';
+
+    const text = document.createElement('span');
+    text.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}] ${msg.username}: ${msg.message}`;
+
+    item.appendChild(profileImg);
+    item.appendChild(text);
+
+    // If there's an image, display it
+    if (msg.image) {
+      const chatImage = document.createElement('img');
+      chatImage.src = msg.image;
+      chatImage.style.maxWidth = '200px';
+      chatImage.style.display = 'block';
+      item.appendChild(chatImage);
+    }
+
+    document.getElementById('messages').appendChild(item);
+    window.scrollTo(0, document.body.scrollHeight);
+  });
+});
+
+// Typing indicator
+input.addEventListener('input', function() {
+    socket.emit('typing', username);
     });
 
-    // Receive and display messages with timestamps and usernames
-    socket.on('chat message', function(msg) {
-      const item = document.createElement('li');
 
-      const profileImg = document.createElement('img');
-      profileImg.src = msg.profilePic || '/uploads/default-avatar.png'; // Use default if no profile pic
-      profileImg.style.width = '40px';
-      profileImg.style.height = '40px';
-      profileImg.style.borderRadius = '50%';
-      profileImg.style.marginRight = '10px';
-
-      const text = document.createElement('span');
-      text.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
-
-      item.appendChild(profileImg);
-      item.appendChild(text);
-
-      document.getElementById('messages').appendChild(item);
-      window.scrollTo(0, document.body.scrollHeight);
-    });
-
-    // Typing indicator
-    input.addEventListener('input', function() {
-      socket.emit('typing', username);
-    });
-
-    socket.on('typing', function(username) {
+socket.on('typing', function(username) {
       document.getElementById('typing').textContent = username + ' is typing...';
     });
 
-    socket.on('stop typing', function() {
+socket.on('stop typing', function() {
       document.getElementById('typing').textContent = '';
     });
 
@@ -219,7 +271,7 @@
     });
 
     // Receive and display the user list
-    socket.on('user list', function(users) {
+socket.on('user list', function(users) {
       var usersList = document.getElementById('users');
       usersList.innerHTML = '';  // Clear the current list
 
@@ -248,6 +300,7 @@
       });
     });
 
+});    
   </script>
 </body>
 </html>

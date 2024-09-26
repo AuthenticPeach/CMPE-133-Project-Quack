@@ -80,7 +80,19 @@
     .hidden {
       display: none;
     }
+    #emoji-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      margin-left: 10px;
+      padding: 0 10px;
+    }
+    #emoji-button:hover {
+      color: #ff5e00;
+    }
   </style>
+  
 </head>
 <body>
 
@@ -104,10 +116,18 @@
     <textarea id="bio" placeholder="Tell us something about yourself..."></textarea>
     <button id="edit-bio-btn">Edit Bio</button> <!-- Edit Bio button -->
     <button id="save-bio-btn" class="hidden">Save Bio</button> <!-- Save Bio button, hidden initially -->
+    
+    <!-- Add Emoji Button for Bio -->
+    <button id="emoji-button" class="hidden">😀</button>
+    
     <p id="bio-message"></p>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
+
+
+  <script src="https://unpkg.com/emoji-button@latest"></script>
+
   <script>
     const uploadForm = document.getElementById('upload-form');
     const profilePicElement = document.getElementById('profile-pic');
@@ -117,6 +137,7 @@
     const bioMessageElement = document.getElementById('bio-message');
     const editBioBtn = document.getElementById('edit-bio-btn');
     const saveBioBtn = document.getElementById('save-bio-btn');
+    const emojiButton = document.getElementById('emoji-button');
 
     // Retrieve the username from localStorage
     const username = localStorage.getItem('username');
@@ -149,6 +170,16 @@
       bioDisplayElement.style.display = 'none'; // Hide the non-editable display
       editBioBtn.style.display = 'none'; // Hide the "Edit Bio" button
       saveBioBtn.style.display = 'block'; // Show the "Save Bio" button
+      emojiButton.style.display = 'inline-block'; // Show the emoji button
+    });
+
+    // Initialize the emoji picker for the bio
+    const picker = new EmojiButton();
+    emojiButton.addEventListener('click', () => {
+      picker.pickerVisible ? picker.hidePicker() : picker.showPicker(emojiButton);
+    });
+    picker.on('emoji', emoji => {
+      bioElement.value += emoji;
     });
 
     // Handle saving the bio
@@ -174,6 +205,7 @@
           bioDisplayElement.style.display = 'block'; // Show the updated bio display
           editBioBtn.style.display = 'block'; // Show the "Edit Bio" button
           saveBioBtn.style.display = 'none'; // Hide the "Save Bio" button
+          emojiButton.style.display = 'none'; // Hide the emoji button
         } else {
           bioMessageElement.textContent = 'Failed to save bio.';
         }

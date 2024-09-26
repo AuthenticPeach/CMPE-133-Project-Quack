@@ -228,92 +228,92 @@ function formatTimestamp(date) {
 }
 
 io.on('connection', (socket) => {
-// Handle signup data
-socket.on('signup', async (data) => {
-  const { firstName, lastName, username, email, password } = data;
-
-  // Server-side validation
-  if (!/^[A-Za-z ]{1,50}$/.test(firstName) || !/^[A-Za-z ]{1,50}$/.test(lastName)) {
-    socket.emit('signup response', { success: false, message: 'Invalid first or last name' });
+  // Ensure MongoDB collections are available
+  if (!usersCollection || !messagesCollection) {
+    console.error('MongoDB not initialized');
+    socket.emit('error', 'Server error: Database not connected');
     return;
   }
 
-  if (!/^[A-Za-z0-9]{3,30}$/.test(username)) {
-    socket.emit('signup response', { success: false, message: 'Invalid username' });
-    return;
-  }
+  // Handle when a user joins a group chat room
+  socket.on('join room', async (roomName) => {
+    // Log when a user joins a room
+    console.log(`${users[socket.id]?.username || 'Unknown User'} is joining room ${roomName}`);
+  
+    socket.join(roomName);
+  
+    // Fetch the last 50 messages from the database
+    const messages = await messagesCollection.find({ roomName: roomName })
+      .sort({ timestamp: 1 })
+      .limit(50)
+      .toArray();
+  
+    // Log the messages being sent as chat history
+    console.log('Sending chat history:', messages);
+  
+    // Send the chat history to the client
+    socket.emit('chat history', messages);
+  
+    // Notify the room that a user has joined
+    io.to(roomName).emit('room message', `${users[socket.id]?.username || 'Unknown User'} has joined the room.`);
+  });
+  
 
-  if (password.length < 6 || password.length > 50) {
-    socket.emit('signup response', { success: false, message: 'Password must be between 6 and 50 characters' });
-    return;
-  }
+  // Handle signup data
+  socket.on('signup', async (data) => {
+    const { firstName, lastName, username, email, password } = data;
+    // Perform signup logic...
+  });
 
-  try {
-    // Proceed with saving the user in the database
-    const existingUser = await usersCollection.findOne({ username });
-
-    if (existingUser) {
-      socket.emit('signup response', { success: false, message: 'Username already exists' });
+  // Handle sign-in data - moved inside the io.on('connection')
+  socket.on('signin', async (data) => {
+    if (!usersCollection) {
+      socket.emit('signin response', { success: false, message: 'Database connection not established.' });
       return;
     }
-
-    await usersCollection.insertOne({ firstName, lastName, username, email, password });
-    socket.emit('signup response', { success: true }); // Respond with success
-  } catch (err) {
-    console.error('Error signing up:', err);
-    socket.emit('signup response', { success: false, message: 'An error occurred. Please try again.' });
-  }
-});
-
-// Handle sign-in data
-socket.on('signin', async (data) => {
-  if (!usersCollection) {
-    socket.emit('signin response', { success: false, message: 'Database connection not established.' });
-    return;
-  }
   
-  const { username, password } = data;
-  const user = await usersCollection.findOne({ username });
+    const { username, password } = data;
+    const user = await usersCollection.findOne({ username });
   
-  if (!user || user.password !== password) {
-    socket.emit('signin response', { success: false, message: 'Invalid username or password' });
-    return;
-  }
+    if (!user || user.password !== password) {
+      socket.emit('signin response', { success: false, message: 'Invalid username or password' });
+      return;
+    }
   
-  console.log('User signed in:', username);
-  users[socket.id] = username; 
-  socket.emit('signin response', { success: true });
-});
+    console.log('User signed in:', username);
+    users[socket.id] = username; 
+    socket.emit('signin response', { success: true });
+  });
 
   // Handle when a username is set
   socket.on('set username', async (username) => {
-    // Ensure usersCollection is defined
     if (!usersCollection) {
       console.error('MongoDB connection is not established.');
       return;
     }
-
-    // Fetch user from the database
+  
     const user = await usersCollection.findOne({ username });
     if (!user) {
       console.error('User not found in the database.');
       return;
     }
-
-    // Add user details to the users object
+  
+    // Store full user object with profile pic
     users[socket.id] = {
       username: user.username,
-      profilePic: user.profilePic || '/uploads/default-avatar.png' // Use default avatar if no profile pic
+      profilePic: user.profilePic || '/uploads/default-avatar.png'
     };
-
-    // Emit the updated list of users, ensuring each user has both username and profilePic
+  
+    // Emit updated user list
     io.emit('user list', Object.values(users));
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    delete users[socket.id]; // Remove user from the list
-    io.emit('user list', Object.values(users)); // Emit the updated list of users
+    const username = users[socket.id]?.username || 'Unknown User';
+    console.log(`${username} has left the chat`);
+    delete users[socket.id]; // Remove user
+    io.emit('user list', Object.values(users)); // Emit updated list
   });
 
   // Handle private 1-on-1 chat
@@ -331,49 +331,61 @@ socket.on('signin', async (data) => {
     io.to(roomName).emit('private chat start', { roomName, users: [fromUser, toUser] });
   });
 
-  // Handle group chat room
-  socket.on('join room', (roomName) => {
-    socket.join(roomName);
-    console.log(`${users[socket.id]} has joined room ${roomName}`);
+// Server-side: Handle incoming chat messages
+socket.on('chat message', async (data) => {
+  const { username, message, roomName, image } = data;
 
-    // Notify the room that a new user has joined
-    io.to(roomName).emit('room message', `${users[socket.id]} has joined the room.`);
+  console.log(`Message from ${username} to room ${roomName}: ${message}`);
+
+  // Fetch user profile from MongoDB
+  const user = await usersCollection.findOne({ username });
+  if (!user) {
+    console.error(`User ${username} not found in database`);
+    return;
+  }
+
+  const profilePic = user.profilePic || '/uploads/default-avatar.png';
+
+  // Create message object for the database
+  const chatMessage = {
+    username: user.username,
+    message: message,
+    roomName: roomName,
+    timestamp: new Date(),
+    profilePic: profilePic,
+    image: image
+  };
+  // Store the message in the database
+  await messagesCollection.insertOne(chatMessage);
+  console.log('Storing message in DB:', chatMessage);
+
+  // Emit the message to the room
+  io.to(roomName).emit('chat message', {
+    username: user.username,
+    message: message,
+    image: image,
+    timestamp: new Date().toLocaleTimeString(),
+    profilePic: profilePic
   });
 
-// Handle chat messages
-socket.on('chat message', async (data) => {
-  const { username, message, roomName } = data;
-
-  // Get the current timestamp and format it
-  const timestamp = formatTimestamp(new Date());
-
-  // Retrieve the user's profile picture from MongoDB
-  const user = await usersCollection.findOne({ username });
-  const profilePic = user ? user.profilePic : '/uploads/default-avatar.png'; // Fallback to default avatar
-
-  // Broadcast the message with the profile picture
-  io.to(roomName).emit('chat message', {
-    username,
-    message,
-    timestamp,
-    profilePic // Use the profilePic fetched from the database
+  console.log(`Emitting message to room ${roomName}:`, {
+    username: user.username,
+    message: message,
+    image: image,
+    timestamp: new Date().toLocaleTimeString(),
+    profilePic: profilePic
   });
 });
-
-  // Typing indicator
-  socket.on('typing', (username) => {
-    socket.broadcast.emit('typing', username);
-  });
-
-  // Handle disconnect
+  
+// Handle disconnect
   socket.on('disconnect', () => {
     const username = users[socket.id];
     console.log(`${username || 'undefined'} has left the chat`);
     delete users[socket.id];
     io.emit('user list', Object.values(users)); // Broadcast updated user list
-  });
 });
 
+});
 // Connect to MongoDB once when the server starts
 async function connectDB() {
   try {
@@ -384,6 +396,7 @@ async function connectDB() {
     console.log('Connected to MongoDB and collections initialized');
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
+    process.exit(1);  // Exit if unable to connect to MongoDB
   }
 }
 
