@@ -266,6 +266,194 @@ app.get('/get-user-profile', async (req, res) => {
   }
 });
 
+///Inbox system
+// Search users endpoint
+app.get('/search-users', async (req, res) => {
+  const query = req.query.query;
+
+  try {
+    const users = await usersCollection.find({
+      username: { $regex: query, $options: 'i' } // Case-insensitive search
+    }).toArray();
+
+    res.json(users);
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({ success: false, message: 'Error searching users' });
+  }
+});
+
+// Add contact endpoint
+app.post('/add-contact', async (req, res) => {
+  const { username, contact } = req.body;
+
+  try {
+    await usersCollection.updateOne(
+      { username: username },
+      { $addToSet: { contacts: { username: contact, isFavorite: false } } } // Avoid duplicates
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error adding contact:', error);
+    res.status(500).json({ success: false, message: 'Error adding contact' });
+  }
+});
+
+// Server-side: Return the user's contact list along with profile pictures
+app.get('/get-contacts', async (req, res) => {
+  const username = req.query.username;
+
+  try {
+    // Fetch the user from the database by their username
+    const user = await usersCollection.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Fetch contact details including their profile pictures
+    const contactsWithDetails = await Promise.all(user.contacts.map(async contact => {
+      const contactDetails = await usersCollection.findOne({ username: contact.username });
+      return {
+        username: contact.username,
+        profilePic: contactDetails?.profilePic || '/uploads/default-avatar.png' // Fallback to default image
+      };
+    }));
+
+    // Return the user's contacts with profile pictures
+    res.json({ success: true, contacts: contactsWithDetails });
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
+  }
+});
+
+// Add a contact to favorites
+app.post('/add-favorite', async (req, res) => {
+  const { username, contactUsername } = req.body;
+
+  try {
+    // Find the user and update the contact as a favorite
+    await usersCollection.updateOne(
+      { username, 'contacts.username': contactUsername },
+      { $set: { 'contacts.$.isFavorite': true } }
+    );
+    res.json({ success: true, message: `${contactUsername} has been added to favorites.` });
+  } catch (error) {
+    console.error('Error adding to favorites:', error);
+    res.status(500).json({ success: false, message: 'Error adding to favorites.' });
+  }
+});
+
+// Remove a contact from favorites
+app.post('/remove-favorite', async (req, res) => {
+  const { username, contactUsername } = req.body;
+
+  try {
+    // Find the user and update the contact as not a favorite
+    await usersCollection.updateOne(
+      { username, 'contacts.username': contactUsername },
+      { $set: { 'contacts.$.isFavorite': false } }
+    );
+    res.json({ success: true, message: `${contactUsername} has been removed from favorites.` });
+  } catch (error) {
+    console.error('Error removing from favorites:', error);
+    res.status(500).json({ success: false, message: 'Error removing from favorites.' });
+  }
+});
+
+
+app.post('/add-field-to-users', async (req, res) => {
+  try {
+    await usersCollection.updateMany(
+      {},
+      {
+        $set: {
+          contacts: [], // Add empty contacts array
+          favorites: [] // Add empty favorites array
+        }
+      }
+    );
+    res.json({ success: true, message: 'Fields added to all users' });
+  } catch (error) {
+    console.error('Error updating users:', error);
+    res.status(500).json({ success: false, message: 'Error updating users' });
+  }
+});
+
+// Server-side: Remove a contact from the user's contact list
+app.post('/remove-contact', async (req, res) => {
+  const { username, contactUsername } = req.body;
+
+  try {
+    // Find the user in the database
+    const user = await usersCollection.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Remove the contact from the user's contacts list
+    await usersCollection.updateOne(
+      { username: username },
+      { $pull: { contacts: { username: contactUsername } } } // Pull removes the matching contact
+    );
+
+    res.json({ success: true, message: `Removed ${contactUsername} from your contacts.` });
+  } catch (error) {
+    console.error('Error removing contact:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while removing the contact.' });
+  }
+});
+
+
+app.post('/send-message', async (req, res) => {
+  const { fromUser, toUser, message } = req.body;
+
+  try {
+    await inboxCollection.insertOne({
+      fromUser: fromUser,
+      toUser: toUser,
+      message: message,
+      timestamp: new Date(),
+      isRead: false
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ success: false, message: 'Error sending message.' });
+  }
+});
+
+app.get('/inbox', async (req, res) => {
+  const { username } = req.query;
+
+  try {
+    const messages = await inboxCollection.find({ toUser: username, isRead: false }).toArray();
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('Error fetching inbox:', error);
+    res.status(500).json({ success: false, message: 'Error fetching inbox.' });
+  }
+});
+
+app.post('/mark-as-read', async (req, res) => {
+  const { messageId } = req.body;
+
+  try {
+    await inboxCollection.updateOne(
+      { _id: new ObjectId(messageId) },
+      { $set: { isRead: true } }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+    res.status(500).json({ success: false, message: 'Error marking message as read.' });
+  }
+});
+
+
 
 const users = {}; // Track users by socket ID
 const rooms = {}; // Track rooms by room name
@@ -455,7 +643,7 @@ io.on('connection', (socket) => {
 // Handle disconnect
   socket.on('disconnect', () => {
     const username = users[socket.id];
-    console.log(`${username || 'undefined'} has left the chat`);
+    //console.log(`${username || 'undefined'} has left the chat`);
     delete users[socket.id];
     io.emit('user list', Object.values(users)); // Broadcast updated user list
 });

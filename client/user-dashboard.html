@@ -55,29 +55,141 @@
       border: none;
       border-radius: 5px;
     }
-    #profile-link {
+    #profile-link, #inbox-link, #contacts-link, #favorites-link {
       position: absolute;
       top: 15px;
-      left: 70px; /* Place next to profile picture */
       font-weight: bold;
-    }
-    #profile-link a {
       color: #ff5e00;
       text-decoration: none;
     }
-    #profile-link a:hover {
+    #profile-link {
+      left: 70px;
+    }
+    #inbox-link {
+      left: 170px;
+    }
+    #contacts-link {
+      left: 270px;
+    }
+    #favorites-link {
+      left: 380px; /* Add a favorites button */
+    }
+    #profile-link a, #inbox-link a, #contacts-link a, #favorites-link a {
+      color: #ff5e00;
+      text-decoration: none;
+    }
+    #profile-link a:hover, #inbox-link a:hover, #contacts-link a:hover, #favorites-link a:hover {
       text-decoration: underline;
     }
     #profile-pic {
       position: absolute;
       top: 10px;
       left: 10px;
-      width: 50px; /* Adjust size */
+      width: 50px;
       height: 50px;
       border-radius: 50%;
-      margin-right: 10px;
-      border: 2px solid #fff; /* Add a white border around the image */
+      border: 2px solid #fff;
     }
+    /* Modal Styling */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 400px;
+      text-align: center;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    /* Search Bar Styling */
+    #search-container {
+      margin-top: 20px;
+    }
+    #search-input {
+      padding: 10px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    #search-results {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+    #search-results li {
+      padding: 10px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    /* Contacts List Styling */
+    #contacts-list {
+      position: absolute;
+      top: 70px;
+      left: 270px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      width: 200px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    #contacts-list li button {
+      margin-left: 10px;
+      background-color: #ff0000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    #contacts-list li button:hover {
+      background-color: #cc0000;
+    }
+    /* Favorites List Styling */
+    #favorites-list {
+      position: absolute;
+      top: 70px;
+      left: 500px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      width: 200px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #favorites-list li {
+      padding: 8px;
+      background-color: #ffe680;
+      border-radius: 5px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -85,15 +197,33 @@
   <!-- Profile Picture at the top-left corner -->
   <img id="profile-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
 
-  <!-- Profile Link next to Profile Picture -->
+  <!-- Profile, Inbox, Contacts, and Favorites Links -->
   <div id="profile-link">
     <a href="/profile.html">Profile</a>
+  </div>
+  <div id="inbox-link">
+    <a href="#" id="inbox-button">Inbox</a>
+  </div>
+  <div id="contacts-link">
+    <a href="#" id="contacts-button">Contacts</a>
+  </div>
+  <div id="favorites-link">
+    <a href="#" id="favorites-button">Favorites</a>
   </div>
 
   <button id="signout">Sign Out</button>
 
   <div id="container">
-    <h2>Welcome to Quack chat!</h2>
+    <h2>Welcome to Quack Chat!</h2>
+
+    <!-- Section for Searching Users -->
+    <div id="search-container">
+      <input type="text" id="search-input" placeholder="Search users to add as contacts...">
+      <ul id="search-results"></ul>
+    </div>
+
+  <!-- Favorite Contacts List -->
+  <ul id="favorites-list" style="display: none;"></ul>
 
     <!-- Section for Private 1-on-1 Chats -->
     <h3>Start a Private Chat</h3>
@@ -109,10 +239,22 @@
     <p id="message"></p>
   </div>
 
+  <!-- Modal for Inbox -->
+  <div id="inboxModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Your Inbox</h3>
+      <p id="inbox-message">Your inbox is looking pretty empty!</p>
+    </div>
+  </div>
+
+  <!-- Contacts List -->
+  <ul id="contacts-list" style="display: none;"></ul>
+  
   <script src="/socket.io/socket.io.js"></script>
   <script>
     var socket = io();
-  
+
     // Get the username from localStorage
     var username = localStorage.getItem('username');
     if (!username) {
@@ -165,6 +307,276 @@
       socket.emit('join room', roomName);
       window.location.href = `/chat?room=${roomName}&username=${encodeURIComponent(username)}`;
     }
+
+    // Modal script
+    var modal = document.getElementById('inboxModal');
+    var btn = document.getElementById('inbox-button');
+    var span = document.getElementsByClassName('close')[0];
+
+    // When the user clicks the button, open the modal
+    btn.onclick = function() {
+      modal.style.display = 'block';
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+      modal.style.display = 'none';
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function(event) {
+      if (event.target == modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Search functionality for finding users
+    var searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', function() {
+      var query = searchInput.value.trim();
+
+      if (query.length > 0) {
+        // Fetch users that match the search query
+        fetch(`/search-users?query=${query}`)
+          .then(response => response.json())
+          .then(data => {
+            var searchResults = document.getElementById('search-results');
+            searchResults.innerHTML = '';
+
+            if (data.length > 0) {
+              data.forEach(function(user) {
+                var li = document.createElement('li');
+                li.textContent = user.username;
+                li.addEventListener('click', function() {
+                  addContact(user.username);
+                });
+                searchResults.appendChild(li);
+              });
+            } else {
+              searchResults.innerHTML = '<li>No users found</li>';
+            }
+          });
+      } else {
+        document.getElementById('search-results').innerHTML = '';
+      }
+    });
+
+    function addContact(contactUsername) {
+      fetch(`/add-contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: username,
+          contact: contactUsername
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`Added ${contactUsername} to your contacts!`);
+        } else {
+          alert('Failed to add contact.');
+        }
+      });
+    }
+
+    // Display the contacts list when clicking "Contacts"
+    var contactsBtn = document.getElementById('contacts-button');
+    contactsBtn.addEventListener('click', function() {
+      var contactsList = document.getElementById('contacts-list');
+      contactsList.style.display = (contactsList.style.display === 'none') ? 'block' : 'none';
+
+      // Fetch and display the contacts list
+      fetch(`/get-contacts?username=${username}`)
+        .then(response => response.json())
+        .then(data => {
+          contactsList.innerHTML = ''; // Clear the previous list
+
+          data.contacts.forEach(function(contact) {
+            var li = document.createElement('li');
+
+            // Create the profile picture element
+            var profileImg = document.createElement('img');
+            profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
+            profileImg.style.width = '30px';
+            profileImg.style.height = '30px';
+            profileImg.style.borderRadius = '50%';
+            profileImg.style.marginRight = '10px';
+
+            // Create the contact name element
+            var contactName = document.createElement('span');
+            contactName.textContent = contact.username;
+
+            // Create the remove button
+            var removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.style.marginLeft = '10px';
+            removeButton.style.backgroundColor = '#ff0000';
+            removeButton.style.color = 'white';
+            removeButton.style.border = 'none';
+            removeButton.style.borderRadius = '5px';
+            removeButton.style.cursor = 'pointer';
+            removeButton.addEventListener('click', function() {
+              removeContact(contact.username);
+            });
+
+            // Create the favorite/unfavorite button
+            var favoriteButton = document.createElement('button');
+            favoriteButton.style.marginLeft = '10px';
+            favoriteButton.style.border = 'none';
+            favoriteButton.style.borderRadius = '5px';
+            favoriteButton.style.cursor = 'pointer';
+            favoriteButton.textContent = contact.isFavorite ? 'Unfavorite' : 'Favorite';
+            favoriteButton.style.backgroundColor = contact.isFavorite ? '#ffcc00' : '#cccccc';
+
+            // Handle adding/removing from favorites
+            favoriteButton.addEventListener('click', function() {
+              if (contact.isFavorite) {
+                removeFavorite(contact.username);
+              } else {
+                addFavorite(contact.username);
+              }
+            });
+
+            // Append the profile picture, contact name, and buttons to the list item
+            li.appendChild(profileImg);
+            li.appendChild(contactName);
+            li.appendChild(favoriteButton);
+            li.appendChild(removeButton);
+
+            contactsList.appendChild(li);
+          });
+        })
+        .catch(error => console.error('Error fetching contacts:', error));
+    });
+
+    // Display the favorite contacts list when clicking "Favorites"
+    var favoritesBtn = document.getElementById('favorites-button');
+    favoritesBtn.addEventListener('click', function() {
+      var favoritesList = document.getElementById('favorites-list');
+      favoritesList.style.display = (favoritesList.style.display === 'none') ? 'block' : 'none';
+
+      // Fetch and display the favorites list
+      fetch(`/get-contacts?username=${username}`)
+        .then(response => response.json())
+        .then(data => {
+          favoritesList.innerHTML = ''; // Clear the previous list
+
+          data.contacts.forEach(function(contact) {
+            if (contact.isFavorite) {
+              var li = document.createElement('li');
+
+              // Create the profile picture element
+              var profileImg = document.createElement('img');
+              profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
+              profileImg.style.width = '30px';
+              profileImg.style.height = '30px';
+              profileImg.style.borderRadius = '50%';
+              profileImg.style.marginRight = '10px';
+
+              // Create the contact name element
+              var contactName = document.createElement('span');
+              contactName.textContent = contact.username;
+
+              // Create the unfavorite button
+              var unfavoriteButton = document.createElement('button');
+              unfavoriteButton.textContent = 'Unfavorite';
+              unfavoriteButton.style.marginLeft = '10px';
+              unfavoriteButton.style.backgroundColor = '#ffcc00';
+              unfavoriteButton.style.color = 'white';
+              unfavoriteButton.style.border = 'none';
+              unfavoriteButton.style.borderRadius = '5px';
+              unfavoriteButton.style.cursor = 'pointer';
+              unfavoriteButton.addEventListener('click', function() {
+                removeFavorite(contact.username);
+              });
+
+              // Append the profile picture, contact name, and unfavorite button to the list item
+              li.appendChild(profileImg);
+              li.appendChild(contactName);
+              li.appendChild(unfavoriteButton);
+
+              favoritesList.appendChild(li);
+            }
+          });
+        })
+        .catch(error => console.error('Error fetching favorite contacts:', error));
+    });
+
+    // Function to add a contact to favorites
+    function addFavorite(contactUsername) {
+      fetch(`/add-favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: username,
+          contactUsername: contactUsername
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`${contactUsername} has been added to your favorites.`);
+          contactsBtn.click(); // Refresh the contacts list
+        } else {
+          alert('Failed to add to favorites.');
+        }
+      })
+      .catch(error => console.error('Error adding to favorites:', error));
+    }
+
+    // Function to remove a contact from favorites
+    function removeFavorite(contactUsername) {
+      fetch(`/remove-favorite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: username,
+          contactUsername: contactUsername
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`${contactUsername} has been removed from your favorites.`);
+          contactsBtn.click(); // Refresh the contacts list
+        } else {
+          alert('Failed to remove from favorites.');
+        }
+      })
+      .catch(error => console.error('Error removing from favorites:', error));
+    }
+
+    // Function to remove contact
+    function removeContact(contactUsername) {
+      fetch(`/remove-contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: username,
+          contactUsername: contactUsername
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`${contactUsername} has been removed from your contacts.`);
+          contactsBtn.click(); // Simulate another click to refresh the list
+        } else {
+          alert('Failed to remove contact.');
+        }
+      })
+      .catch(error => console.error('Error removing contact:', error));
+    }
+
   </script>
 
 </body>
