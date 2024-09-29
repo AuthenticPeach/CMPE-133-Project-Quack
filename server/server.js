@@ -301,28 +301,43 @@ app.post('/add-contact', async (req, res) => {
 });
 
 // Server-side: Return the user's contact list along with profile pictures
+// server.js
+
 app.get('/get-contacts', async (req, res) => {
   const username = req.query.username;
 
   try {
-    // Fetch the user from the database by their username
+    // Fetch the user from the database
     const user = await usersCollection.findOne({ username });
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Fetch contact details including their profile pictures
-    const contactsWithDetails = await Promise.all(user.contacts.map(async contact => {
-      const contactDetails = await usersCollection.findOne({ username: contact.username });
+    // Get the user's contacts array (array of objects with username and isFavorite)
+    const contactsInfo = user.contacts || [];
+
+    // Extract usernames to fetch detailed info from users collection
+    const contactsUsernames = contactsInfo.map(contact => contact.username);
+
+    // Fetch contact details from the users collection
+    const contacts = await usersCollection
+      .find({ username: { $in: contactsUsernames } })
+      .toArray();
+
+    // Map contacts to include isFavorite status
+    const contactsWithFavorites = contacts.map(contact => {
+      // Find the corresponding contact in contactsInfo to get isFavorite
+      const contactInfo = contactsInfo.find(c => c.username === contact.username);
+
       return {
         username: contact.username,
-        profilePic: contactDetails?.profilePic || '/uploads/default-avatar.png' // Fallback to default image
+        profilePic: contact.profilePic || '/uploads/default-avatar.png',
+        isFavorite: contactInfo ? contactInfo.isFavorite : false
       };
-    }));
+    });
 
-    // Return the user's contacts with profile pictures
-    res.json({ success: true, contacts: contactsWithDetails });
+    res.json({ success: true, contacts: contactsWithFavorites });
   } catch (error) {
     console.error('Error fetching contacts:', error);
     res.status(500).json({ success: false, message: 'An error occurred' });
@@ -334,34 +349,36 @@ app.post('/add-favorite', async (req, res) => {
   const { username, contactUsername } = req.body;
 
   try {
-    // Find the user and update the contact as a favorite
     await usersCollection.updateOne(
       { username, 'contacts.username': contactUsername },
       { $set: { 'contacts.$.isFavorite': true } }
     );
-    res.json({ success: true, message: `${contactUsername} has been added to favorites.` });
+
+    res.json({ success: true });
   } catch (error) {
-    console.error('Error adding to favorites:', error);
-    res.status(500).json({ success: false, message: 'Error adding to favorites.' });
+    console.error('Error adding favorite:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
   }
 });
+
 
 // Remove a contact from favorites
 app.post('/remove-favorite', async (req, res) => {
   const { username, contactUsername } = req.body;
 
   try {
-    // Find the user and update the contact as not a favorite
     await usersCollection.updateOne(
       { username, 'contacts.username': contactUsername },
       { $set: { 'contacts.$.isFavorite': false } }
     );
-    res.json({ success: true, message: `${contactUsername} has been removed from favorites.` });
+
+    res.json({ success: true });
   } catch (error) {
-    console.error('Error removing from favorites:', error);
-    res.status(500).json({ success: false, message: 'Error removing from favorites.' });
+    console.error('Error removing favorite:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
   }
 });
+
 
 
 app.post('/add-field-to-users', async (req, res) => {

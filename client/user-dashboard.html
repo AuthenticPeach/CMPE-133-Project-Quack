@@ -382,176 +382,198 @@
       });
     }
 
-    // Display the contacts list when clicking "Contacts"
-    var contactsBtn = document.getElementById('contacts-button');
-    contactsBtn.addEventListener('click', function() {
-      var contactsList = document.getElementById('contacts-list');
-      contactsList.style.display = (contactsList.style.display === 'none') ? 'block' : 'none';
+// Display the contacts list when clicking "Contacts"
+var contactsBtn = document.getElementById('contacts-button');
+contactsBtn.addEventListener('click', function() {
+  var contactsList = document.getElementById('contacts-list');
+  contactsList.style.display = (contactsList.style.display === 'none') ? 'block' : 'none';
 
-      // Fetch and display the contacts list
-      fetch(`/get-contacts?username=${username}`)
-        .then(response => response.json())
-        .then(data => {
-          contactsList.innerHTML = ''; // Clear the previous list
+  // Fetch and display the contacts list
+  fetch(`/get-contacts?username=${username}`)
+    .then(response => response.json())
+    .then(data => {
+      contactsList.innerHTML = ''; // Clear the previous list
 
-          data.contacts.forEach(function(contact) {
-            var li = document.createElement('li');
+      if (data.contacts.length === 0) {
+        // Display a message if contacts list is empty
+        var emptyMessage = document.createElement('li');
+        emptyMessage.textContent = 'Your contacts list is empty.';
+        emptyMessage.style.fontStyle = 'italic';
+        contactsList.appendChild(emptyMessage);
+      } else {
+        data.contacts.forEach(function(contact) {
+          // Existing code to create list items
+          var li = document.createElement('li');
 
-            // Create the profile picture element
-            var profileImg = document.createElement('img');
-            profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
-            profileImg.style.width = '30px';
-            profileImg.style.height = '30px';
-            profileImg.style.borderRadius = '50%';
-            profileImg.style.marginRight = '10px';
+          // Create the profile picture element
+          var profileImg = document.createElement('img');
+          profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
+          profileImg.style.width = '30px';
+          profileImg.style.height = '30px';
+          profileImg.style.borderRadius = '50%';
+          profileImg.style.marginRight = '10px';
 
-            // Create the contact name element
-            var contactName = document.createElement('span');
-            contactName.textContent = contact.username;
+          // Create the contact name element
+          var contactName = document.createElement('span');
+          contactName.textContent = contact.username;
 
-            // Create the remove button
-            var removeButton = document.createElement('button');
-            removeButton.textContent = 'Remove';
-            removeButton.style.marginLeft = '10px';
-            removeButton.style.backgroundColor = '#ff0000';
-            removeButton.style.color = 'white';
-            removeButton.style.border = 'none';
-            removeButton.style.borderRadius = '5px';
-            removeButton.style.cursor = 'pointer';
-            removeButton.addEventListener('click', function() {
-              removeContact(contact.username);
-            });
-
-            // Create the favorite/unfavorite button
-            var favoriteButton = document.createElement('button');
-            favoriteButton.style.marginLeft = '10px';
-            favoriteButton.style.border = 'none';
-            favoriteButton.style.borderRadius = '5px';
-            favoriteButton.style.cursor = 'pointer';
-            favoriteButton.textContent = contact.isFavorite ? 'Unfavorite' : 'Favorite';
-            favoriteButton.style.backgroundColor = contact.isFavorite ? '#ffcc00' : '#cccccc';
-
-            // Handle adding/removing from favorites
-            favoriteButton.addEventListener('click', function() {
-              if (contact.isFavorite) {
-                removeFavorite(contact.username);
-              } else {
-                addFavorite(contact.username);
-              }
-            });
-
-            // Append the profile picture, contact name, and buttons to the list item
-            li.appendChild(profileImg);
-            li.appendChild(contactName);
-            li.appendChild(favoriteButton);
-            li.appendChild(removeButton);
-
-            contactsList.appendChild(li);
+          // Create the remove button
+          var removeButton = document.createElement('button');
+          removeButton.textContent = 'Remove';
+          removeButton.style.marginLeft = '10px';
+          removeButton.style.backgroundColor = '#ff0000';
+          removeButton.style.color = 'white';
+          removeButton.style.border = 'none';
+          removeButton.style.borderRadius = '5px';
+          removeButton.style.cursor = 'pointer';
+          removeButton.addEventListener('click', function() {
+            removeContact(contact.username);
           });
-        })
-        .catch(error => console.error('Error fetching contacts:', error));
-    });
 
-    // Display the favorite contacts list when clicking "Favorites"
-    var favoritesBtn = document.getElementById('favorites-button');
-    favoritesBtn.addEventListener('click', function() {
-      var favoritesList = document.getElementById('favorites-list');
-      favoritesList.style.display = (favoritesList.style.display === 'none') ? 'block' : 'none';
+          // Create the favorite/unfavorite button
+          var favoriteButton = document.createElement('button');
+          favoriteButton.style.marginLeft = '10px';
+          favoriteButton.style.border = 'none';
+          favoriteButton.style.borderRadius = '5px';
+          favoriteButton.style.cursor = 'pointer';
+          favoriteButton.textContent = contact.isFavorite ? 'Unfavorite' : 'Favorite';
+          favoriteButton.style.backgroundColor = contact.isFavorite ? '#ffcc00' : '#cccccc';
 
-      // Fetch and display the favorites list
-      fetch(`/get-contacts?username=${username}`)
-        .then(response => response.json())
-        .then(data => {
-          favoritesList.innerHTML = ''; // Clear the previous list
-
-          data.contacts.forEach(function(contact) {
+          // Handle adding/removing from favorites
+          favoriteButton.addEventListener('click', function() {
             if (contact.isFavorite) {
-              var li = document.createElement('li');
-
-              // Create the profile picture element
-              var profileImg = document.createElement('img');
-              profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
-              profileImg.style.width = '30px';
-              profileImg.style.height = '30px';
-              profileImg.style.borderRadius = '50%';
-              profileImg.style.marginRight = '10px';
-
-              // Create the contact name element
-              var contactName = document.createElement('span');
-              contactName.textContent = contact.username;
-
-              // Create the unfavorite button
-              var unfavoriteButton = document.createElement('button');
-              unfavoriteButton.textContent = 'Unfavorite';
-              unfavoriteButton.style.marginLeft = '10px';
-              unfavoriteButton.style.backgroundColor = '#ffcc00';
-              unfavoriteButton.style.color = 'white';
-              unfavoriteButton.style.border = 'none';
-              unfavoriteButton.style.borderRadius = '5px';
-              unfavoriteButton.style.cursor = 'pointer';
-              unfavoriteButton.addEventListener('click', function() {
-                removeFavorite(contact.username);
-              });
-
-              // Append the profile picture, contact name, and unfavorite button to the list item
-              li.appendChild(profileImg);
-              li.appendChild(contactName);
-              li.appendChild(unfavoriteButton);
-
-              favoritesList.appendChild(li);
+              removeFavorite(contact.username);
+            } else {
+              addFavorite(contact.username);
             }
           });
-        })
-        .catch(error => console.error('Error fetching favorite contacts:', error));
-    });
+
+          // Append the profile picture, contact name, and buttons to the list item
+          li.appendChild(profileImg);
+          li.appendChild(contactName);
+          li.appendChild(favoriteButton);
+          li.appendChild(removeButton);
+
+          contactsList.appendChild(li);
+        });
+      }
+    })
+    .catch(error => console.error('Error fetching contacts:', error));
+});
+
+// Display the favorite contacts list when clicking "Favorites"
+var favoritesBtn = document.getElementById('favorites-button');
+favoritesBtn.addEventListener('click', function() {
+  var favoritesList = document.getElementById('favorites-list');
+  favoritesList.style.display = (favoritesList.style.display === 'none') ? 'block' : 'none';
+
+  // Fetch and display the favorites list
+  fetch(`/get-contacts?username=${username}`)
+    .then(response => response.json())
+    .then(data => {
+      favoritesList.innerHTML = ''; // Clear the previous list
+
+      // Filter contacts to get favorites
+      var favoriteContacts = data.contacts.filter(contact => contact.isFavorite);
+
+      if (favoriteContacts.length === 0) {
+        // Display a message if favorites list is empty
+        var emptyMessage = document.createElement('li');
+        emptyMessage.textContent = 'Your favorites list is empty.';
+        emptyMessage.style.fontStyle = 'italic';
+        favoritesList.appendChild(emptyMessage);
+      } else {
+        favoriteContacts.forEach(function(contact) {
+          var li = document.createElement('li');
+
+          // Create the profile picture element
+          var profileImg = document.createElement('img');
+          profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
+          profileImg.style.width = '30px';
+          profileImg.style.height = '30px';
+          profileImg.style.borderRadius = '50%';
+          profileImg.style.marginRight = '10px';
+
+          // Create the contact name element
+          var contactName = document.createElement('span');
+          contactName.textContent = contact.username;
+
+          // Create the unfavorite button
+          var unfavoriteButton = document.createElement('button');
+          unfavoriteButton.textContent = 'Unfavorite';
+          unfavoriteButton.style.marginLeft = '10px';
+          unfavoriteButton.style.backgroundColor = '#ffcc00';
+          unfavoriteButton.style.color = 'white';
+          unfavoriteButton.style.border = 'none';
+          unfavoriteButton.style.borderRadius = '5px';
+          unfavoriteButton.style.cursor = 'pointer';
+          unfavoriteButton.addEventListener('click', function() {
+            removeFavorite(contact.username);
+          });
+
+          // Append elements to the list item
+          li.appendChild(profileImg);
+          li.appendChild(contactName);
+          li.appendChild(unfavoriteButton);
+
+          favoritesList.appendChild(li);
+        });
+      }
+    })
+    .catch(error => console.error('Error fetching favorite contacts:', error));
+});
+
 
     // Function to add a contact to favorites
     function addFavorite(contactUsername) {
-      fetch(`/add-favorite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: username,
-          contactUsername: contactUsername
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(`${contactUsername} has been added to your favorites.`);
-          contactsBtn.click(); // Refresh the contacts list
-        } else {
-          alert('Failed to add to favorites.');
-        }
-      })
-      .catch(error => console.error('Error adding to favorites:', error));
+  fetch(`/add-favorite`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      username: username,
+      contactUsername: contactUsername
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`${contactUsername} has been added to your favorites.`);
+      contactsBtn.click(); // Refresh contacts
+      favoritesBtn.click(); // Open favorites
+      favoritesBtn.click(); // Close favorites to trigger refresh
+    } else {
+      alert('Failed to add to favorites.');
     }
+  })
+  .catch(error => console.error('Error adding to favorites:', error));
+}
 
-    // Function to remove a contact from favorites
-    function removeFavorite(contactUsername) {
-      fetch(`/remove-favorite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          username: username,
-          contactUsername: contactUsername
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert(`${contactUsername} has been removed from your favorites.`);
-          contactsBtn.click(); // Refresh the contacts list
-        } else {
-          alert('Failed to remove from favorites.');
-        }
-      })
-      .catch(error => console.error('Error removing from favorites:', error));
+function removeFavorite(contactUsername) {
+  fetch(`/remove-favorite`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      username: username,
+      contactUsername: contactUsername
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`${contactUsername} has been removed from your favorites.`);
+      contactsBtn.click(); // Refresh contacts
+      favoritesBtn.click(); // Open favorites
+      favoritesBtn.click(); // Close favorites to trigger refresh
+    } else {
+      alert('Failed to remove from favorites.');
     }
+  })
+  .catch(error => console.error('Error removing from favorites:', error));
+}
 
     // Function to remove contact
     function removeContact(contactUsername) {
