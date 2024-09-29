@@ -211,6 +211,25 @@ form.addEventListener('submit', function(e) {
   }
 });
 
+// Function to convert URLs in messages into embedded content
+function autoEmbedMessage(message) {
+  // Regex for detecting YouTube links
+  const youtubeRegex = /(https?:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+))/;
+
+  // Replace YouTube URLs with an iframe
+  if (youtubeRegex.test(message)) {
+    const videoId = message.match(youtubeRegex)[2];
+    const embedHTML = `
+      <iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" 
+      frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      allowfullscreen></iframe>`;
+    return message.replace(youtubeRegex, embedHTML);
+  }
+
+  // Return the message if no link was found or transformed
+  return message;
+}
+
 socket.on('chat message', function(msg) {
   console.log('Received message:', msg);
   const item = document.createElement('li');
@@ -229,6 +248,15 @@ socket.on('chat message', function(msg) {
 
   item.appendChild(profileImg);
   item.appendChild(text);
+
+  // Call the autoEmbedMessage function to detect and convert URLs
+  const content = autoEmbedMessage(msg.message);
+
+  // Create text or embedded element
+  item.innerHTML = `<strong>${msg.username}:</strong> ${content}`;
+
+  document.getElementById('messages').appendChild(item);
+  window.scrollTo(0, document.body.scrollHeight);
 
   // If there's a file in the message
   if (msg.fileUrl) {
@@ -298,6 +326,9 @@ socket.on('chat history', function(messages) {
     window.scrollTo(0, document.body.scrollHeight);
   });
 });
+
+
+
 
 // Typing indicator
 input.addEventListener('input', function() {

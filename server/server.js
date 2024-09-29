@@ -457,6 +457,12 @@ app.post('/mark-as-read', async (req, res) => {
 
 const users = {}; // Track users by socket ID
 const rooms = {}; // Track rooms by room name
+const createDOMPurify = require('dompurify');
+const { JSDOM } = require('jsdom');
+const window = new JSDOM('').window;
+const DOMPurify = createDOMPurify(window);
+
+
 
 // Utility function to format timestamps
 function formatTimestamp(date) {
@@ -595,6 +601,14 @@ io.on('connection', (socket) => {
 
   // Server-side: Handle incoming chat messages
   socket.on('chat message', async (data) => {
+  
+    const sanitizedMessage = DOMPurify.sanitize(msg.message); // Sanitize input
+
+  // Emit sanitized message to all clients
+  io.to(roomName).emit('chat message', {
+    username: msg.username,
+    message: sanitizedMessage
+  });
     
   const { username, message, roomName, image } = data;
 
