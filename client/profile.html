@@ -206,6 +206,32 @@
     }
   });
 
+ // Event listener for profile picture upload
+uploadForm.addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  const formData = new FormData(uploadForm);
+  formData.append('username', username);
+
+  fetch('/upload-profile-pic', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      profilePicElement.src = data.profilePic;
+      messageElement.textContent = 'Profile picture updated successfully!';
+    } else {
+      messageElement.textContent = 'Failed to upload profile picture.';
+    }
+  })
+  .catch(error => {
+    console.error('Error uploading profile picture:', error);
+    messageElement.textContent = 'An error occurred while uploading the profile picture.';
+  });
+});
+ 
 
     // Show the editable bio text area when "Edit Bio" is clicked
     editBioBtn.addEventListener('click', function() {
