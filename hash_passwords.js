@@ -38,5 +38,4 @@ async function hashPasswords() {
   }
 }
 
-// Corrected function call
 hashPasswords();

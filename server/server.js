@@ -192,7 +192,8 @@ app.post('/signup', async (req, res) => {
     if (existingUser) {
       return res.json({ success: false, message: 'Username already exists' });
     }
-
+    // Normalize the phone number by removing non-digit characters
+    const normalizedPhoneNumber = phoneNumber.replace(/\D/g, '');
         // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log('Inserting new user:', { firstName, lastName, username, email, phoneNumber, password });
@@ -281,9 +282,17 @@ app.post('/update-phone-number', async (req, res) => {
   }
 
   try {
+    // Normalize the phone number by removing non-digit characters
+    const normalizedPhoneNumber = phoneNumber.replace(/\D/g, '');
+
     const result = await usersCollection.updateOne(
       { username: username },
-      { $set: { phoneNumber: phoneNumber } }
+      {
+        $set: {
+          phoneNumber: phoneNumber,
+          normalizedPhoneNumber: normalizedPhoneNumber // Update the normalized phone number
+        }
+      }
     );
 
     if (result.modifiedCount === 0) {
@@ -335,14 +344,34 @@ app.post('/change-password', async (req, res) => {
   }
 });
 ///Inbox system
+
 // Search users endpoint
 app.get('/search-users', async (req, res) => {
   const query = req.query.query;
+  const type = req.query.type || 'username';
 
   try {
-    const users = await usersCollection.find({
-      username: { $regex: query, $options: 'i' } // Case-insensitive search
-    }).toArray();
+    let users;
+
+    if (type === 'phoneNumber') {
+      // Normalize the phone number by removing non-digit characters
+      const normalizedQuery = query.replace(/\D/g, '');
+
+      if (normalizedQuery.length === 10 || normalizedQuery.length === 11) {
+        // Search for an exact match in normalized phone numbers
+        users = await usersCollection.find({
+          normalizedPhoneNumber: normalizedQuery
+        }).toArray();
+      } else {
+        // If the phone number is not the expected length, return an empty array
+        users = [];
+      }
+    } else {
+      // Search by username with case-insensitive partial match
+      users = await usersCollection.find({
+        username: { $regex: `^${query}`, $options: 'i' }
+      }).toArray();
+    }
 
     res.json(users);
   } catch (error) {
