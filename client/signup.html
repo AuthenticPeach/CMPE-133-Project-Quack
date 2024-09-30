@@ -90,6 +90,7 @@
         <input type="text" id="lastName" placeholder="Last Name" required maxlength="50" pattern="[A-Za-z ]{1,50}">
         <input type="text" id="username" placeholder="Username" required maxlength="30" pattern="[A-Za-z0-9]{3,30}">
         <input type="email" id="email" placeholder="Email" required maxlength="100">
+        <input type="tel" id="phoneNumber" placeholder="Phone Number" required maxlength="15" pattern="[0-9+()-\s]{7,15}">
         <input type="password" id="password" placeholder="Password" required minlength="8" maxlength="50" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?:{}])[A-Za-z\d!@#$%^&*(),.?:{}]{8,}"><p id="password-strength"></p>
         <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="8" maxlength="50">
         <button type="submit">SIGN UP</button>
@@ -104,7 +105,7 @@
     const errorMessage = document.getElementById('error-message');
     const socket = io();
 
-    signupForm.addEventListener('submit', function(e) {
+signupForm.addEventListener('submit', function(e) {
   e.preventDefault(); // Prevent the form from doing a traditional submit
 
   const password = document.getElementById('password').value;
@@ -121,19 +122,30 @@
     lastName: document.getElementById('lastName').value.trim(),
     username: document.getElementById('username').value.trim(),
     email: document.getElementById('email').value.trim(),
+    phoneNumber: document.getElementById('phoneNumber').value.trim(),
     password: password.trim(),
+    confirmPassword: confirmPassword.trim()
   };
 
-  // Emit the signup data via Socket.IO
-  socket.emit('signup', data);
-
-  socket.on('signup response', function(response) {
+  fetch('/signup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(response => {
     if (response.success) {
-      // Redirect to chat.html with the username as a query parameter
-      window.location.href = '/chat?username=' + encodeURIComponent(data.username);
+      // Redirect to user-dashboard.html
+      window.location.href = '/user-dashboard.html';
     } else {
       errorMessage.textContent = response.message; // Show the error message
     }
+  })
+  .catch(error => {
+    console.error('Error during signup:', error);
+    errorMessage.textContent = 'An error occurred during signup.';
   });
 });
 

@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Profile</title>
   <style>
+    /* ... (existing styles) ... */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -35,6 +35,14 @@
       border: none;
       border-radius: 5px;
       cursor: pointer;
+    }
+    #email, #phone-number {
+      font-size: 16px;
+      color: #333;
+      margin: 10px 0;
+    }
+    #reveal-email-btn, #reveal-phone-btn {
+      margin-bottom: 20px;
     }
     #signout {
       position: absolute;
@@ -91,8 +99,18 @@
     #emoji-button:hover {
       color: #ff5e00;
     }
+    /* Additional styles for new sections */
+    #phone-edit-section, #password-change-section {
+      margin-top: 10px;
+    }
+    #password-message {
+      color: red;
+    }
+    /* Hide the upload form initially */
+    #upload-form {
+      display: none;
+    }
   </style>
-  
 </head>
 <body>
 
@@ -104,28 +122,60 @@
 
   <div class="container">
     <h2>Your Profile</h2>
+    <h3 id="full-name"></h3> <!-- Display user's full name -->
+
+    <!-- Profile Picture -->
     <img id="profile-pic" src="" alt="Profile Picture">
+
+    <!-- Upload Profile Picture Form (hidden initially) -->
     <form id="upload-form" enctype="multipart/form-data">
       <input type="file" name="profilePic" id="profilePic" required>
       <button type="submit">Upload Profile Picture</button>
     </form>
     <p id="message"></p>
 
+    <!-- Email Section -->
+    <div>
+      <p id="email" style="display: none;"></p>
+      <button id="reveal-email-btn">Reveal Email</button>
+    </div>
+
+    <!-- Phone Number Section -->
+    <div>
+      <p id="phone-number-display" style="display: none;"></p>
+      <button id="reveal-phone-btn">Reveal Phone Number</button>
+      <button id="edit-phone-btn" style="display: none;">Edit Phone Number</button>
+      <div id="phone-edit-section" style="display: none;">
+        <input type="tel" id="phone-number-input" placeholder="Enter new phone number" maxlength="15" pattern="[0-9+()-\s]{7,15}">
+        <button id="save-phone-btn">Save Phone Number</button>
+      </div>
+    </div>
+
+    <!-- Change Password Section -->
+    <div>
+      <button id="change-password-btn">Change Password</button>
+      <div id="password-change-section" style="display: none;">
+        <input type="password" id="current-password" placeholder="Current Password" required>
+        <input type="password" id="new-password" placeholder="New Password" required>
+        <input type="password" id="confirm-new-password" placeholder="Confirm New Password" required>
+        <button id="save-password-btn">Save Password</button>
+        <p id="password-message"></p>
+      </div>
+    </div>
+
     <h3>Your Bio</h3>
     <p id="bio-display" class="bio-display"></p> <!-- Non-editable bio display -->
     <textarea id="bio" placeholder="Tell us something about yourself..."></textarea>
-    <button id="edit-bio-btn">Edit Bio</button> <!-- Edit Bio button -->
-    <button id="save-bio-btn" class="hidden">Save Bio</button> <!-- Save Bio button, hidden initially -->
-    
+    <button id="edit-bio-btn">Edit Profile</button> <!-- Changed to 'Edit Profile' -->
+    <button id="save-bio-btn" class="hidden">Save Profile</button> <!-- Changed to 'Save Profile' -->
+
     <!-- Add Emoji Button for Bio -->
     <button id="emoji-button" class="hidden">😀</button>
-    
+
     <p id="bio-message"></p>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-
-
   <script src="https://unpkg.com/emoji-button@latest"></script>
 
   <script>
@@ -139,6 +189,23 @@
     const saveBioBtn = document.getElementById('save-bio-btn');
     const emojiButton = document.getElementById('emoji-button');
 
+    // Elements for phone number editing
+    const phoneNumberDisplay = document.getElementById('phone-number-display');
+    const revealPhoneBtn = document.getElementById('reveal-phone-btn');
+    const editPhoneBtn = document.getElementById('edit-phone-btn');
+    const phoneEditSection = document.getElementById('phone-edit-section');
+    const phoneNumberInput = document.getElementById('phone-number-input');
+    const savePhoneBtn = document.getElementById('save-phone-btn');
+
+    // Elements for password changing
+    const changePasswordBtn = document.getElementById('change-password-btn');
+    const passwordChangeSection = document.getElementById('password-change-section');
+    const currentPasswordInput = document.getElementById('current-password');
+    const newPasswordInput = document.getElementById('new-password');
+    const confirmNewPasswordInput = document.getElementById('confirm-new-password');
+    const savePasswordBtn = document.getElementById('save-password-btn');
+    const passwordMessage = document.getElementById('password-message');
+
     // Retrieve the username from localStorage
     const username = localStorage.getItem('username');
 
@@ -148,98 +215,138 @@
     }
 
     function autoEmbedBio(bioText) {
-  // Regex for detecting YouTube video links
-  const youtubeVideoRegex = /(https?:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+))/g;
+      // Regex for detecting YouTube video links
+      const youtubeVideoRegex = /(https?:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+))/g;
 
-  // Regex for detecting YouTube channel/profile links
-  const youtubeChannelRegex = /(https?:\/\/www\.youtube\.com\/(user|channel|c)\/([a-zA-Z0-9_-]+))/g;
+      // Regex for detecting YouTube channel/profile links
+      const youtubeChannelRegex = /(https?:\/\/www\.youtube\.com\/(user|channel|c)\/([a-zA-Z0-9_-]+))/g;
 
-  // Regex for detecting Twitter/X profile links
-  const twitterRegex = /(https?:\/\/(x\.com|twitter\.com)\/([a-zA-Z0-9_]+))/g;
+      // Regex for detecting Twitter/X profile links
+      const twitterRegex = /(https?:\/\/(x\.com|twitter\.com)\/([a-zA-Z0-9_]+))/g;
 
-  // Replace YouTube video URLs with an iframe embed
-  bioText = bioText.replace(youtubeVideoRegex, (url, _, videoId) => {
-    return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" 
-      frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-      allowfullscreen></iframe>`;
-  });
+      // Replace YouTube video URLs with an iframe embed
+      bioText = bioText.replace(youtubeVideoRegex, (url, _, videoId) => {
+        return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" 
+          frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen></iframe>`;
+      });
 
-  // Replace YouTube channel/profile links with a clickable YouTube button
-  bioText = bioText.replace(youtubeChannelRegex, (url, type, channelId) => {
-    return `<a href="${url}" target="_blank">
-              <img src="https://www.youtube.com/about/static/svgs/icons/brand-resources/YouTube-logo-full_color_light.svg" alt="YouTube" width="120">
-              Visit my YouTube Channel
-            </a>`;
-  });
+      // Replace YouTube channel/profile links with a clickable YouTube button
+      bioText = bioText.replace(youtubeChannelRegex, (url, type, channelId) => {
+        return `<a href="${url}" target="_blank">
+                  <img src="https://www.youtube.com/about/static/svgs/icons/brand-resources/YouTube-logo-full_color_light.svg" alt="YouTube" width="120">
+                  Visit my YouTube Channel
+                </a>`;
+      });
 
-  // Replace Twitter/X profile links with a clickable Twitter button
-  bioText = bioText.replace(twitterRegex, (url, _, username) => {
-    return `<a class="twitter-timeline" href="${url}" data-width="400" data-height="600" target="_blank">Tweets by @${username}</a>`;
-  });
+      // Replace Twitter/X profile links with a clickable Twitter button
+      bioText = bioText.replace(twitterRegex, (url, _, username) => {
+        return `<a class="twitter-timeline" href="${url}" data-width="400" data-height="600" target="_blank">Tweets by @${username}</a>`;
+      });
 
-  return bioText;
-}
-
+      return bioText;
+    }
 
     // Load the existing profile picture and bio
     fetch(`/get-user-profile?username=${username}`)
-  .then(response => response.json())
-  .then(data => {
-    if (data.profilePic) {
-      profilePicElement.src = data.profilePic;
-    } else {
-      profilePicElement.src = '/uploads/default-avatar.png';
-    }
-    if (data.bio) {
-      bioDisplayElement.innerHTML = autoEmbedBio(data.bio);
+      .then(response => response.json())
+      .then(data => {
+        if (data.profilePic) {
+          profilePicElement.src = data.profilePic;
+        } else {
+          profilePicElement.src = '/uploads/default-avatar.png';
+        }
+        if (data.bio) {
+          bioDisplayElement.innerHTML = autoEmbedBio(data.bio);
 
-      // Append the Twitter widget script if there's a Twitter link
-      if (data.bio.includes("twitter.com") || data.bio.includes("x.com")) {
-        const script = document.createElement('script');
-        script.setAttribute('async', '');
-        script.setAttribute('src', 'https://platform.twitter.com/widgets.js');
-        script.setAttribute('charset', 'utf-8');
-        document.body.appendChild(script);
+          // Append the Twitter widget script if there's a Twitter link
+          if (data.bio.includes("twitter.com") || data.bio.includes("x.com")) {
+            const script = document.createElement('script');
+            script.setAttribute('async', '');
+            script.setAttribute('src', 'https://platform.twitter.com/widgets.js');
+            script.setAttribute('charset', 'utf-8');
+            document.body.appendChild(script);
+          }
+        } else {
+          bioDisplayElement.textContent = 'No bio available';
+        }
+
+        // Display the user's full name
+        document.getElementById('full-name').textContent = `${data.firstName} ${data.lastName}`;
+
+        // Store email and phone number for later use
+        const emailElement = document.getElementById('email');
+        emailElement.textContent = data.email;
+
+        // Update phone number display
+        phoneNumberDisplay.textContent = data.phoneNumber || 'No phone number available';
+      });
+
+    // Event listener for profile picture upload
+    uploadForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const formData = new FormData(uploadForm);
+      formData.append('username', username);
+
+      fetch('/upload-profile-pic', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          profilePicElement.src = data.profilePic;
+          messageElement.textContent = 'Profile picture updated successfully!';
+        } else {
+          messageElement.textContent = 'Failed to upload profile picture.';
+        }
+      })
+      .catch(error => {
+        console.error('Error uploading profile picture:', error);
+        messageElement.textContent = 'An error occurred while uploading the profile picture.';
+      });
+    });
+
+    // Reveal Email Button
+    const revealEmailBtn = document.getElementById('reveal-email-btn');
+    revealEmailBtn.addEventListener('click', function() {
+      const emailElement = document.getElementById('email');
+      if (emailElement.style.display === 'none') {
+        emailElement.style.display = 'block';
+        revealEmailBtn.textContent = 'Hide Email';
+      } else {
+        emailElement.style.display = 'none';
+        revealEmailBtn.textContent = 'Reveal Email';
       }
-    } else {
-      bioDisplayElement.textContent = 'No bio available';
-    }
-  });
+    });
 
- // Event listener for profile picture upload
-uploadForm.addEventListener('submit', function(event) {
-  event.preventDefault();
+    // Reveal Phone Number Button
+    revealPhoneBtn.addEventListener('click', function() {
+      if (phoneNumberDisplay.style.display === 'none') {
+        phoneNumberDisplay.style.display = 'block';
+        revealPhoneBtn.textContent = 'Hide Phone Number';
+        editPhoneBtn.style.display = 'inline-block'; // Show the Edit Phone Number button
+      } else {
+        phoneNumberDisplay.style.display = 'none';
+        revealPhoneBtn.textContent = 'Reveal Phone Number';
+        editPhoneBtn.style.display = 'none'; // Hide the Edit Phone Number button
+        phoneEditSection.style.display = 'none'; // Hide the phone edit section if open
+        editPhoneBtn.textContent = 'Edit Phone Number'; // Reset button text
+      }
+    });
 
-  const formData = new FormData(uploadForm);
-  formData.append('username', username);
-
-  fetch('/upload-profile-pic', {
-    method: 'POST',
-    body: formData
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      profilePicElement.src = data.profilePic;
-      messageElement.textContent = 'Profile picture updated successfully!';
-    } else {
-      messageElement.textContent = 'Failed to upload profile picture.';
-    }
-  })
-  .catch(error => {
-    console.error('Error uploading profile picture:', error);
-    messageElement.textContent = 'An error occurred while uploading the profile picture.';
-  });
-});
- 
-
-    // Show the editable bio text area when "Edit Bio" is clicked
+    // Show the editable bio text area and upload form when "Edit Profile" is clicked
     editBioBtn.addEventListener('click', function() {
       bioElement.value = bioDisplayElement.textContent; // Set the text area to the current bio text
       bioElement.style.display = 'block'; // Show the editable text area
       bioDisplayElement.style.display = 'none'; // Hide the non-editable display
-      editBioBtn.style.display = 'none'; // Hide the "Edit Bio" button
-      saveBioBtn.style.display = 'block'; // Show the "Save Bio" button
+
+      uploadForm.style.display = 'block'; // Show the upload form
+      messageElement.style.display = 'block'; // Show any messages
+
+      editBioBtn.style.display = 'none'; // Hide the "Edit Profile" button
+      saveBioBtn.style.display = 'block'; // Show the "Save Profile" button
       emojiButton.style.display = 'inline-block'; // Show the emoji button
     });
 
@@ -252,39 +359,142 @@ uploadForm.addEventListener('submit', function(event) {
       bioElement.value += emoji;
     });
 
-    // Handle saving the bio
-saveBioBtn.addEventListener('click', function() {
-  const bioData = {
-    username: username,
-    bio: bioElement.value.trim()
-  };
+    // Handle saving the bio and hiding the upload form
+    saveBioBtn.addEventListener('click', function() {
+      const bioData = {
+        username: username,
+        bio: bioElement.value.trim()
+      };
 
-  fetch('/save-bio', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(bioData)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      bioMessageElement.textContent = 'Bio saved successfully!';
-      bioDisplayElement.innerHTML = autoEmbedBio(bioElement.value); // Update the bio with embedded links
-      bioElement.style.display = 'none'; // Hide the editable text area
-      bioDisplayElement.style.display = 'block'; // Show the updated bio display
-      editBioBtn.style.display = 'block'; // Show the "Edit Bio" button
-      saveBioBtn.style.display = 'none'; // Hide the "Save Bio" button
-      emojiButton.style.display = 'none'; // Hide the emoji button
-    } else {
-      bioMessageElement.textContent = 'Failed to save bio.';
-    }
-  })
-  .catch(error => {
-    bioMessageElement.textContent = 'An error occurred.';
-    console.error(error);
-  });
-});
+      fetch('/save-bio', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bioData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          bioMessageElement.textContent = 'Profile updated successfully!';
+          bioDisplayElement.innerHTML = autoEmbedBio(bioElement.value); // Update the bio with embedded links
+          bioElement.style.display = 'none'; // Hide the editable text area
+          bioDisplayElement.style.display = 'block'; // Show the updated bio display
+
+          uploadForm.style.display = 'none'; // Hide the upload form
+          messageElement.style.display = 'none'; // Hide any messages
+
+          editBioBtn.style.display = 'block'; // Show the "Edit Profile" button
+          saveBioBtn.style.display = 'none'; // Hide the "Save Profile" button
+          emojiButton.style.display = 'none'; // Hide the emoji button
+        } else {
+          bioMessageElement.textContent = 'Failed to update profile.';
+        }
+      })
+      .catch(error => {
+        bioMessageElement.textContent = 'An error occurred.';
+        console.error(error);
+      });
+    });
+
+    // Event listener to toggle phone number edit form
+    editPhoneBtn.addEventListener('click', function() {
+      if (phoneEditSection.style.display === 'none') {
+        phoneEditSection.style.display = 'block';
+        editPhoneBtn.textContent = 'Cancel';
+      } else {
+        phoneEditSection.style.display = 'none';
+        editPhoneBtn.textContent = 'Edit Phone Number';
+      }
+    });
+
+    // Save the new phone number
+    savePhoneBtn.addEventListener('click', function() {
+      const newPhoneNumber = phoneNumberInput.value.trim();
+
+      // Validate phone number
+      if (!newPhoneNumber.match(/[0-9+()-\s]{7,15}/)) {
+        alert('Please enter a valid phone number.');
+        return;
+      }
+
+      fetch('/update-phone-number', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, phoneNumber: newPhoneNumber })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          phoneNumberDisplay.textContent = newPhoneNumber;
+          phoneEditSection.style.display = 'none';
+          editPhoneBtn.textContent = 'Edit Phone Number';
+          alert('Phone number updated successfully.');
+        } else {
+          alert('Failed to update phone number.');
+        }
+      })
+      .catch(error => {
+        console.error('Error updating phone number:', error);
+        alert('An error occurred while updating the phone number.');
+      });
+    });
+
+    // Event listener to toggle password change form
+    changePasswordBtn.addEventListener('click', function() {
+      if (passwordChangeSection.style.display === 'none') {
+        passwordChangeSection.style.display = 'block';
+        changePasswordBtn.textContent = 'Cancel';
+      } else {
+        passwordChangeSection.style.display = 'none';
+        changePasswordBtn.textContent = 'Change Password';
+      }
+    });
+
+    // Save the new password
+    savePasswordBtn.addEventListener('click', function() {
+      const currentPassword = currentPasswordInput.value.trim();
+      const newPassword = newPasswordInput.value.trim();
+      const confirmNewPassword = confirmNewPasswordInput.value.trim();
+
+      // Validate passwords
+      if (newPassword !== confirmNewPassword) {
+        passwordMessage.textContent = 'New passwords do not match.';
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        passwordMessage.textContent = 'New password must be at least 8 characters long.';
+        return;
+      }
+
+      // Additional password strength validations can be added here
+
+      fetch('/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, currentPassword, newPassword })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          passwordChangeSection.style.display = 'none';
+          changePasswordBtn.textContent = 'Change Password';
+          passwordMessage.textContent = '';
+          alert('Password changed successfully.');
+        } else {
+          passwordMessage.textContent = data.message || 'Failed to change password.';
+        }
+      })
+      .catch(error => {
+        console.error('Error changing password:', error);
+        passwordMessage.textContent = 'An error occurred while changing the password.';
+      });
+    });
 
     // Sign out button functionality
     document.getElementById('signout').addEventListener('click', function() {

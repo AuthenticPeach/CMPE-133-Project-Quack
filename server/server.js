@@ -8,6 +8,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const { MongoClient } = require('mongodb');
+const bcrypt = require('bcrypt');
 
 app.get('/img/:filename', (req, res) => {
   const filePath = path.join(__dirname, '../img', req.params.filename); // Adjusted path
@@ -168,9 +169,9 @@ app.get('/user-dashboard', (req, res) => {
 
 // Route to handle signup form POST request
 app.post('/signup', async (req, res) => {
-  console.log('Received data:', req.body); // Log incoming request data
+  console.log('Received data:', req.body);
 
-  const { firstName, lastName, username, email, password, confirmPassword } = req.body;
+  const { firstName, lastName, username, email, phoneNumber, password, confirmPassword } = req.body;
 
   // Simple validation
   if (password !== confirmPassword) {
@@ -178,7 +179,6 @@ app.post('/signup', async (req, res) => {
   }
 
   try {
-    // Ensure MongoDB connection and collection is valid
     if (!usersCollection) {
       console.log('MongoDB connection failed or usersCollection is undefined');
       return res.json({ success: false, message: 'Database connection failed' });
@@ -193,10 +193,13 @@ app.post('/signup', async (req, res) => {
       return res.json({ success: false, message: 'Username already exists' });
     }
 
-    console.log('Inserting new user:', { firstName, lastName, username, email, password });
+        // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('Inserting new user:', { firstName, lastName, username, email, phoneNumber, password });
 
     // Create a new user and insert into the database
-    await usersCollection.insertOne({ firstName, lastName, username, email, password });
+    await usersCollection.insertOne({ firstName, lastName, username, email, phoneNumber, password: hashedPassword });
+
     console.log('New user created:', username);
 
     return res.json({ success: true });
@@ -205,6 +208,7 @@ app.post('/signup', async (req, res) => {
     res.status(500).json({ success: false, message: 'An error occurred. Please try again.' });
   }
 });
+
 
 // Route to handle saving the bio
 app.post('/save-bio', async (req, res) => {
@@ -247,18 +251,20 @@ app.get('/get-user-profile', async (req, res) => {
   const username = req.query.username;
 
   try {
-    // Find the user in the database by username
     const user = await usersCollection.findOne({ username });
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Return the user profile including the bio and profile picture
     res.json({
       success: true,
       profilePic: user.profilePic || '/uploads/default-avatar.png',
-      bio: user.bio || '' // Send the bio, default to empty if not set
+      bio: user.bio || '',
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phoneNumber: user.phoneNumber || ''
     });
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -266,6 +272,68 @@ app.get('/get-user-profile', async (req, res) => {
   }
 });
 
+// Route to update phone number
+app.post('/update-phone-number', async (req, res) => {
+  const { username, phoneNumber } = req.body;
+
+  if (!username || !phoneNumber) {
+    return res.status(400).json({ success: false, message: 'Invalid data' });
+  }
+
+  try {
+    const result = await usersCollection.updateOne(
+      { username: username },
+      { $set: { phoneNumber: phoneNumber } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, message: 'Phone number updated successfully' });
+  } catch (error) {
+    console.error('Error updating phone number:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
+  }
+});
+
+// Route to change password
+app.post('/change-password', async (req, res) => {
+  const { username, currentPassword, newPassword } = req.body;
+
+  if (!username || !currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Invalid data' });
+  }
+
+  try {
+    const user = await usersCollection.findOne({ username: username });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Compare current password with stored password
+    const match = await bcrypt.compare(currentPassword, user.password);
+
+    if (!match) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the password in the database
+    const result = await usersCollection.updateOne(
+      { username: username },
+      { $set: { password: hashedPassword } }
+    );
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
+  }
+});
 ///Inbox system
 // Search users endpoint
 app.get('/search-users', async (req, res) => {
@@ -470,7 +538,68 @@ app.post('/mark-as-read', async (req, res) => {
   }
 });
 
+// Route to update phone number
+app.post('/update-phone-number', async (req, res) => {
+  const { username, phoneNumber } = req.body;
 
+  if (!username || !phoneNumber) {
+    return res.status(400).json({ success: false, message: 'Invalid data' });
+  }
+
+  try {
+    const result = await usersCollection.updateOne(
+      { username: username },
+      { $set: { phoneNumber: phoneNumber } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, message: 'Phone number updated successfully' });
+  } catch (error) {
+    console.error('Error updating phone number:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
+  }
+});
+
+// Route to change password
+app.post('/change-password', async (req, res) => {
+  const { username, currentPassword, newPassword } = req.body;
+
+  if (!username || !currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Invalid data' });
+  }
+
+  try {
+    const user = await usersCollection.findOne({ username: username });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Compare current password with stored password
+    const match = await bcrypt.compare(currentPassword, user.password);
+
+    if (!match) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the password in the database
+    const result = await usersCollection.updateOne(
+      { username: username },
+      { $set: { password: hashedPassword } }
+    );
+
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
+  }
+});
 
 const users = {}; // Track users by socket ID
 const rooms = {}; // Track rooms by room name
@@ -560,7 +689,15 @@ io.on('connection', (socket) => {
     const { username, password } = data;
     const user = await usersCollection.findOne({ username });
   
-    if (!user || user.password !== password) {
+    if (!user) {
+      socket.emit('signin response', { success: false, message: 'Invalid username or password' });
+      return;
+    }
+  
+    // Compare the plaintext password with the hashed password
+    const match = await bcrypt.compare(password, user.password);
+  
+    if (!match) {
       socket.emit('signin response', { success: false, message: 'Invalid username or password' });
       return;
     }
@@ -569,6 +706,7 @@ io.on('connection', (socket) => {
     users[socket.id] = username; 
     socket.emit('signin response', { success: true });
   });
+  
 
   // Handle when a username is set
   socket.on('set username', async (username) => {
