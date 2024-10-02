@@ -1,506 +1,1095 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>User Profile</title>
-  <style>
-    /* ... (existing styles) ... */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: white;
-      position: relative;
-      display: flex;
-    }
-    .container {
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      max-width: 500px;
-      margin: 50px auto;
-    }
-    img {
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #ff5e00;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #email, #phone-number {
-      font-size: 16px;
-      color: #333;
-      margin: 10px 0;
-    }
-    #reveal-email-btn, #reveal-phone-btn {
-      margin-bottom: 20px;
-    }
-    #signout {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background-color: #ff0000;
-      padding: 10px 20px;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      z-index: 10;
-    }
-    #links {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 10;
-    }
-    #links a {
-      margin-right: 20px;
-      color: #ff5e00;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    #links a:hover {
-      text-decoration: underline;
-    }
-    textarea {
-      width: 100%;
-      height: 100px;
-      border-radius: 5px;
-      padding: 10px;
-      margin-top: 20px;
-      border: 1px solid #ccc;
-      display: none;
-    }
-    .bio-display {
-      font-size: 16px;
-      color: #333;
-      margin: 20px 0;
-    }
-    .hidden {
-      display: none;
-    }
-    #emoji-button {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      margin-left: 10px;
-      padding: 0 10px;
-    }
-    #emoji-button:hover {
-      color: #ff5e00;
-    }
-    /* Additional styles for new sections */
-    #phone-edit-section, #password-change-section {
-      margin-top: 10px;
-    }
-    #password-message {
-      color: red;
-    }
-    /* Hide the upload form initially */
-    #upload-form {
-      display: none;
-    }
-  </style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <div id="links"> <!-- Links to profile.html and user-dashboard.html -->
-    <a href="/user-dashboard.html">Dashboard</a>
-  </div>
+    <link
+      href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css"
+      rel="stylesheet"
+    />
 
-  <button id="signout">Sign Out</button> <!-- Sign Out button at top-right -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
 
-  <div class="container">
-    <h2>Your Profile</h2>
-    <h3 id="full-name"></h3> <!-- Display user's full name -->
+      :root {
+        /* ===== Colors ===== */
+        --body-color: white;
+        --sidebar-color: #226c5c;
+        --primary-color: white;
+        --toggle-color: #226c5c;
+        --text-color: white;
 
-    <!-- Profile Picture -->
-    <img id="profile-pic" src="" alt="Profile Picture">
+        /* ====== Transition ====== */
+        --tran-03: all 0.2s ease;
+        --tran-03: all 0.3s ease;
+        --tran-04: all 0.3s ease;
+        --tran-05: all 0.3s ease;
+      }
 
-    <!-- Upload Profile Picture Form (hidden initially) -->
-    <form id="upload-form" enctype="multipart/form-data">
-      <input type="file" name="profilePic" id="profilePic" required>
-      <button type="submit">Upload Profile Picture</button>
-    </form>
-    <p id="message"></p>
+      body {
+        min-height: 100vh;
+        background-color: var(--body-color);
+        transition: var(--tran-05);
+      }
 
-    <!-- Email Section -->
-    <div>
-      <p id="email" style="display: none;"></p>
-      <button id="reveal-email-btn">Reveal Email</button>
-    </div>
+      /* ===== Sidebar ===== */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 250px;
+        padding: 10px 14px;
+        background: var(--sidebar-color);
+        transition: var(--tran-05);
+        z-index: 100;
+      }
+      .sidebar.close {
+        width: 88px;
+      }
 
-    <!-- Phone Number Section -->
-    <div>
-      <p id="phone-number-display" style="display: none;"></p>
-      <button id="reveal-phone-btn">Reveal Phone Number</button>
-      <button id="edit-phone-btn" style="display: none;">Edit Phone Number</button>
-      <div id="phone-edit-section" style="display: none;">
-        <input type="tel" id="phone-number-input" placeholder="Enter new phone number" maxlength="15" pattern="[0-9+()-\s]{7,15}">
-        <button id="save-phone-btn">Save Phone Number</button>
+      /* ===== Reusable code - Here ===== */
+      .sidebar li {
+        height: 50px;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .sidebar header .image,
+      .sidebar .icon {
+        min-width: 60px;
+        border-radius: 6px;
+      }
+
+      .sidebar .icon {
+        min-width: 60px;
+        border-radius: 6px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 25px;
+      }
+
+      .sidebar .text,
+      .sidebar .icon {
+        color: var(--text-color);
+        transition: var(--tran-03);
+      }
+
+      .sidebar .text {
+        font-size: 18px;
+        font-weight: 500;
+        white-space: nowrap;
+        opacity: 1;
+        margin-left: 152x;
+      }
+      .sidebar.close .text {
+        opacity: 0;
+      }
+      /* =========================== */
+
+      .sidebar header {
+        position: relative;
+      }
+
+      .sidebar header .image-text {
+        display: flex;
+        align-items: center;
+      }
+      .sidebar header .logo-text {
+        display: flex;
+        flex-direction: column;
+      }
+      header .image-text .name {
+        margin-top: 2px;
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      header .image-text .profession {
+        font-size: 16px;
+        margin-top: -2px;
+        display: block;
+      }
+
+      .sidebar header .image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar header .image img {
+        width: 60px;
+        border-radius: 6px;
+      }
+
+      .sidebar header .toggle {
+        position: absolute;
+        top: 50%;
+        right: -25px;
+        transform: translateY(-50%) rotate(180deg);
+        height: 25px;
+        width: 25px;
+        background-color: var(--primary-color);
+        color: var(--sidebar-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        cursor: pointer;
+        transition: var(--tran-05);
+      }
+
+      body.dark .sidebar header .toggle {
+        color: var(--text-color);
+      }
+
+      .sidebar.close .toggle {
+        transform: translateY(-50%) rotate(0deg);
+      }
+
+      .sidebar .menu {
+        margin-top: 40px;
+      }
+
+      .sidebar li a {
+        list-style: none;
+        height: 100%;
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: var(--tran-03);
+      }
+
+      .sidebar li a:hover {
+        background-color: var(--primary-color);
+      }
+      .sidebar li a:hover .icon,
+      .sidebar li a:hover .text {
+        color: var(--sidebar-color);
+      }
+      body.dark .sidebar li a:hover .icon,
+      body.dark .sidebar li a:hover .text {
+        color: var(--text-color);
+      }
+
+      .sidebar .menu-bar {
+        height: calc(100% - 55px);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow-y: scroll;
+      }
+      .menu-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .menu-bar .bottom-content .toggle-switch {
+        position: absolute;
+        right: 0;
+        height: 100%;
+        min-width: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .toggle-switch .switch {
+        position: relative;
+        height: 22px;
+        width: 40px;
+        border-radius: 25px;
+        background-color: var(--toggle-color);
+        transition: var(--tran-05);
+      }
+
+      .switch::before {
+        content: "";
+        position: absolute;
+        height: 15px;
+        width: 15px;
+        border-radius: 50%;
+        top: 50%;
+        left: 5px;
+        transform: translateY(-50%);
+        background-color: var(--sidebar-color);
+        transition: var(--tran-04);
+      }
+
+      body.dark .switch::before {
+        left: 20px;
+      }
+
+      .home {
+        position: absolute;
+        top: 0;
+        top: 0;
+        left: 250px;
+        height: 100vh;
+        width: calc(100% - 250px);
+        transition: var(--tran-05);
+        background: linear-gradient(
+            rgba(220, 216, 216, 0.5),
+            rgba(220, 216, 216, 0.5)
+          ),
+          url("img/Background.png");
+        background-size: cover;
+      }
+
+      .home .text {
+        font-size: 30px;
+        font-weight: 500;
+        color: var(--text-color);
+        padding: 12px 60px;
+      }
+
+      .sidebar.close ~ .home {
+        left: 78px;
+        height: 100vh;
+        width: calc(100% - 78px);
+      }
+      body.dark .home .text {
+        color: var(--text-color);
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: 35% 65%;
+        gap: 10px;
+        padding: 10px;
+        max-width: 950px;
+        margin: 1em auto;
+        margin-top: 50px;
+      }
+
+      .grid-container > div {
+        background-color: white;
+        text-align: center;
+        padding: 20px 0;
+        font-size: 30px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+      }
+
+      #Bio {
+        grid-column: span 2;
+        min-height: 150px;
+        padding-bottom: 0;
+      }
+
+      .profile-pic {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        border: 0.5px solid black;
+      }
+
+      #profilePic {
+        background-color: white;
+        box-shadow: 1px 1px 2px black;
+        border-radius: 5px;
+        width: 200px;
+        outline: none;
+      }
+
+      ::-webkit-file-upload-button {
+        color: white;
+        padding: 4px;
+        background-color: #0502e0;
+        border: none;
+        outline: none;
+        font-weight: bold;
+      }
+
+      ::-webkit-file-upload-button:hover {
+        background-color: #0704b9;
+      }
+
+      .normalButton {
+        background-color: #226c5c;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        font-size: 15px;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-top: 20px;
+        font-weight: bolder;
+        transition: background-color 0.3s, transform 0.3s;
+        width: 30%;
+      }
+      .normalButton:hover {
+        background-color: #1a5548;
+        transform: scale(1.05);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #bio {
+        min-width: 850px;
+        max-width: 850px;
+        min-height: 180px;
+        font-size: 16px;
+        padding: 28px;
+        margin: 1px auto;
+        display: none;
+      }
+
+      #emoji-button {
+        background: none;
+        border: none;
+        font-size: 25px;
+        cursor: pointer;
+        margin-left: 790px;
+        padding: 0 10px;
+        transform: translateY(-45px);
+      }
+      #emoji-button:hover {
+        color: #ff5e00;
+      }
+
+      #edit-bio-btn {
+        width: 90px;
+        background-color: #f4a62a;
+      }
+
+      #save-bio-btn {
+        margin-left: 805px;
+        width: 90px;
+        transform: translateY(-35px);
+      }
+
+      #profile-form {
+        margin: 0 auto;
+        text-align: left;
+        width: 90%;
+      }
+
+      label {
+        font-size: 16px;
+        display: inline-block;
+        width: 200px;
+        text-align: right;
+        margin-right: 10px;
+        font-weight: bold;
+      }
+
+      #profile-form input {
+        height: 25px;
+        padding: 5px;
+        margin-top: 15px;
+      }
+
+      #message {
+        font-size: 16px;
+        padding: 10px 10px 0 10px;
+      }
+
+      h5 {
+        padding: 15px 20px 0 20px;
+      }
+
+      #bio-display {
+        font-size: 20px;
+        margin-top: 10px;
+      }
+
+      #profile-form input {
+        font-size: 15px;
+        border: none;
+        background-color: #ecf1f0;
+        border-radius: 5px;
+      }
+
+      #showBtn {
+        width: 115px;
+        margin-left: 195px;
+      }
+
+      #editBtn {
+        width: 100px;
+        background-color: #f4a62a;
+      }
+
+      #cancelBtn {
+        display: none;
+        background-color: red;
+        margin-left: 210px;
+        width: 75px;
+      }
+
+      #updateBtn {
+        width: 125px;
+        display: none;
+      }
+
+      .button-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      #bio-message {
+        font-size: 20px;
+        color: red;
+        transform: translateY(-20px);
+      }
+
+      #editPasswordBtn {
+        background-color: #f4a62a;
+        margin: 0 290px;
+        position: relative;
+        top: -8px;
+        width: 130px;
+      }
+
+      #changePasswordBtn {
+        width: 160px;
+      }
+
+      #cancelPasswordBtn {
+        background-color: red;
+        width: 75px;
+        margin-left: 175px;
+      }
+
+      #password-message {
+        font-size: 16px;
+        color: red;
+        text-align: center;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="sidebar close">
+      <header>
+        <div class="image-text">
+          <span class="image">
+            <img src="img/Logo.png" alt="" />
+          </span>
+
+          <div class="text logo-text">
+            <span class="name">QUACK.</span>
+          </div>
+        </div>
+
+        <i class="bx bx-chevron-right toggle"></i>
+      </header>
+
+      <div class="menu-bar">
+        <div class="menu">
+          <ul class="menu-links">
+            <li class="nav-link">
+              <a href="/user-dashboard">
+                <i class="bx bx-home-alt icon"></i>
+                <span class="text nav-text">Dashboard</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#">
+                <i class="bx bx-message-rounded icon"></i>
+                <span class="text nav-text">Inbox</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#">
+                <i class="bx bxs-contact icon"></i>
+                <span class="text nav-text">Contact</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#">
+                <i class="bx bx-heart icon"></i>
+                <span class="text nav-text">Favorites</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#">
+                <i class="bx bx-archive icon"></i>
+                <span class="text nav-text">Archive</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bottom-content">
+          <li class="">
+            <a href="signin" onclick="localStorage.removeItem('username')">
+              <i class="bx bx-log-out icon"></i>
+              <span class="text nav-text">Logout</span>
+            </a>
+          </li>
+
+          <li class="">
+            <a href="profile">
+              <img
+                src=""
+                alt=""
+                class="profile-pic"
+                style="width: 40px; margin: 8px; height: auto"
+              />
+              <p class="text nav-text full-name"></p>
+            </a>
+          </li>
+        </div>
       </div>
-    </div>
+    </nav>
 
-    <!-- Change Password Section -->
-    <div>
-      <button id="change-password-btn">Change Password</button>
-      <div id="password-change-section" style="display: none;">
-        <input type="password" id="current-password" placeholder="Current Password" required>
-        <input type="password" id="new-password" placeholder="New Password" required>
-        <input type="password" id="confirm-new-password" placeholder="Confirm New Password" required>
-        <button id="save-password-btn">Save Password</button>
-        <p id="password-message"></p>
+    <section class="home">
+      <div class="grid-container">
+        <div>
+          <img class="profile-pic" src="" alt="Profile Picture" />
+          <h5 class="full-name"></h5>
+
+          <!-- Upload Profile Picture Form (hidden initially) -->
+          <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" name="profilePic" id="profilePic" required />
+            <br /><button type="submit" class="normalButton">Upload</button>
+          </form>
+          <p id="message"></p>
+        </div>
+
+        <div>
+          <h4>Your Profile</h4>
+          <form id="profile-form">
+            <p>
+              <label>First Name:</label>
+              <input type="text" name="firstName" id="firstName" readonly />
+            </p>
+            <p>
+              <label>Last Name:</label>
+              <input type="text" name="lastName" id="lastName" readonly />
+            </p>
+            <p>
+              <label>Username:</label>
+              <input
+                type="text"
+                name="username"
+                id="username"
+                style="display: none"
+                readonly
+              />
+            </p>
+            <p>
+              <label>Email:</label>
+              <input
+                type="text"
+                name="email"
+                id="email"
+                style="display: none"
+                readonly
+              />
+            </p>
+            <p>
+              <label>Phone Number:</label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                style="display: none"
+                id="phoneNumber"
+                readonly
+              />
+            </p>
+            <div class="button-container">
+              <button type="button" class="normalButton" id="showBtn">
+                Show Profile
+              </button>
+              <button type="button" class="normalButton" id="editBtn">
+                Edit Profile
+              </button>
+              <button type="button" class="normalButton" id="cancelBtn">
+                Cancel
+              </button>
+              <button type="submit" class="normalButton" id="updateBtn">
+                Update Profile
+              </button>
+            </div>
+          </form>
+          <form id="profile-form">
+            <button type="button" class="normalButton" id="editPasswordBtn">
+              Edit Password
+            </button>
+            <div id="password-change-section" style="display: none">
+              <p>
+                <label>Current Password:</label>
+                <input
+                  type="password"
+                  name="current-password"
+                  id="current-password"
+                  required
+                />
+              </p>
+              <p>
+                <label>New Password:</label>
+                <input
+                  type="password"
+                  name="new-password"
+                  id="new-password"
+                  required
+                />
+              </p>
+              <p>
+                <label>Confirm Password:</label>
+                <input
+                  type="password"
+                  name="confirm-new-password"
+                  id="confirm-new-password"
+                  required
+                />
+              </p>
+            </div>
+            <p id="password-message"></p>
+            <div class="button-container" style="display: none">
+              <button type="button" class="normalButton" id="cancelPasswordBtn">
+                Cancel
+              </button>
+              <button type="button" class="normalButton" id="changePasswordBtn">
+                Change Password
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div id="Bio">
+          <h4>Your Bio</h4>
+          <p id="bio-display" class="bio-display"></p>
+          <!-- Non-editable bio display -->
+          <textarea
+            id="bio"
+            placeholder="Tell us something about yourself..."
+          ></textarea>
+          <!-- Add Emoji Button for Bio -->
+          <button id="emoji-button" class="hidden">😀</button>
+
+          <button id="edit-bio-btn" class="normalButton">Edit Bio</button>
+          <!-- Changed to 'Edit Profile' -->
+          <button id="save-bio-btn" class="hidden normalButton">
+            Save Bio
+          </button>
+          <!-- Changed to 'Save Profile' -->
+
+          <p id="bio-message"></p>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <h3>Your Bio</h3>
-    <p id="bio-display" class="bio-display"></p> <!-- Non-editable bio display -->
-    <textarea id="bio" placeholder="Tell us something about yourself..."></textarea>
-    <button id="edit-bio-btn">Edit Profile</button> <!-- Changed to 'Edit Profile' -->
-    <button id="save-bio-btn" class="hidden">Save Profile</button> <!-- Changed to 'Save Profile' -->
+    <script>
+      const body = document.querySelector("body"),
+        sidebar = body.querySelector("nav"),
+        toggle = body.querySelector(".toggle"),
+        modeText = body.querySelector(".mode-text");
 
-    <!-- Add Emoji Button for Bio -->
-    <button id="emoji-button" class="hidden">😀</button>
-
-    <p id="bio-message"></p>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://unpkg.com/emoji-button@latest"></script>
-
-  <script>
-    const uploadForm = document.getElementById('upload-form');
-    const profilePicElement = document.getElementById('profile-pic');
-    const messageElement = document.getElementById('message');
-    const bioElement = document.getElementById('bio');
-    const bioDisplayElement = document.getElementById('bio-display'); // Bio display element
-    const bioMessageElement = document.getElementById('bio-message');
-    const editBioBtn = document.getElementById('edit-bio-btn');
-    const saveBioBtn = document.getElementById('save-bio-btn');
-    const emojiButton = document.getElementById('emoji-button');
-
-    // Elements for phone number editing
-    const phoneNumberDisplay = document.getElementById('phone-number-display');
-    const revealPhoneBtn = document.getElementById('reveal-phone-btn');
-    const editPhoneBtn = document.getElementById('edit-phone-btn');
-    const phoneEditSection = document.getElementById('phone-edit-section');
-    const phoneNumberInput = document.getElementById('phone-number-input');
-    const savePhoneBtn = document.getElementById('save-phone-btn');
-
-    // Elements for password changing
-    const changePasswordBtn = document.getElementById('change-password-btn');
-    const passwordChangeSection = document.getElementById('password-change-section');
-    const currentPasswordInput = document.getElementById('current-password');
-    const newPasswordInput = document.getElementById('new-password');
-    const confirmNewPasswordInput = document.getElementById('confirm-new-password');
-    const savePasswordBtn = document.getElementById('save-password-btn');
-    const passwordMessage = document.getElementById('password-message');
-
-    // Retrieve the username from localStorage
-    const username = localStorage.getItem('username');
-
-    // Redirect to the sign-in page if the username is not found
-    if (!username) {
-      window.location.href = '/signin';
-    }
-
-    function autoEmbedBio(bioText) {
-      // Regex for detecting YouTube video links
-      const youtubeVideoRegex = /(https?:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+))/g;
-
-      // Regex for detecting YouTube channel/profile links
-      const youtubeChannelRegex = /(https?:\/\/www\.youtube\.com\/(user|channel|c)\/([a-zA-Z0-9_-]+))/g;
-
-      // Regex for detecting Twitter/X profile links
-      const twitterRegex = /(https?:\/\/(x\.com|twitter\.com)\/([a-zA-Z0-9_]+))/g;
-
-      // Replace YouTube video URLs with an iframe embed
-      bioText = bioText.replace(youtubeVideoRegex, (url, _, videoId) => {
-        return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" 
-          frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowfullscreen></iframe>`;
+      toggle.addEventListener("click", () => {
+        sidebar.classList.toggle("close");
       });
+    </script>
 
-      // Replace YouTube channel/profile links with a clickable YouTube button
-      bioText = bioText.replace(youtubeChannelRegex, (url, type, channelId) => {
-        return `<a href="${url}" target="_blank">
-                  <img src="https://www.youtube.com/about/static/svgs/icons/brand-resources/YouTube-logo-full_color_light.svg" alt="YouTube" width="120">
-                  Visit my YouTube Channel
-                </a>`;
-      });
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/emoji-button@latest"></script>
 
-      // Replace Twitter/X profile links with a clickable Twitter button
-      bioText = bioText.replace(twitterRegex, (url, _, username) => {
-        return `<a class="twitter-timeline" href="${url}" data-width="400" data-height="600" target="_blank">Tweets by @${username}</a>`;
-      });
+    <script>
+      const uploadForm = document.getElementById("upload-form");
+      const profilePicElement = document.getElementsByClassName("profile-pic");
+      const messageElement = document.getElementById("message");
+      const bioElement = document.getElementById("bio");
+      const bioDisplayElement = document.getElementById("bio-display"); // Bio display element
+      const bioMessageElement = document.getElementById("bio-message");
+      const editBioBtn = document.getElementById("edit-bio-btn");
+      const saveBioBtn = document.getElementById("save-bio-btn");
+      const emojiButton = document.getElementById("emoji-button");
 
-      return bioText;
-    }
+      const firstNameElement = document.getElementById("firstName");
+      const lastNameElement = document.getElementById("lastName");
+      const usernameElement = document.getElementById("username");
+      const emailElement = document.getElementById("email");
+      const phoneElement = document.getElementById("phoneNumber");
 
-    // Load the existing profile picture and bio
-    fetch(`/get-user-profile?username=${username}`)
-      .then(response => response.json())
-      .then(data => {
-        if (data.profilePic) {
-          profilePicElement.src = data.profilePic;
-        } else {
-          profilePicElement.src = '/uploads/default-avatar.png';
-        }
-        if (data.bio) {
-          bioDisplayElement.innerHTML = autoEmbedBio(data.bio);
+      // Elements for password changing
+      const passwordChangeSection = document.getElementById(
+        "password-change-section"
+      );
+      const currentPasswordInput = document.getElementById("current-password");
+      const newPasswordInput = document.getElementById("new-password");
+      const confirmNewPasswordInput = document.getElementById(
+        "confirm-new-password"
+      );
+      const changePasswordBtn = document.getElementById("changePasswordBtn");
+      const passwordMessage = document.getElementById("password-message");
 
-          // Append the Twitter widget script if there's a Twitter link
-          if (data.bio.includes("twitter.com") || data.bio.includes("x.com")) {
-            const script = document.createElement('script');
-            script.setAttribute('async', '');
-            script.setAttribute('src', 'https://platform.twitter.com/widgets.js');
-            script.setAttribute('charset', 'utf-8');
-            document.body.appendChild(script);
+      // Retrieve the username from localStorage
+      const username = localStorage.getItem("username");
+
+      // Redirect to the sign-in page if the username is not found
+      if (!username) {
+        window.location.href = "/signin";
+      }
+
+      function autoEmbedBio(bioText) {
+        // Regex for detecting YouTube video links
+        const youtubeVideoRegex =
+          /(https?:\/\/www\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]+))/g;
+
+        // Regex for detecting YouTube channel/profile links
+        const youtubeChannelRegex =
+          /(https?:\/\/www\.youtube\.com\/(user|channel|c)\/([a-zA-Z0-9_-]+))/g;
+
+        // Regex for detecting Twitter/X profile links
+        const twitterRegex =
+          /(https?:\/\/(x\.com|twitter\.com)\/([a-zA-Z0-9_]+))/g;
+
+        // Replace YouTube video URLs with an iframe embed
+        bioText = bioText.replace(youtubeVideoRegex, (url, _, videoId) => {
+          return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" 
+      frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+      allowfullscreen></iframe>`;
+        });
+
+        // Replace YouTube channel/profile links with a clickable YouTube button
+        bioText = bioText.replace(
+          youtubeChannelRegex,
+          (url, type, channelId) => {
+            return `<a href="${url}" target="_blank">
+              <img src="https://www.youtube.com/about/static/svgs/icons/brand-resources/YouTube-logo-full_color_light.svg" alt="YouTube" width="120">
+              Visit my YouTube Channel
+            </a>`;
           }
-        } else {
-          bioDisplayElement.textContent = 'No bio available';
-        }
+        );
 
-        // Display the user's full name
-        document.getElementById('full-name').textContent = `${data.firstName} ${data.lastName}`;
+        // Replace Twitter/X profile links with a clickable Twitter button
+        bioText = bioText.replace(twitterRegex, (url, _, username) => {
+          return `<a class="twitter-timeline" href="${url}" data-width="400" data-height="600" target="_blank">Tweets by @${username}</a>`;
+        });
 
-        // Store email and phone number for later use
-        const emailElement = document.getElementById('email');
-        emailElement.textContent = data.email;
+        return bioText;
+      }
 
-        // Update phone number display
-        phoneNumberDisplay.textContent = data.phoneNumber || 'No phone number available';
+      // Load the existing profile picture and bio
+      fetch(`/get-user-profile?username=${username}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.profilePic) {
+            profilePicElement[0].src = data.profilePic;
+            profilePicElement[1].src = data.profilePic;
+          } else {
+            profilePicElement[0].src = "/uploads/default-avatar.png";
+            profilePicElement[1].src = "/uploads/default-avatar.png";
+          }
+          if (data.bio) {
+            bioDisplayElement.innerHTML = autoEmbedBio(data.bio);
+
+            // Append the Twitter widget script if there's a Twitter link
+            if (
+              data.bio.includes("twitter.com") ||
+              data.bio.includes("x.com")
+            ) {
+              const script = document.createElement("script");
+              script.setAttribute("async", "");
+              script.setAttribute(
+                "src",
+                "https://platform.twitter.com/widgets.js"
+              );
+              script.setAttribute("charset", "utf-8");
+              document.body.appendChild(script);
+            }
+          } else {
+            bioDisplayElement.textContent = "No bio available";
+          }
+
+          // Display the user's full name
+          document.getElementsByClassName(
+            "full-name"
+          )[0].textContent = `${data.firstName} ${data.lastName}`;
+          document.getElementsByClassName(
+            "full-name"
+          )[1].textContent = `${data.firstName} ${data.lastName}`;
+
+          // Store firstname, lastname, username, email, phonenumber in a box
+          firstNameElement.value = data.firstName;
+          lastNameElement.value = data.lastName;
+          usernameElement.value = username;
+          emailElement.value = data.email;
+          phoneElement.value = data.phoneNumber;
+        });
+
+      // Event listener for profile picture upload
+      uploadForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const formData = new FormData(uploadForm);
+        formData.append("username", username);
+
+        fetch("/upload-profile-pic", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              profilePicElement[0].src = data.profilePic;
+              profilePicElement[1].src = data.profilePic;
+              messageElement.style.display = "none";
+            } else {
+              messageElement.textContent = "Failed to upload profile picture.";
+            }
+          })
+          .catch((error) => {
+            console.error("Error uploading profile picture:", error);
+            messageElement.textContent =
+              "An error occurred while uploading the profile picture.";
+          });
       });
 
-    // Event listener for profile picture upload
-    uploadForm.addEventListener('submit', function(event) {
-      event.preventDefault();
+      // Show the editable bio text area and upload form when "Edit Profile" is clicked
+      editBioBtn.addEventListener("click", function () {
+        bioElement.value = bioDisplayElement.textContent; // Set the text area to the current bio text
+        bioElement.style.display = "block"; // Show the editable text area
+        bioDisplayElement.style.display = "none"; // Hide the non-editable display
 
-      const formData = new FormData(uploadForm);
-      formData.append('username', username);
+        messageElement.style.display = "block"; // Show any messages
 
-      fetch('/upload-profile-pic', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          profilePicElement.src = data.profilePic;
-          messageElement.textContent = 'Profile picture updated successfully!';
-        } else {
-          messageElement.textContent = 'Failed to upload profile picture.';
-        }
-      })
-      .catch(error => {
-        console.error('Error uploading profile picture:', error);
-        messageElement.textContent = 'An error occurred while uploading the profile picture.';
+        editBioBtn.style.display = "none"; // Hide the "Edit Profile" button
+        saveBioBtn.style.display = "block"; // Show the "Save Profile" button
+        emojiButton.style.display = "inline-block"; // Show the emoji button
       });
-    });
 
-    // Reveal Email Button
-    const revealEmailBtn = document.getElementById('reveal-email-btn');
-    revealEmailBtn.addEventListener('click', function() {
-      const emailElement = document.getElementById('email');
-      if (emailElement.style.display === 'none') {
-        emailElement.style.display = 'block';
-        revealEmailBtn.textContent = 'Hide Email';
-      } else {
-        emailElement.style.display = 'none';
-        revealEmailBtn.textContent = 'Reveal Email';
-      }
-    });
-
-    // Reveal Phone Number Button
-    revealPhoneBtn.addEventListener('click', function() {
-      if (phoneNumberDisplay.style.display === 'none') {
-        phoneNumberDisplay.style.display = 'block';
-        revealPhoneBtn.textContent = 'Hide Phone Number';
-        editPhoneBtn.style.display = 'inline-block'; // Show the Edit Phone Number button
-      } else {
-        phoneNumberDisplay.style.display = 'none';
-        revealPhoneBtn.textContent = 'Reveal Phone Number';
-        editPhoneBtn.style.display = 'none'; // Hide the Edit Phone Number button
-        phoneEditSection.style.display = 'none'; // Hide the phone edit section if open
-        editPhoneBtn.textContent = 'Edit Phone Number'; // Reset button text
-      }
-    });
-
-    // Show the editable bio text area and upload form when "Edit Profile" is clicked
-    editBioBtn.addEventListener('click', function() {
-      bioElement.value = bioDisplayElement.textContent; // Set the text area to the current bio text
-      bioElement.style.display = 'block'; // Show the editable text area
-      bioDisplayElement.style.display = 'none'; // Hide the non-editable display
-
-      uploadForm.style.display = 'block'; // Show the upload form
-      messageElement.style.display = 'block'; // Show any messages
-
-      editBioBtn.style.display = 'none'; // Hide the "Edit Profile" button
-      saveBioBtn.style.display = 'block'; // Show the "Save Profile" button
-      emojiButton.style.display = 'inline-block'; // Show the emoji button
-    });
-
-    // Initialize the emoji picker for the bio
-    const picker = new EmojiButton();
-    emojiButton.addEventListener('click', () => {
-      picker.pickerVisible ? picker.hidePicker() : picker.showPicker(emojiButton);
-    });
-    picker.on('emoji', emoji => {
-      bioElement.value += emoji;
-    });
-
-    // Handle saving the bio and hiding the upload form
-    saveBioBtn.addEventListener('click', function() {
-      const bioData = {
-        username: username,
-        bio: bioElement.value.trim()
-      };
-
-      fetch('/save-bio', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(bioData)
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          bioMessageElement.textContent = 'Profile updated successfully!';
-          bioDisplayElement.innerHTML = autoEmbedBio(bioElement.value); // Update the bio with embedded links
-          bioElement.style.display = 'none'; // Hide the editable text area
-          bioDisplayElement.style.display = 'block'; // Show the updated bio display
-
-          uploadForm.style.display = 'none'; // Hide the upload form
-          messageElement.style.display = 'none'; // Hide any messages
-
-          editBioBtn.style.display = 'block'; // Show the "Edit Profile" button
-          saveBioBtn.style.display = 'none'; // Hide the "Save Profile" button
-          emojiButton.style.display = 'none'; // Hide the emoji button
-        } else {
-          bioMessageElement.textContent = 'Failed to update profile.';
-        }
-      })
-      .catch(error => {
-        bioMessageElement.textContent = 'An error occurred.';
-        console.error(error);
+      // Initialize the emoji picker for the bio
+      const picker = new EmojiButton();
+      emojiButton.addEventListener("click", () => {
+        picker.pickerVisible
+          ? picker.hidePicker()
+          : picker.showPicker(emojiButton);
       });
-    });
-
-    // Event listener to toggle phone number edit form
-    editPhoneBtn.addEventListener('click', function() {
-      if (phoneEditSection.style.display === 'none') {
-        phoneEditSection.style.display = 'block';
-        editPhoneBtn.textContent = 'Cancel';
-      } else {
-        phoneEditSection.style.display = 'none';
-        editPhoneBtn.textContent = 'Edit Phone Number';
-      }
-    });
-
-    // Save the new phone number
-    savePhoneBtn.addEventListener('click', function() {
-      const newPhoneNumber = phoneNumberInput.value.trim();
-
-      // Validate phone number
-      if (!newPhoneNumber.match(/[0-9+()-\s]{7,15}/)) {
-        alert('Please enter a valid phone number.');
-        return;
-      }
-
-      fetch('/update-phone-number', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, phoneNumber: newPhoneNumber })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          phoneNumberDisplay.textContent = newPhoneNumber;
-          phoneEditSection.style.display = 'none';
-          editPhoneBtn.textContent = 'Edit Phone Number';
-          alert('Phone number updated successfully.');
-        } else {
-          alert('Failed to update phone number.');
-        }
-      })
-      .catch(error => {
-        console.error('Error updating phone number:', error);
-        alert('An error occurred while updating the phone number.');
+      picker.on("emoji", (emoji) => {
+        bioElement.value += emoji;
       });
-    });
 
-    // Event listener to toggle password change form
-    changePasswordBtn.addEventListener('click', function() {
-      if (passwordChangeSection.style.display === 'none') {
-        passwordChangeSection.style.display = 'block';
-        changePasswordBtn.textContent = 'Cancel';
-      } else {
-        passwordChangeSection.style.display = 'none';
-        changePasswordBtn.textContent = 'Change Password';
-      }
-    });
+      // Handle saving the bio and hiding the upload form
+      saveBioBtn.addEventListener("click", function () {
+        const bioData = {
+          username: username,
+          bio: bioElement.value.trim(),
+        };
 
-    // Save the new password
-    savePasswordBtn.addEventListener('click', function() {
-      const currentPassword = currentPasswordInput.value.trim();
-      const newPassword = newPasswordInput.value.trim();
-      const confirmNewPassword = confirmNewPasswordInput.value.trim();
+        fetch("/save-bio", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bioData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              bioDisplayElement.innerHTML = autoEmbedBio(bioElement.value); // Update the bio with embedded links
+              bioElement.style.display = "none"; // Hide the editable text area
+              bioDisplayElement.style.display = "block"; // Show the updated bio display
 
-      // Validate passwords
-      if (newPassword !== confirmNewPassword) {
-        passwordMessage.textContent = 'New passwords do not match.';
-        return;
-      }
+              messageElement.style.display = "none"; // Hide any messages
+              bioMessageElement.style.display = "none"; // Hide any messages
 
-      if (newPassword.length < 8) {
-        passwordMessage.textContent = 'New password must be at least 8 characters long.';
-        return;
-      }
-
-      // Additional password strength validations can be added here
-
-      fetch('/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, currentPassword, newPassword })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          passwordChangeSection.style.display = 'none';
-          changePasswordBtn.textContent = 'Change Password';
-          passwordMessage.textContent = '';
-          alert('Password changed successfully.');
-        } else {
-          passwordMessage.textContent = data.message || 'Failed to change password.';
-        }
-      })
-      .catch(error => {
-        console.error('Error changing password:', error);
-        passwordMessage.textContent = 'An error occurred while changing the password.';
+              editBioBtn.style.display = "inline"; // Show the "Edit Bio" button
+              saveBioBtn.style.display = "none"; // Hide the "Save Profile" button
+              emojiButton.style.display = "none"; // Hide the emoji button
+            } else {
+              bioMessageElement.textContent = "Failed to update profile.";
+            }
+          })
+          .catch((error) => {
+            bioMessageElement.textContent = "An error occurred.";
+            console.error(error);
+          });
       });
-    });
 
-    // Sign out button functionality
-    document.getElementById('signout').addEventListener('click', function() {
-      localStorage.removeItem('username'); // Clear username from localStorage
-      window.location.href = '/signin';
-    });
-  </script>
-</body>
+      // Show and Hide Button of the profile information
+      document.getElementById("showBtn").addEventListener("click", function () {
+        if (document.getElementById("showBtn").textContent === "Show Profile") {
+          usernameElement.style.display = "inline";
+          emailElement.style.display = "inline";
+          phoneElement.style.display = "inline";
+          document.getElementById("showBtn").textContent = "Hide Profile";
+        } else {
+          usernameElement.style.display = "none";
+          emailElement.style.display = "none";
+          phoneElement.style.display = "none";
+          document.getElementById("showBtn").textContent = "Show Profile";
+        }
+      });
+
+      // Display the edit button
+      document.getElementById("editBtn").addEventListener("click", function () {
+        usernameElement.style.display = "inline";
+        emailElement.style.display = "inline";
+        phoneElement.style.display = "inline";
+
+        document.getElementById("showBtn").style.display = "none";
+        document.getElementById("editBtn").style.display = "none";
+        document.getElementById("updateBtn").style.display = "block";
+        document.getElementById("cancelBtn").style.display = "block";
+
+        firstNameElement.removeAttribute("readonly");
+        lastNameElement.removeAttribute("readonly");
+        phoneElement.removeAttribute("readonly");
+      });
+
+      // Cancel edit button
+      document
+        .getElementById("cancelBtn")
+        .addEventListener("click", function () {
+          window.location.href = "/profile";
+        });
+
+      // Edit password button
+      document
+        .getElementById("editPasswordBtn")
+        .addEventListener("click", function () {
+          document.getElementsByClassName("button-container")[1].style.display =
+            "block";
+          passwordChangeSection.style.display = "block";
+          document.getElementById("editPasswordBtn").style.display = "none";
+        });
+
+      // Cancel password button
+      document
+        .getElementById("cancelPasswordBtn")
+        .addEventListener("click", function () {
+          document.getElementsByClassName("button-container")[1].style.display =
+            "none";
+          passwordChangeSection.style.display = "none";
+          document.getElementById("editPasswordBtn").style.display = "block";
+          document.getElementById("editPasswordBtn").style.top = "0";
+          passwordMessage.style.display = "none";
+        });
+
+      // Update the profile
+      document
+        .getElementById("updateBtn")
+        .addEventListener("click", function () {
+          event.preventDefault();
+
+          const newFirstName = firstNameElement.value.trim();
+          const newLastName = lastNameElement.value.trim();
+          const newPhoneNumber = phoneElement.value.trim();
+
+          // Validate first name
+          if (!newFirstName.match(/[A-Za-z ]{1,50}/)) {
+            alert("Please enter a valid first name.");
+            return;
+          }
+
+          // Validate last name
+          if (!newLastName.match(/[A-Za-z ]{1,50}/)) {
+            alert("Please enter a valid last name.");
+            return;
+          }
+
+          // Validate phone number
+          if (!newPhoneNumber.match(/[0-9+()-\s]{7,15}/)) {
+            alert("Please enter a valid phone number.");
+            return;
+          }
+
+          fetch("/update-profile", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username,
+              firstName: newFirstName,
+              lastName: newLastName,
+              phoneNumber: newPhoneNumber,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                firstNameElement.value = newFirstName;
+                lastNameElement.value = newLastName;
+                phoneElement.value = newPhoneNumber;
+
+                alert("Success to update profile");
+                window.location.href = "/profile";
+              } else {
+                alert("Failed to update profile");
+              }
+            })
+            .catch((error) => {
+              console.error("Error updating profile:", error);
+              alert("An error occurred while updating the profile.");
+            });
+        });
+
+      // Change the new password
+      changePasswordBtn.addEventListener("click", function () {
+        passwordMessage.style.display = "block";
+
+        const currentPassword = currentPasswordInput.value.trim();
+        const newPassword = newPasswordInput.value.trim();
+        const confirmNewPassword = confirmNewPasswordInput.value.trim();
+
+        // Validate passwords
+        if (newPassword !== confirmNewPassword) {
+          passwordMessage.textContent = "New passwords do not match.";
+          return;
+        }
+
+        if (newPassword.length < 8) {
+          passwordMessage.textContent =
+            "New password must be at least 8 characters long.";
+          return;
+        }
+
+        // Additional password strength validations can be added here
+
+        fetch("/change-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, currentPassword, newPassword }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              passwordChangeSection.style.display = "none";
+              changePasswordBtn.textContent = "Change Password";
+              passwordMessage.textContent = "";
+              alert("Password changed successfully.");
+              window.location.href = "/profile";
+            } else {
+              passwordMessage.textContent =
+                data.message || "Failed to change password.";
+            }
+          })
+          .catch((error) => {
+            console.error("Error changing password:", error);
+            passwordMessage.textContent =
+              "An error occurred while changing the password.";
+          });
+      });
+    </script>
+  </body>
 </html>
