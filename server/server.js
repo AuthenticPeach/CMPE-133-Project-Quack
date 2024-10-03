@@ -20,6 +20,16 @@ app.get('/img/:filename', (req, res) => {
   });
 });
 
+app.get('/uploads/:filename', (req, res) => {
+  const filePath = path.join(__dirname, '../uploads', req.params.filename); // Adjusted path
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error sending file:', err);
+      res.status(err.status).end();
+    }
+  });
+});
+
 // MongoDB connection string from MongoDB Atlas
 const uri = 'mongodb+srv://travispeach:ebr4SFmM7vLTp9p@quackcluster1.hwojm.mongodb.net/';
 const client = new MongoClient(uri);
@@ -27,12 +37,13 @@ const client = new MongoClient(uri);
 // Set up Multer storage configuration with file type validation
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Save files in the 'uploads' folder
+    cb(null, path.join(__dirname, '../uploads')); // Save files in the 'uploads' folder
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname)); // Use timestamp to make filenames unique
   }
 });
+
 
 // File filter to allow only specific file types
 const fileFilter = (req, file, cb) => {
@@ -55,7 +66,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 // Serve the /uploads folder to make images publicly accessible
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 let usersCollection, messagesCollection;
 
@@ -75,7 +86,6 @@ app.use((err, req, res, next) => {
   }
   next(err);
 });
-
 
 // Serve the profile image from the uploads folder
 app.use('/uploads', express.static('uploads'));
@@ -274,14 +284,27 @@ app.get('/get-user-profile', async (req, res) => {
 });
 
 // Route to update phone number
-app.post('/update-phone-number', async (req, res) => {
-  const { username, phoneNumber } = req.body;
+app.post('/update-profile', async (req, res) => {
+  const { username, firstName, lastName, phoneNumber } = req.body;
 
-  if (!username || !phoneNumber) {
-    return res.status(400).json({ success: false, message: 'Invalid data' });
+  // Check if username is provided, as it's required
+  if (!username) {
+    return res.status(400).json({ success: false, message: 'Username is required' });
+  }
+
+  // Prepare the fields to update
+  const updateFields = {};
+  if (firstName) updateFields.firstName = firstName;
+  if (lastName) updateFields.lastName = lastName;
+  if (phoneNumber) updateFields.phoneNumber = phoneNumber;
+
+  // If no fields are provided to update, return an error
+  if (Object.keys(updateFields).length === 0) {
+    return res.status(400).json({ success: false, message: 'No fields to update' });
   }
 
   try {
+
     // Normalize the phone number by removing non-digit characters
     const normalizedPhoneNumber = phoneNumber.replace(/\D/g, '');
 
@@ -293,18 +316,22 @@ app.post('/update-phone-number', async (req, res) => {
           normalizedPhoneNumber: normalizedPhoneNumber // Update the normalized phone number
         }
       }
+
     );
 
+    // Check if any document was modified (i.e., user was found)
     if (result.modifiedCount === 0) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: 'User not found or no changes made' });
     }
 
-    res.json({ success: true, message: 'Phone number updated successfully' });
+    // Success response
+    res.json({ success: true, message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('Error updating phone number:', error);
+    console.error('Error updating profile:', error);
     res.status(500).json({ success: false, message: 'An error occurred' });
   }
 });
+
 
 // Route to change password
 app.post('/change-password', async (req, res) => {
