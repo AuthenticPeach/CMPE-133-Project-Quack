@@ -218,7 +218,7 @@
 
     <!-- Section for Searching Users -->
     <div id="search-container">
-      <input type="text" id="search-input" placeholder="Search users to add as contacts...">
+      <input type="text" id="search-input" placeholder="Search users by username or phone number...">
       <ul id="search-results"></ul>
     </div>
 
@@ -335,31 +335,42 @@
     searchInput.addEventListener('input', function() {
       var query = searchInput.value.trim();
 
-      if (query.length > 0) {
-        // Fetch users that match the search query
-        fetch(`/search-users?query=${query}`)
-          .then(response => response.json())
-          .then(data => {
-            var searchResults = document.getElementById('search-results');
-            searchResults.innerHTML = '';
+      // Check if the input is a phone number
+      var isPhoneNumber = /^[0-9+()-\s]{7,15}$/.test(query);
 
-            if (data.length > 0) {
-              data.forEach(function(user) {
-                var li = document.createElement('li');
-                li.textContent = user.username;
-                li.addEventListener('click', function() {
-                  addContact(user.username);
-                });
-                searchResults.appendChild(li);
-              });
-            } else {
-              searchResults.innerHTML = '<li>No users found</li>';
-            }
-          });
+      if (isPhoneNumber) {
+        // If it's a phone number and length is sufficient, perform search
+        // Only search when the length matches your phone number format
+        searchUsers(query, 'phoneNumber');
+      } else if (query.length > 0) {
+        // Assume it's a username search
+        searchUsers(query, 'username');
       } else {
         document.getElementById('search-results').innerHTML = '';
       }
     });
+
+    function searchUsers(query, type) {
+      fetch(`/search-users?query=${encodeURIComponent(query)}&type=${type}`)
+        .then(response => response.json())
+        .then(data => {
+          var searchResults = document.getElementById('search-results');
+          searchResults.innerHTML = '';
+
+          if (data.length > 0) {
+            data.forEach(function(user) {
+              var li = document.createElement('li');
+              li.textContent = user.username;
+              li.addEventListener('click', function() {
+                addContact(user.username);
+              });
+              searchResults.appendChild(li);
+            });
+          } else {
+            searchResults.innerHTML = '<li>No users found</li>';
+          }
+        });
+    }
 
     function addContact(contactUsername) {
       fetch(`/add-contact`, {
