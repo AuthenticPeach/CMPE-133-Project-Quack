@@ -1,0 +1,24 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# Uploaded files
+uploads/
+temp_uploads/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+.idea/
+.vscode/
