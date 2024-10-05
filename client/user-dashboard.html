@@ -146,15 +146,15 @@
     }
     /* Contacts List Styling */
     #contacts-list {
-      position: absolute;
-      top: 70px;
-      left: 270px;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      padding: 10px;
-      border-radius: 5px;
-      width: 200px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      position:absolute;
+      top:70px;
+      left:270px;
+      background-color:#fff;
+      border:1px solid #ccc;
+      padding:10px;
+      border-radius:5px;
+      width:200px;
+      box-shadow:0px 0px 10px rgba(0,0,0,0.1);
     }
     #contacts-list li button {
       margin-left: 10px;
@@ -165,23 +165,21 @@
       cursor: pointer;
       padding: 5px;
     }
-
     #contacts-list li button:hover {
       background-color: #cc0000;
     }
     /* Favorites List Styling */
     #favorites-list {
-      position: absolute;
-      top: 70px;
-      left: 500px;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      padding: 10px;
-      border-radius: 5px;
-      width: 200px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      position:absolute;
+      top:70px;
+      left:500px;
+      background-color:#fff;
+      border:1px solid #ccc;
+      padding:10px;
+      border-radius:5px;
+      width:200px;
+      box-shadow:0px 0px 10px rgba(0,0,0,0.1);
     }
-
     #favorites-list li {
       padding: 8px;
       background-color: #ffe680;
@@ -189,7 +187,6 @@
       margin-bottom: 5px;
       cursor: pointer;
     }
-
   </style>
 </head>
 <body>
@@ -245,6 +242,16 @@
       <span class="close">&times;</span>
       <h3>Your Inbox</h3>
       <p id="inbox-message">Your inbox is looking pretty empty!</p>
+    </div>
+  </div>
+
+  <!-- User Interaction Modal -->
+  <div id="userModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="modal-username">Username</h3>
+      <button id="add-friend-btn" onclick="addContact(username)">Add Friend</button>
+      <button id="start-chat-btn" onclick="startPrivateChat(username)">Start Chat</button>
     </div>
   </div>
 
@@ -308,27 +315,37 @@
       window.location.href = `/chat?room=${roomName}&username=${encodeURIComponent(username)}`;
     }
 
-    // Modal script
-    var modal = document.getElementById('inboxModal');
-    var btn = document.getElementById('inbox-button');
-    var span = document.getElementsByClassName('close')[0];
+  // Modal script for Inbox and User Interaction
+  var inboxModal = document.getElementById('inboxModal');
+  var userModal = document.getElementById('userModal');
+  var inboxBtn = document.getElementById('inbox-button');
+  var userClose = document.getElementsByClassName('close')[1]; // Getting the second close button
+  var inboxClose = document.getElementsByClassName('close')[0]; // Getting the first close button
 
-    // When the user clicks the button, open the modal
-    btn.onclick = function() {
-      modal.style.display = 'block';
-    }
+  // Open the inbox modal
+  inboxBtn.onclick = function() {
+    inboxModal.style.display = 'block';
+  }
 
-    // When the user clicks on <span> (x), close the modal
-    span.onclick = function() {
-      modal.style.display = 'none';
-    }
+  // Close the inbox modal when clicking x
+  inboxClose.onclick = function() {
+    inboxModal.style.display = 'none';
+  }
 
-    // When the user clicks anywhere outside of the modal, close it
-    window.onclick = function(event) {
-      if (event.target == modal) {
-        modal.style.display = 'none';
-      }
+  // Close the user modal when clicking x
+  userClose.onclick = function() {
+    userModal.style.display = 'none';
+  }
+
+  // When the user clicks anywhere outside of either modal, close it
+  window.onclick = function(event) {
+    if (event.target == inboxModal) {
+      inboxModal.style.display = 'none';
     }
+    if (event.target == userModal) {
+      userModal.style.display = 'none';
+    }
+  }
 
     // Search functionality for finding users
     var searchInput = document.getElementById('search-input');
@@ -362,7 +379,17 @@
               var li = document.createElement('li');
               li.textContent = user.username;
               li.addEventListener('click', function() {
-                addContact(user.username);
+                // Set the username for modal
+                var modalUsername = document.getElementById('modal-username');
+                var addFriendBtn = document.getElementById('add-friend-btn');
+                var startChatBtn = document.getElementById('start-chat-btn');
+
+                modalUsername.textContent = user.username;
+                addFriendBtn.onclick = function() { addContact(user.username); };
+                startChatBtn.onclick = function() { startPrivateChat(user.username); };
+
+                // Display the modal
+                document.getElementById('userModal').style.display = 'block';
               });
               searchResults.appendChild(li);
             });
