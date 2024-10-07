@@ -8,35 +8,15 @@ const fs = require('fs');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
-const defaultProfilePicUrl = 'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png';
 const sanitizeFilename = require('sanitize-filename');
 
-
-
+// Environment variables configuration
 require('dotenv').config();
 
-app.get('/img/:filename', (req, res) => {
-  const filePath = path.join(__dirname, '../img', req.params.filename); // Adjusted path
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Error sending file:', err);
-      res.status(err.status).end();
-    }
-  });
-});
-
-app.get('/uploads/:filename', (req, res) => {
-  const filePath = path.join(__dirname, '../uploads', req.params.filename); // Adjusted path
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Error sending file:', err);
-      res.status(err.status).end();
-    }
-  });
-});
+const defaultProfilePicUrl = 'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png';
 
 // MongoDB connection string from MongoDB Atlas
 const uri = 'mongodb+srv://travispeach:ebr4SFmM7vLTp9p@quackcluster1.hwojm.mongodb.net/';
@@ -48,6 +28,14 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
 
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Multer storage configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, tempDir);
@@ -55,12 +43,6 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   }
-});
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // File filter to allow only specific file types
@@ -81,12 +63,8 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// Multer upload middleware
 const upload = multer({ storage: storage, fileFilter: fileFilter });
-
-// Serve the /uploads folder to make images publicly accessible
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-let usersCollection, messagesCollection;
 
 // Middleware to parse form data
 app.use(bodyParser.urlencoded({ extended: true })); // For URL-encoded form data
@@ -95,6 +73,8 @@ app.use(express.static('client', {
   index: false // Disable automatic serving of index.html
 }));
 
+// Serve the /uploads folder to make images publicly accessible
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Error handling middleware for Multer
 app.use((err, req, res, next) => {
@@ -105,10 +85,105 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
-// Serve the profile image from the uploads folder
-app.use('/uploads', express.static('uploads'));
+// Create a route after defining 'upload' to prevent ReferenceError
+app.post('/upload-chat', upload.single('image'), async (req, res) => {
+  const message = req.body.message || '';
+  const username = req.body.username || 'Unknown User';
+  const roomName = req.body.roomName;
+  const replyToId = req.body.replyTo; // Get the ID of the message being replied to
 
-// Route for uploading a profile picture
+  let fileUrl = null;
+  let fileType = null;
+  let fileName = null;
+
+  if (req.file) {
+    try {
+      // Sanitize the original file name
+      fileName = sanitizeFilename(req.file.originalname);
+
+      // Determine resource_type based on file mimetype
+      let resourceType = 'auto';
+      if (req.file.mimetype === 'application/pdf' || req.file.mimetype === 'text/plain') {
+        resourceType = 'raw';
+      }
+
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: resourceType,
+        folder: 'chat_files', // Optional: organize files
+        use_filename: true, // Use the original filename
+        unique_filename: false, // Prevent Cloudinary from appending random characters
+      });
+
+      fileUrl = result.secure_url;
+      fileType = req.file.mimetype;
+
+      // Delete the temporary file
+      fs.unlinkSync(req.file.path);
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error);
+      return res.status(500).json({ success: false, message: 'File upload failed.' });
+    }
+  }
+
+  // Create a message object
+  const chatMessage = {
+    username: username,
+    message: message,
+    roomName: roomName,
+    fileUrl: fileUrl,
+    fileType: fileType,
+    fileName: fileName,
+    replyTo: replyToId ? new ObjectId(replyToId) : null, // Convert to ObjectId if exists
+    timestamp: new Date()
+  };
+
+  try {
+    // Store the message in the database
+    const result = await messagesCollection.insertOne(chatMessage);
+    console.log('Storing message in DB:', chatMessage);
+
+    // Fetch user profile from MongoDB
+    const user = await usersCollection.findOne({ username });
+    const profilePic = user ? user.profilePic || defaultProfilePicUrl : defaultProfilePicUrl;
+
+    // Prepare the message to be sent to clients
+    const messageToSend = {
+      _id: result.insertedId, // Include the ID of the new message
+      username: username,
+      message: message,
+      fileUrl: fileUrl,
+      fileType: fileType,
+      fileName: fileName,
+      replyTo: replyToId,
+      timestamp: new Date().toISOString(),
+      profilePic: profilePic
+    };
+
+    // If there's a replyTo, fetch the original message content
+    if (replyToId) {
+      const originalMessage = await messagesCollection.findOne({ _id: new ObjectId(replyToId) });
+      if (originalMessage) {
+        messageToSend.replyToMessage = {
+          username: originalMessage.username,
+          message: originalMessage.message || originalMessage.fileName || '[File]',
+          fileType: originalMessage.fileType
+        };
+      }
+    }
+
+    // Emit the message to the room
+    io.to(roomName).emit('chat message', messageToSend);
+    console.log(`Emitting message to room ${roomName}:`, messageToSend);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error handling /upload-chat:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Define other routes here, e.g. uploading a profile picture
 app.post('/upload-profile-pic', upload.single('profilePic'), async (req, res) => {
   const username = req.body.username;
 
@@ -145,6 +220,7 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
   const message = req.body.message || '';
   const username = req.body.username || 'Unknown User';
   const roomName = req.body.roomName;
+  const replyToId = req.body.replyTo; // Get the ID of the message being replied to
 
   let fileUrl = null;
   let fileType = null;
@@ -187,47 +263,62 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
       }
     }
   
-    // Create a message object
-    const chatMessage = {
+  // Create a message object
+  const chatMessage = {
+    username: username,
+    message: message,
+    roomName: roomName,
+    fileUrl: fileUrl,
+    fileType: fileType,
+    fileName: fileName,
+    replyTo: replyToId ? new ObjectId(replyToId) : null, // Convert to ObjectId if exists
+    timestamp: new Date()
+  };
+
+  try {
+    // Store the message in the database
+    const result = await messagesCollection.insertOne(chatMessage);
+    console.log('Storing message in DB:', chatMessage);
+
+    // Fetch user profile from MongoDB
+    const user = await usersCollection.findOne({ username });
+    const profilePic = user ? user.profilePic || defaultProfilePicUrl : defaultProfilePicUrl;
+
+    // Prepare the message to be sent to clients
+    const messageToSend = {
+      _id: result.insertedId, // Include the ID of the new message
       username: username,
       message: message,
-      roomName: roomName,
       fileUrl: fileUrl,
       fileType: fileType,
-      fileName: fileName, // Include the sanitized file name
-      timestamp: new Date()
+      fileName: fileName,
+      replyTo: replyToId,
+      timestamp: new Date().toISOString(),
+      profilePic: profilePic
     };
-  
-    try {
-      // Store the message in the database
-      await messagesCollection.insertOne(chatMessage);
-      console.log('Storing message in DB:', chatMessage);
-  
-      // Fetch user profile from MongoDB
-      const user = await usersCollection.findOne({ username });
-      const profilePic = user ? user.profilePic || defaultProfilePicUrl : defaultProfilePicUrl;
-  
-      // Prepare the message to be sent to clients
-      const messageToSend = {
-        username: username,
-        message: message,
-        fileUrl: fileUrl,
-        fileType: fileType,
-        fileName: fileName, // Include the file name
-        timestamp: new Date().toISOString(), // Full date-time
-        profilePic: profilePic
-      };    
-  
-      // Emit the message to the room
-      io.to(roomName).emit('chat message', messageToSend);
-      console.log(`Emitting message to room ${roomName}:`, messageToSend);
-  
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Error handling /upload-chat:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
+
+    // If there's a replyTo, fetch the original message content
+    if (replyToId) {
+      const originalMessage = await messagesCollection.findOne({ _id: new ObjectId(replyToId) });
+      if (originalMessage) {
+        messageToSend.replyToMessage = {
+          username: originalMessage.username,
+          message: originalMessage.message || originalMessage.fileName || '[File]',
+          fileType: originalMessage.fileType
+        };
+      }
     }
-  });  
+
+    // Emit the message to the room
+    io.to(roomName).emit('chat message', messageToSend);
+    console.log(`Emitting message to room ${roomName}:`, messageToSend);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error handling /upload-chat:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 // Route to serve signin.html as the default page
 app.get('/', (req, res) => {
@@ -857,10 +948,28 @@ io.on('connection', (socket) => {
       userProfilePicMap[user.username] = user.profilePic || defaultProfilePicUrl;
     });
 
-    // Attach profilePic to each message
-    messages.forEach(msg => {
-      msg.profilePic = userProfilePicMap[msg.username] || defaultProfilePicUrl;
-    });
+  // Fetch replyTo messages
+  const replyToIds = messages
+    .filter(msg => msg.replyTo)
+    .map(msg => new ObjectId(msg.replyTo));
+  const replyToMessages = await messagesCollection.find({ _id: { $in: replyToIds } }).toArray();
+
+  const replyToMap = {};
+  replyToMessages.forEach(msg => {
+    replyToMap[msg._id.toString()] = {
+      username: msg.username,
+      message: msg.message || msg.fileName || '[File]',
+      fileType: msg.fileType
+    };
+  });
+
+  // Attach profilePic and replyToMessage to each message
+  messages.forEach(msg => {
+    msg.profilePic = userProfilePicMap[msg.username] || defaultProfilePicUrl;
+    if (msg.replyTo) {
+      msg.replyToMessage = replyToMap[msg.replyTo];
+    }
+  });
 
     // Send the chat history to the client
     socket.emit('chat history', messages);

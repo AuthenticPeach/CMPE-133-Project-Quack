@@ -192,6 +192,25 @@ a.download-button:hover {
   margin-bottom: 5px;
 }
 
+.reply-button {
+  background-color: transparent;
+  border: none;
+  color: #007BFF;
+  cursor: pointer;
+  margin-left: auto;
+  font-size: 14px;
+}
+
+.reply-button:hover {
+  color: #0056b3;
+}
+
+.reply-button i {
+  pointer-events: none; /* Allow click to pass through to the button */
+}
+
+
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   #chat-section {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quack Chat</title>
   <link rel="stylesheet" href="chat.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 </head>
 <body>
   <div id="links"> <!-- Links to profile.html and user-dashboard.html -->
@@ -124,6 +125,7 @@
   }
 });
 
+
 // Function to convert URLs in messages into embedded content
 function autoEmbedMessage(message) {
   // Regex for detecting YouTube links
@@ -178,12 +180,12 @@ socket.on('chat history', function(messages) {
 
 function createMessageElement(msg) {
   const item = document.createElement('li');
-  item.classList.add('message-item'); // Add a class for styling
-  item.dataset.messageId = msg._id; // Store the message ID
+  item.classList.add('message-item');
+  item.dataset.messageId = msg._id;
 
   // Create a container for the profile image and message content
   const messageContainer = document.createElement('div');
-  messageContainer.classList.add('message-container'); // Add a class for styling
+  messageContainer.classList.add('message-container');
 
   // Create profile image element
   const profileImg = document.createElement('img');
@@ -192,13 +194,13 @@ function createMessageElement(msg) {
 
   // Create a container for the message content
   const contentDiv = document.createElement('div');
-  contentDiv.classList.add('content-div'); // Add a class for styling
+  contentDiv.classList.add('content-div');
 
   // Create timestamp element
   const timestamp = new Date(msg.timestamp).toLocaleString();
   const timestampSpan = document.createElement('span');
   timestampSpan.textContent = `[${timestamp}] `;
-  timestampSpan.classList.add('timestamp'); // Add a class for styling
+  timestampSpan.classList.add('timestamp');
 
   // Create username element
   const usernameSpan = document.createElement('strong');
@@ -209,15 +211,12 @@ function createMessageElement(msg) {
 
   // Create message content element
   const messageSpan = document.createElement('span');
-  messageSpan.innerHTML = content; // Use innerHTML to allow embedded content
+  messageSpan.innerHTML = content;
 
   // Append elements to contentDiv
   contentDiv.appendChild(timestampSpan);
   contentDiv.appendChild(usernameSpan);
   contentDiv.appendChild(messageSpan);
-
-  // Append profile image and contentDiv to messageContainer
-  messageContainer.appendChild(profileImg);
 
   // If the message is a reply, display the quoted message
   if (msg.replyToMessage) {
@@ -228,17 +227,32 @@ function createMessageElement(msg) {
     replyUsername.textContent = msg.replyToMessage.username + ': ';
 
     const replyContent = document.createElement('span');
-    replyContent.textContent = msg.replyToMessage.message || '[File]';
+    replyContent.textContent = msg.replyToMessage.message || msg.replyToMessage.fileName || '[File]';
 
     replyDiv.appendChild(replyUsername);
     replyDiv.appendChild(replyContent);
 
-    contentDiv.appendChild(replyDiv);
+    contentDiv.insertBefore(replyDiv, contentDiv.firstChild);
   }
 
   // Append profile image and contentDiv to messageContainer
   messageContainer.appendChild(profileImg);
   messageContainer.appendChild(contentDiv);
+
+  // **Add a Reply button**
+const replyButton = document.createElement('button');
+replyButton.innerHTML = '<i class="fas fa-reply"></i>';
+replyButton.classList.add('reply-button');
+
+
+  // Add event listener for replying
+  replyButton.addEventListener('click', (event) => {
+    event.stopPropagation(); // Prevent triggering any parent event handlers
+    setReplyToMessage(msg);
+  });
+
+  // Append replyButton to messageContainer
+  messageContainer.appendChild(replyButton);
 
   // Append messageContainer to item
   item.appendChild(messageContainer);
@@ -263,20 +277,22 @@ function createMessageElement(msg) {
       // Create download button
       const downloadButton = document.createElement('a');
       downloadButton.href = msg.fileUrl;
-      downloadButton.download = msg.fileName || 'file'; // Ensure download attribute works with the filename
-      downloadButton.innerHTML = '⬇'; // Use a down arrow character for simplicity
-      downloadButton.style.marginLeft = '10px'; // Add some margin between the link and the button
-      downloadButton.style.cursor = 'pointer';  // Make it look clickable
+      downloadButton.download = msg.fileName || 'file';
+      downloadButton.innerHTML = '⬇';
+      downloadButton.style.marginLeft = '10px';
+      downloadButton.style.cursor = 'pointer';
 
-      contentDiv.appendChild(fileElement); // Append file link to contentDiv
-      contentDiv.appendChild(downloadButton); // Append download button next to file link
+      // Append file link and download button
+      contentDiv.appendChild(fileElement);
+      contentDiv.appendChild(downloadButton);
     } else {
       // Handle other types
       fileElement = document.createElement('span');
       fileElement.textContent = 'Unsupported file type.';
-      contentDiv.appendChild(fileElement); // Append to contentDiv
+      contentDiv.appendChild(fileElement);
     }
   }
+
 
   item.addEventListener('click', () => {
     setReplyToMessage(msg);
