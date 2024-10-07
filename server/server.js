@@ -12,6 +12,8 @@ const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
 const defaultProfilePicUrl = 'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png';
+const sanitizeFilename = require('sanitize-filename');
+
 
 
 require('dotenv').config();
@@ -146,63 +148,86 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
 
   let fileUrl = null;
   let fileType = null;
+  let fileName = null;
+  
+    if (req.file) {
+      try {
+        // Sanitize the original file name
+        fileName = sanitizeFilename(req.file.originalname);
+  
+        // Determine resource_type based on file mimetype
+        let resourceType = 'auto';
+        if (req.file.mimetype === 'application/pdf' || req.file.mimetype === 'text/plain') {
+          resourceType = 'raw';
+        }
+  
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+          resource_type: resourceType,
+          folder: 'chat_files', // Optional: organize files
+          use_filename: true, // Use the original filename
+          unique_filename: false, // Prevent Cloudinary from appending random characters
+        });
+  
+        const publicId = result.public_id;
 
-  if (req.file) {
-    try {
-      // Upload to Cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: 'auto'
-      });
-      fileUrl = result.secure_url;
-      fileType = req.file.mimetype;
-
-      // Delete the temporary file
-      fs.unlinkSync(req.file.path);
-    } catch (error) {
-      console.error('Error uploading to Cloudinary:', error);
-      return res.status(500).json({ success: false, message: 'File upload failed.' });
+        fileUrl = cloudinary.url(publicId, {
+          resource_type: 'raw',
+          secure: true,
+          // flags: 'attachment', // Uncomment to force download
+        });
+        fileUrl = result.secure_url;
+        fileType = req.file.mimetype;
+  
+        // Delete the temporary file
+        fs.unlinkSync(req.file.path);
+      } catch (error) {
+        console.error('Error uploading to Cloudinary:', error);
+        return res.status(500).json({ success: false, message: 'File upload failed.' });
+      }
     }
-  }
-
-  // Create a message object
-  const chatMessage = {
-    username: username,
-    message: message,
-    roomName: roomName,
-    fileUrl: fileUrl,
-    fileType: fileType,
-    timestamp: new Date()
-  };
-
-  try {
-    // Store the message in the database
-    await messagesCollection.insertOne(chatMessage);
-    console.log('Storing message in DB:', chatMessage);
-
-    // Fetch user profile from MongoDB
-    const user = await usersCollection.findOne({ username });
-    const profilePic = user ? user.profilePic || defaultProfilePicUrl : defaultProfilePicUrl;
-
-    // Prepare the message to be sent to clients
-    const messageToSend = {
+  
+    // Create a message object
+    const chatMessage = {
       username: username,
       message: message,
+      roomName: roomName,
       fileUrl: fileUrl,
       fileType: fileType,
-      timestamp: new Date().toISOString(), // Full date-time
-      profilePic: profilePic
-    };    
-
-    // Emit the message to the room
-    io.to(roomName).emit('chat message', messageToSend);
-    console.log(`Emitting message to room ${roomName}:`, messageToSend);
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error handling /upload-chat:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-});
+      fileName: fileName, // Include the sanitized file name
+      timestamp: new Date()
+    };
+  
+    try {
+      // Store the message in the database
+      await messagesCollection.insertOne(chatMessage);
+      console.log('Storing message in DB:', chatMessage);
+  
+      // Fetch user profile from MongoDB
+      const user = await usersCollection.findOne({ username });
+      const profilePic = user ? user.profilePic || defaultProfilePicUrl : defaultProfilePicUrl;
+  
+      // Prepare the message to be sent to clients
+      const messageToSend = {
+        username: username,
+        message: message,
+        fileUrl: fileUrl,
+        fileType: fileType,
+        fileName: fileName, // Include the file name
+        timestamp: new Date().toISOString(), // Full date-time
+        profilePic: profilePic
+      };    
+  
+      // Emit the message to the room
+      io.to(roomName).emit('chat message', messageToSend);
+      console.log(`Emitting message to room ${roomName}:`, messageToSend);
+  
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error handling /upload-chat:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  });  
 
 // Route to serve signin.html as the default page
 app.get('/', (req, res) => {

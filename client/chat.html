@@ -31,6 +31,7 @@
     <h3>Users Online:</h3>
     <ul id="users"></ul> <!-- List of connected users -->
   </div>
+  <div id="reply-preview" style="display: none;"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/emoji-button@latest"></script>
@@ -80,15 +81,13 @@
     // Send a message with the username
     var form = document.getElementById('form');
 
-form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function(e) {
   e.preventDefault();
   const message = input.value;
   const imageInput = document.getElementById('image-input');
   const imageFile = imageInput.files[0];
 
   if (message || imageFile) {
-    console.log(`Sending message to room ${roomName}:`, message);
-
     const formData = new FormData();
     formData.append('username', username);
     formData.append('roomName', roomName);
@@ -97,6 +96,9 @@ form.addEventListener('submit', function(e) {
     }
     if (imageFile) {
       formData.append('image', imageFile);
+    }
+    if (replyToMessage) {
+      formData.append('replyTo', replyToMessage._id);
     }
 
     fetch('/upload-chat', {
@@ -112,7 +114,8 @@ form.addEventListener('submit', function(e) {
     .then(data => {
       input.value = '';
       imageInput.value = '';
-      // No need to emit 'chat message' here
+      replyToMessage = null;
+      document.getElementById('reply-preview').style.display = 'none';
     })
     .catch(error => {
       console.error('Error uploading image:', error);
@@ -142,81 +145,8 @@ function autoEmbedMessage(message) {
 
 socket.on('chat message', function(msg) {
   console.log('Received message:', msg);
-  const item = document.createElement('li');
-  item.classList.add('message-item'); // Add a class for styling
 
-  // Create a container for the profile image and message content
-  const messageContainer = document.createElement('div');
-  messageContainer.classList.add('message-container'); // Add a class for styling
-
-  // Create profile image element
-  const profileImg = document.createElement('img');
-  profileImg.src = msg.profilePic || '/uploads/default-avatar.png';
-  profileImg.classList.add('profile-image'); // Add a class for styling
-
-  // Create a container for the message content
-  const contentDiv = document.createElement('div');
-  contentDiv.classList.add('content-div'); // Add a class for styling
-
-  // Create timestamp element
-  const timestamp = new Date(msg.timestamp).toLocaleString();
-  const timestampSpan = document.createElement('span');
-  timestampSpan.textContent = `[${timestamp}] `;
-  timestampSpan.classList.add('timestamp'); // Add a class for styling
-
-  // Create username element
-  const usernameSpan = document.createElement('strong');
-  usernameSpan.textContent = msg.username + ': ';
-
-  // Use the autoEmbedMessage function to process the message
-  const content = autoEmbedMessage(msg.message);
-
-  // Create message content element
-  const messageSpan = document.createElement('span');
-  messageSpan.innerHTML = content; // Use innerHTML to allow embedded content
-
-  // Append elements to contentDiv
-  contentDiv.appendChild(timestampSpan);
-  contentDiv.appendChild(usernameSpan);
-  contentDiv.appendChild(messageSpan);
-
-  // Append profile image and contentDiv to messageContainer
-  messageContainer.appendChild(profileImg);
-  messageContainer.appendChild(contentDiv);
-
-  // Append messageContainer to item
-  item.appendChild(messageContainer);
-
-  // If there's a file in the message
-  if (msg.fileUrl) {
-    let fileElement;
-
-    if (msg.fileType.startsWith('image/')) {
-      // Display image
-      fileElement = document.createElement('img');
-      fileElement.src = msg.fileUrl;
-      fileElement.style.maxWidth = '200px';
-      fileElement.style.display = 'block';
-    } else if (msg.fileType === 'application/pdf') {
-      // Display PDF link
-      fileElement = document.createElement('a');
-      fileElement.href = msg.fileUrl;
-      fileElement.textContent = 'View PDF';
-      fileElement.target = '_blank';
-    } else if (msg.fileType === 'text/plain') {
-      // Display text file link
-      fileElement = document.createElement('a');
-      fileElement.href = msg.fileUrl;
-      fileElement.textContent = 'View Text File';
-      fileElement.target = '_blank';
-    } else {
-      // Handle other types
-      fileElement = document.createElement('span');
-      fileElement.textContent = 'Unsupported file type.';
-    }
-
-    contentDiv.appendChild(fileElement); // Append to contentDiv
-  }
+  const item = createMessageElement(msg);
 
   // Append the message to the messages list
   document.getElementById('messages').appendChild(item);
@@ -249,6 +179,7 @@ socket.on('chat history', function(messages) {
 function createMessageElement(msg) {
   const item = document.createElement('li');
   item.classList.add('message-item'); // Add a class for styling
+  item.dataset.messageId = msg._id; // Store the message ID
 
   // Create a container for the profile image and message content
   const messageContainer = document.createElement('div');
@@ -287,6 +218,26 @@ function createMessageElement(msg) {
 
   // Append profile image and contentDiv to messageContainer
   messageContainer.appendChild(profileImg);
+
+  // If the message is a reply, display the quoted message
+  if (msg.replyToMessage) {
+    const replyDiv = document.createElement('div');
+    replyDiv.classList.add('reply-message');
+
+    const replyUsername = document.createElement('strong');
+    replyUsername.textContent = msg.replyToMessage.username + ': ';
+
+    const replyContent = document.createElement('span');
+    replyContent.textContent = msg.replyToMessage.message || '[File]';
+
+    replyDiv.appendChild(replyUsername);
+    replyDiv.appendChild(replyContent);
+
+    contentDiv.appendChild(replyDiv);
+  }
+
+  // Append profile image and contentDiv to messageContainer
+  messageContainer.appendChild(profileImg);
   messageContainer.appendChild(contentDiv);
 
   // Append messageContainer to item
@@ -302,28 +253,59 @@ function createMessageElement(msg) {
       fileElement.src = msg.fileUrl;
       fileElement.style.maxWidth = '200px';
       fileElement.style.display = 'block';
-    } else if (msg.fileType === 'application/pdf') {
-      // Display PDF link
+    } else if (['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(msg.fileType)) {
+      // Display file link with file name
       fileElement = document.createElement('a');
       fileElement.href = msg.fileUrl;
-      fileElement.textContent = 'View PDF';
+      fileElement.textContent = msg.fileName || 'View File';
       fileElement.target = '_blank';
-    } else if (msg.fileType === 'text/plain') {
-      // Display text file link
-      fileElement = document.createElement('a');
-      fileElement.href = msg.fileUrl;
-      fileElement.textContent = 'View Text File';
-      fileElement.target = '_blank';
+
+      // Create download button
+      const downloadButton = document.createElement('a');
+      downloadButton.href = msg.fileUrl;
+      downloadButton.download = msg.fileName || 'file'; // Ensure download attribute works with the filename
+      downloadButton.innerHTML = '⬇'; // Use a down arrow character for simplicity
+      downloadButton.style.marginLeft = '10px'; // Add some margin between the link and the button
+      downloadButton.style.cursor = 'pointer';  // Make it look clickable
+
+      contentDiv.appendChild(fileElement); // Append file link to contentDiv
+      contentDiv.appendChild(downloadButton); // Append download button next to file link
     } else {
       // Handle other types
       fileElement = document.createElement('span');
       fileElement.textContent = 'Unsupported file type.';
+      contentDiv.appendChild(fileElement); // Append to contentDiv
     }
-
-    contentDiv.appendChild(fileElement); // Append to contentDiv
   }
 
+  item.addEventListener('click', () => {
+    setReplyToMessage(msg);
+  });
+
   return item;
+}
+
+let replyToMessage = null;
+
+function setReplyToMessage(msg) {
+  replyToMessage = msg;
+
+  // Display the quoted message
+  const replyPreview = document.getElementById('reply-preview');
+  replyPreview.innerHTML = `
+    <div class="reply-preview-content">
+      <strong>${msg.username}</strong>: ${msg.message || msg.fileName || ''}
+      <button id="cancel-reply">✕</button>
+    </div>
+  `;
+
+  replyPreview.style.display = 'block';
+
+  // Handle cancel reply
+  document.getElementById('cancel-reply').addEventListener('click', () => {
+    replyToMessage = null;
+    replyPreview.style.display = 'none';
+  });
 }
 
 
@@ -349,7 +331,6 @@ document.getElementById('load-more').addEventListener('click', function() {
     socket.emit('load more messages', { roomName: roomName, lastTimestamp: oldestTimestamp });
   }
 });
-
 
 // Typing indicator
 input.addEventListener('input', function() {
@@ -400,7 +381,6 @@ socket.on('user list', function(users) {
         usersList.appendChild(item);
       });
     });
-
 });    
   </script>
 </body>
