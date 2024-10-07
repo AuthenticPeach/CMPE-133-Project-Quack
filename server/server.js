@@ -4,11 +4,15 @@ const http = require('http');
 const { Server } = require('socket.io');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
+const cloudinary = require('cloudinary').v2;
+
+require('dotenv').config();
 
 app.get('/img/:filename', (req, res) => {
   const filePath = path.join(__dirname, '../img', req.params.filename); // Adjusted path
@@ -34,16 +38,26 @@ app.get('/uploads/:filename', (req, res) => {
 const uri = 'mongodb+srv://travispeach:ebr4SFmM7vLTp9p@quackcluster1.hwojm.mongodb.net/';
 const client = new MongoClient(uri);
 
-// Set up Multer storage configuration with file type validation
+// Create a temporary directory if it doesn't exist
+const tempDir = path.join(__dirname, 'temp_uploads');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir);
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads')); // Save files in the 'uploads' folder
+    cb(null, tempDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Use timestamp to make filenames unique
+    cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // File filter to allow only specific file types
 const fileFilter = (req, file, cb) => {
@@ -92,36 +106,69 @@ app.use('/uploads', express.static('uploads'));
 
 // Route for uploading a profile picture
 app.post('/upload-profile-pic', upload.single('profilePic'), async (req, res) => {
-  const username = req.body.username; // Assuming you're passing the username
+  const username = req.body.username;
 
-  // Save the file path to MongoDB for the user's profile
-  const profilePicPath = `/uploads/${req.file.filename}`;
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded.' });
+  }
 
   try {
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: 'image',
+      folder: 'profile_pics' // Optional: organize files
+    });
+
+    const profilePicUrl = result.secure_url;
+
+    // Delete the temporary file
+    fs.unlinkSync(req.file.path);
+
     // Update the user's profile picture in MongoDB
     await usersCollection.updateOne(
       { username: username },
-      { $set: { profilePic: profilePicPath } }
+      { $set: { profilePic: profilePicUrl } }
     );
-    res.json({ success: true, profilePic: profilePicPath });
+
+    res.json({ success: true, profilePic: profilePicUrl });
   } catch (error) {
-    console.error('Error updating profile picture:', error);
+    console.error('Error uploading profile picture:', error);
     res.status(500).json({ success: false, message: 'Failed to upload profile picture.' });
   }
 });
 
 app.post('/upload-chat', upload.single('image'), async (req, res) => {
   const message = req.body.message || '';
-  const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
   const username = req.body.username || 'Unknown User';
   const roomName = req.body.roomName;
+
+  let fileUrl = null;
+  let fileType = null;
+
+  if (req.file) {
+    try {
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: 'auto'
+      });
+      fileUrl = result.secure_url;
+      fileType = req.file.mimetype;
+
+      // Delete the temporary file
+      fs.unlinkSync(req.file.path);
+    } catch (error) {
+      console.error('Error uploading to Cloudinary:', error);
+      return res.status(500).json({ success: false, message: 'File upload failed.' });
+    }
+  }
 
   // Create a message object
   const chatMessage = {
     username: username,
     message: message,
     roomName: roomName,
-    image: imagePath,
+    fileUrl: fileUrl,
+    fileType: fileType,
     timestamp: new Date()
   };
 
@@ -138,10 +185,11 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
     const messageToSend = {
       username: username,
       message: message,
-      image: imagePath,
-      timestamp: new Date().toLocaleTimeString(),
+      fileUrl: fileUrl,
+      fileType: fileType,
+      timestamp: new Date().toISOString(), // Full date-time
       profilePic: profilePic
-    };
+    };    
 
     // Emit the message to the room
     io.to(roomName).emit('chat message', messageToSend);

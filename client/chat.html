@@ -4,100 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quack Chat</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 0;
-      position: relative;
-      display: flex;
-      justify-content: space-between; /* Separate sections */
-    }
-    #chat-section {
-      max-width: 600px;
-      margin: 50px auto;
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-      flex-grow: 2; /* Main chat section grows */
-    }
-    #users-section {
-      width: 25%; /* Right third section */
-      margin: 50px 20px;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      padding: 8px;
-      margin-bottom: 10px;
-      background-color: #e0e0e0;
-      border-radius: 5px;
-    }
-    input {
-      padding: 10px;
-      width: calc(100% - 22px);
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #ff5e00;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #signout {
-      position: absolute;
-      top: 10px;
-      right: 10px; /* Move to top-right */
-      background-color: #ff0000;
-      padding: 10px 20px;
-      color: white;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-    }
-    #links {
-      position: absolute;
-      top: 10px;
-      left: 10px; /* Move links to the top-left */
-    }
-    #links a {
-      margin-right: 20px;
-      color: #ff5e00;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    #links a:hover {
-      text-decoration: underline;
-    }
-    #emoji-button {
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      margin-left: 10px;
-      padding: 0 10px;
-    }
-    #emoji-button:hover {
-      color: #ff5e00;
-    }
-    @media (max-width: 600px) {
-      #chat-section {
-        margin: 20px;
-        padding: 10px;
-      }
-      input {
-        width: calc(100% - 20px);
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="chat.css">
 </head>
 <body>
   <div id="links"> <!-- Links to profile.html and user-dashboard.html -->
@@ -233,34 +140,52 @@ function autoEmbedMessage(message) {
 socket.on('chat message', function(msg) {
   console.log('Received message:', msg);
   const item = document.createElement('li');
+  item.classList.add('message-item'); // Add a class for styling
+
+  // Create a container for the profile image and message content
+  const messageContainer = document.createElement('div');
+  messageContainer.classList.add('message-container'); // Add a class for styling
 
   // Create profile image element
   const profileImg = document.createElement('img');
   profileImg.src = msg.profilePic || '/uploads/default-avatar.png';
-  profileImg.style.width = '40px';
-  profileImg.style.height = '40px';
-  profileImg.style.borderRadius = '50%';
-  profileImg.style.marginRight = '10px';
+  profileImg.classList.add('profile-image'); // Add a class for styling
 
-  // Create text element for the message content
-  const text = document.createElement('span');
-  text.textContent = `[${msg.timestamp}] ${msg.username}: ${msg.message}`;
+  // Create a container for the message content
+  const contentDiv = document.createElement('div');
+  contentDiv.classList.add('content-div'); // Add a class for styling
 
-  item.appendChild(profileImg);
-  item.appendChild(text);
+  // Create timestamp element
+  const timestamp = new Date(msg.timestamp).toLocaleString();
+  const timestampSpan = document.createElement('span');
+  timestampSpan.textContent = `[${timestamp}] `;
+  timestampSpan.classList.add('timestamp'); // Add a class for styling
 
-  // Call the autoEmbedMessage function to detect and convert URLs
+  // Create username element
+  const usernameSpan = document.createElement('strong');
+  usernameSpan.textContent = msg.username + ': ';
+
+  // Use the autoEmbedMessage function to process the message
   const content = autoEmbedMessage(msg.message);
 
-  // Create text or embedded element
-  item.innerHTML = `<strong>${msg.username}:</strong> ${content}`;
+  // Create message content element
+  const messageSpan = document.createElement('span');
+  messageSpan.innerHTML = content; // Use innerHTML to allow embedded content
 
-  document.getElementById('messages').appendChild(item);
-  window.scrollTo(0, document.body.scrollHeight);
+  // Append elements to contentDiv
+  contentDiv.appendChild(timestampSpan);
+  contentDiv.appendChild(usernameSpan);
+  contentDiv.appendChild(messageSpan);
+
+  // Append profile image and contentDiv to messageContainer
+  messageContainer.appendChild(profileImg);
+  messageContainer.appendChild(contentDiv);
+
+  // Append messageContainer to item
+  item.appendChild(messageContainer);
 
   // If there's a file in the message
   if (msg.fileUrl) {
-    // Create a file element based on the file type
     let fileElement;
 
     if (msg.fileType.startsWith('image/')) {
@@ -282,12 +207,12 @@ socket.on('chat message', function(msg) {
       fileElement.textContent = 'View Text File';
       fileElement.target = '_blank';
     } else {
-      // Handle other types (shouldn't occur due to server-side filtering)
+      // Handle other types
       fileElement = document.createElement('span');
       fileElement.textContent = 'Unsupported file type.';
     }
 
-    item.appendChild(fileElement);
+    contentDiv.appendChild(fileElement); // Append to contentDiv
   }
 
   // Append the message to the messages list
@@ -295,11 +220,13 @@ socket.on('chat message', function(msg) {
   window.scrollTo(0, document.body.scrollHeight);
 });
 
+
 // Client-side: Display chat history when joining a room
 socket.on('chat history', function(messages) {
   messages.forEach(function(msg) {
     const item = document.createElement('li');
 
+    // Profile Image
     const profileImg = document.createElement('img');
     profileImg.src = msg.profilePic || '/uploads/default-avatar.png';
     profileImg.style.width = '40px';
@@ -307,28 +234,64 @@ socket.on('chat history', function(messages) {
     profileImg.style.borderRadius = '50%';
     profileImg.style.marginRight = '10px';
 
-    const text = document.createElement('span');
-    text.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}] ${msg.username}: ${msg.message}`;
+    // Message Content
+    const contentDiv = document.createElement('div');
 
+    const timestampSpan = document.createElement('span');
+    timestampSpan.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}] `;
+    timestampSpan.style.fontSize = 'smaller';
+    timestampSpan.style.color = 'gray';
+
+    const usernameSpan = document.createElement('strong');
+    usernameSpan.textContent = msg.username + ': ';
+
+    const content = autoEmbedMessage(msg.message);
+    const messageSpan = document.createElement('span');
+    messageSpan.innerHTML = content;
+
+    contentDiv.appendChild(timestampSpan);
+    contentDiv.appendChild(usernameSpan);
+    contentDiv.appendChild(messageSpan);
+
+    // Append to item
     item.appendChild(profileImg);
-    item.appendChild(text);
+    item.appendChild(contentDiv);
 
-    // If there's an image, display it
-    if (msg.image) {
-      const chatImage = document.createElement('img');
-      chatImage.src = msg.image;
-      chatImage.style.maxWidth = '200px';
-      chatImage.style.display = 'block';
-      item.appendChild(chatImage);
+    // If there's a file in the message
+    if (msg.fileUrl) {
+      let fileElement;
+
+      if (msg.fileType.startsWith('image/')) {
+        // Display image
+        fileElement = document.createElement('img');
+        fileElement.src = msg.fileUrl;
+        fileElement.style.maxWidth = '200px';
+        fileElement.style.display = 'block';
+      } else if (msg.fileType === 'application/pdf') {
+        // Display PDF link
+        fileElement = document.createElement('a');
+        fileElement.href = msg.fileUrl;
+        fileElement.textContent = 'View PDF';
+        fileElement.target = '_blank';
+      } else if (msg.fileType === 'text/plain') {
+        // Display text file link
+        fileElement = document.createElement('a');
+        fileElement.href = msg.fileUrl;
+        fileElement.textContent = 'View Text File';
+        fileElement.target = '_blank';
+      } else {
+        // Handle other types
+        fileElement = document.createElement('span');
+        fileElement.textContent = 'Unsupported file type.';
+      }
+
+      item.appendChild(fileElement);
     }
 
     document.getElementById('messages').appendChild(item);
     window.scrollTo(0, document.body.scrollHeight);
   });
 });
-
-
-
 
 // Typing indicator
 input.addEventListener('input', function() {

@@ -4,57 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Realtime Chat</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 0;
-    }
-    #chat {
-      max-width: 600px;
-      margin: 50px auto;
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      padding: 8px;
-      margin-bottom: 10px;
-      background-color: #e0e0e0;
-      border-radius: 5px;
-    }
-    input {
-      padding: 10px;
-      width: calc(100% - 22px);
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #ff5e00;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    @media (max-width: 600px) {
-      #chat {
-        margin: 20px;
-        padding: 10px;
-      }
-      input {
-        width: calc(100% - 20px);
-      }
-    }
-  </style>
-  
+  <link rel="stylesheet" href="index.css">
 </head>
 <body>
   <script src="/socket.io/socket.io.js"></script>
