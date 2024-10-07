@@ -16,6 +16,7 @@
 
   <div id="chat-section">
     <h2>Welcome to Quack chat!</h2>
+    <button id="load-more" style="display: none;">Load More</button>
     <ul id="messages"></ul>
     <form id="form">
       <input id="input" autocomplete="off" placeholder="Type a message..." />
@@ -36,6 +37,8 @@
   <script>
   document.addEventListener('DOMContentLoaded', function() {    
     var socket = io();
+    const defaultProfilePicUrl = 'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png';
+
 
     // Extract the username from the URL query parameter
     var urlParams = new URLSearchParams(window.location.search);
@@ -52,7 +55,7 @@
       // Join the specified room
       socket.emit('join room', roomName);
     }
-
+    let oldestTimestamp = null;
     const input = document.getElementById('input');
     const emojiButton = document.getElementById('emoji-button');
 
@@ -223,75 +226,130 @@ socket.on('chat message', function(msg) {
 
 // Client-side: Display chat history when joining a room
 socket.on('chat history', function(messages) {
-  messages.forEach(function(msg) {
-    const item = document.createElement('li');
+  const messagesList = document.getElementById('messages');
 
-    // Profile Image
-    const profileImg = document.createElement('img');
-    profileImg.src = msg.profilePic || '/uploads/default-avatar.png';
-    profileImg.style.width = '40px';
-    profileImg.style.height = '40px';
-    profileImg.style.borderRadius = '50%';
-    profileImg.style.marginRight = '10px';
+  if (messages.length > 0) {
+    oldestTimestamp = messages[0].timestamp;
 
-    // Message Content
-    const contentDiv = document.createElement('div');
+    messages.forEach(function(msg) {
+      const item = createMessageElement(msg);
+      messagesList.appendChild(item);
+    });
 
-    const timestampSpan = document.createElement('span');
-    timestampSpan.textContent = `[${new Date(msg.timestamp).toLocaleTimeString()}] `;
-    timestampSpan.style.fontSize = 'smaller';
-    timestampSpan.style.color = 'gray';
+    // Show the "Load More" button
+    document.getElementById('load-more').style.display = 'block';
+  } else {
+    // Hide the "Load More" button if no messages are received
+    document.getElementById('load-more').style.display = 'none';
+  }
 
-    const usernameSpan = document.createElement('strong');
-    usernameSpan.textContent = msg.username + ': ';
+  window.scrollTo(0, document.body.scrollHeight);
+});
 
-    const content = autoEmbedMessage(msg.message);
-    const messageSpan = document.createElement('span');
-    messageSpan.innerHTML = content;
+function createMessageElement(msg) {
+  const item = document.createElement('li');
+  item.classList.add('message-item'); // Add a class for styling
 
-    contentDiv.appendChild(timestampSpan);
-    contentDiv.appendChild(usernameSpan);
-    contentDiv.appendChild(messageSpan);
+  // Create a container for the profile image and message content
+  const messageContainer = document.createElement('div');
+  messageContainer.classList.add('message-container'); // Add a class for styling
 
-    // Append to item
-    item.appendChild(profileImg);
-    item.appendChild(contentDiv);
+  // Create profile image element
+  const profileImg = document.createElement('img');
+  profileImg.src = msg.profilePic || defaultProfilePicUrl;
+  profileImg.classList.add('profile-image');
 
-    // If there's a file in the message
-    if (msg.fileUrl) {
-      let fileElement;
+  // Create a container for the message content
+  const contentDiv = document.createElement('div');
+  contentDiv.classList.add('content-div'); // Add a class for styling
 
-      if (msg.fileType.startsWith('image/')) {
-        // Display image
-        fileElement = document.createElement('img');
-        fileElement.src = msg.fileUrl;
-        fileElement.style.maxWidth = '200px';
-        fileElement.style.display = 'block';
-      } else if (msg.fileType === 'application/pdf') {
-        // Display PDF link
-        fileElement = document.createElement('a');
-        fileElement.href = msg.fileUrl;
-        fileElement.textContent = 'View PDF';
-        fileElement.target = '_blank';
-      } else if (msg.fileType === 'text/plain') {
-        // Display text file link
-        fileElement = document.createElement('a');
-        fileElement.href = msg.fileUrl;
-        fileElement.textContent = 'View Text File';
-        fileElement.target = '_blank';
-      } else {
-        // Handle other types
-        fileElement = document.createElement('span');
-        fileElement.textContent = 'Unsupported file type.';
-      }
+  // Create timestamp element
+  const timestamp = new Date(msg.timestamp).toLocaleString();
+  const timestampSpan = document.createElement('span');
+  timestampSpan.textContent = `[${timestamp}] `;
+  timestampSpan.classList.add('timestamp'); // Add a class for styling
 
-      item.appendChild(fileElement);
+  // Create username element
+  const usernameSpan = document.createElement('strong');
+  usernameSpan.textContent = msg.username + ': ';
+
+  // Use the autoEmbedMessage function to process the message
+  const content = autoEmbedMessage(msg.message);
+
+  // Create message content element
+  const messageSpan = document.createElement('span');
+  messageSpan.innerHTML = content; // Use innerHTML to allow embedded content
+
+  // Append elements to contentDiv
+  contentDiv.appendChild(timestampSpan);
+  contentDiv.appendChild(usernameSpan);
+  contentDiv.appendChild(messageSpan);
+
+  // Append profile image and contentDiv to messageContainer
+  messageContainer.appendChild(profileImg);
+  messageContainer.appendChild(contentDiv);
+
+  // Append messageContainer to item
+  item.appendChild(messageContainer);
+
+  // If there's a file in the message
+  if (msg.fileUrl) {
+    let fileElement;
+
+    if (msg.fileType.startsWith('image/')) {
+      // Display image
+      fileElement = document.createElement('img');
+      fileElement.src = msg.fileUrl;
+      fileElement.style.maxWidth = '200px';
+      fileElement.style.display = 'block';
+    } else if (msg.fileType === 'application/pdf') {
+      // Display PDF link
+      fileElement = document.createElement('a');
+      fileElement.href = msg.fileUrl;
+      fileElement.textContent = 'View PDF';
+      fileElement.target = '_blank';
+    } else if (msg.fileType === 'text/plain') {
+      // Display text file link
+      fileElement = document.createElement('a');
+      fileElement.href = msg.fileUrl;
+      fileElement.textContent = 'View Text File';
+      fileElement.target = '_blank';
+    } else {
+      // Handle other types
+      fileElement = document.createElement('span');
+      fileElement.textContent = 'Unsupported file type.';
     }
 
-    document.getElementById('messages').appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
-  });
+    contentDiv.appendChild(fileElement); // Append to contentDiv
+  }
+
+  return item;
+}
+
+
+socket.on('more chat history', function(messages) {
+  const messagesList = document.getElementById('messages');
+
+  if (messages.length > 0) {
+    // Update oldestTimestamp
+    oldestTimestamp = messages[0].timestamp;
+
+    messages.forEach(function(msg) {
+      const item = createMessageElement(msg);
+      messagesList.insertBefore(item, messagesList.firstChild);
+    });
+  } else {
+    // Hide the "Load More" button if no more messages are available
+    document.getElementById('load-more').style.display = 'none';
+  }
 });
+
+document.getElementById('load-more').addEventListener('click', function() {
+  if (oldestTimestamp) {
+    socket.emit('load more messages', { roomName: roomName, lastTimestamp: oldestTimestamp });
+  }
+});
+
 
 // Typing indicator
 input.addEventListener('input', function() {
@@ -320,8 +378,7 @@ socket.on('user list', function(users) {
       usersList.innerHTML = '';  // Clear the current list
 
       users.forEach(function(user) {
-        // Create a list item for each user
-        var item = document.createElement('li');
+        var item = document.createElement('li');        // Create a list item for each user
 
         // Create the profile picture element
         const profileImg = document.createElement('img');

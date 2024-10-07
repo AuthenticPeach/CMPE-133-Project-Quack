@@ -11,6 +11,8 @@ const io = new Server(server);
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
+const defaultProfilePicUrl = 'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png';
+
 
 require('dotenv').config();
 
@@ -179,7 +181,7 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
 
     // Fetch user profile from MongoDB
     const user = await usersCollection.findOne({ username });
-    const profilePic = user ? user.profilePic || '/uploads/default-avatar.png' : '/uploads/default-avatar.png';
+    const profilePic = user ? user.profilePic || defaultProfilePicUrl : defaultProfilePicUrl;
 
     // Prepare the message to be sent to clients
     const messageToSend = {
@@ -201,7 +203,6 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
-
 
 // Route to serve signin.html as the default page
 app.get('/', (req, res) => {
@@ -256,8 +257,29 @@ app.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log('Inserting new user:', { firstName, lastName, username, email, phoneNumber, password });
 
-    // Create a new user and insert into the database
-    await usersCollection.insertOne({ firstName, lastName, username, email, phoneNumber, password: hashedPassword });
+  // Assign a random default profile picture
+  const defaultProfilePics = [
+    'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/p4szwxh3wzbfzq2bx9op.png',
+    'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/zhzxuj1nsoar8ufqlvgn.png',
+    'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/p8ogcgmilh9cwcegzfdk.png',
+    'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/teuavi81io1mpomonulm.png',
+    'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/rwn57mlxu05h14jghllg.png',
+    'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/d62dajduqseghmhuqqui.png',
+    'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/jm0u0vephzkbgq2yadjc.png',
+  ];
+  const randomIndex = Math.floor(Math.random() * defaultProfilePics.length);
+  const profilePic = defaultProfilePics[randomIndex];
+
+  // Create a new user and insert into the database
+  await usersCollection.insertOne({
+    firstName,
+    lastName,
+    username,
+    email,
+    phoneNumber,
+    password: hashedPassword,
+    profilePic: profilePic
+  });
 
     console.log('New user created:', username);
 
@@ -268,6 +290,33 @@ app.post('/signup', async (req, res) => {
   }
 });
 
+app.post('/assign-default-profile-pics', async (req, res) => {
+  try {
+    const defaultProfilePics = [
+      'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/p4szwxh3wzbfzq2bx9op.png',
+      'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/zhzxuj1nsoar8ufqlvgn.png',
+      'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/p8ogcgmilh9cwcegzfdk.png',
+      'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/teuavi81io1mpomonulm.png',
+      'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/rwn57mlxu05h14jghllg.png',
+      'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/d62dajduqseghmhuqqui.png',
+      'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/jm0u0vephzkbgq2yadjc.png',
+    ];
+
+    const usersWithoutProfilePic = await usersCollection.find({ profilePic: { $exists: false } }).toArray();
+
+    for (const user of usersWithoutProfilePic) {
+      const randomIndex = Math.floor(Math.random() * defaultProfilePics.length);
+      const profilePic = defaultProfilePics[randomIndex];
+
+      await usersCollection.updateOne({ _id: user._id }, { $set: { profilePic } });
+    }
+
+    res.json({ success: true, message: 'Assigned default profile pictures to users without profile pictures.' });
+  } catch (error) {
+    console.error('Error assigning default profile pictures:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while assigning default profile pictures.' });
+  }
+});
 
 // Route to handle saving the bio
 app.post('/save-bio', async (req, res) => {
@@ -318,7 +367,7 @@ app.get('/get-user-profile', async (req, res) => {
 
     res.json({
       success: true,
-      profilePic: user.profilePic || '/uploads/default-avatar.png',
+      profilePic: user.profilePic || defaultProfilePicUrl,
       bio: user.bio || '',
       firstName: user.firstName || '',
       lastName: user.lastName || '',
@@ -760,20 +809,74 @@ io.on('connection', (socket) => {
   
     socket.join(roomName);
   
-    // Fetch the last 25 messages from the database
+    // Fetch the most recent 25 messages from the database
     const messages = await messagesCollection.find({ roomName: roomName })
-      .sort({ timestamp: 1 })
+      .sort({ timestamp: -1 }) // Sort by newest first
       .limit(25)
       .toArray();
-  
+
+    // Reverse the array to display messages in chronological order
+    messages.reverse();
     // Log the messages being sent as chat history
     console.log('Sending chat history:', messages);
-  
+
+    // **Define 'usernames' before using it**
+    const usernames = [...new Set(messages.map(msg => msg.username))];    
+
+    // Fetch profilePics for these usernames
+    const usersData = await usersCollection.find({ username: { $in: usernames } }).toArray();
+
+    // Create a map of username to profilePic
+    const userProfilePicMap = {};
+    usersData.forEach(user => {
+      userProfilePicMap[user.username] = user.profilePic || defaultProfilePicUrl;
+    });
+
+    // Attach profilePic to each message
+    messages.forEach(msg => {
+      msg.profilePic = userProfilePicMap[msg.username] || defaultProfilePicUrl;
+    });
+
     // Send the chat history to the client
     socket.emit('chat history', messages);
-  
+
     // Notify the room that a user has joined
     io.to(roomName).emit('room message', `${users[socket.id]?.username || 'Unknown User'} has joined the room.`);
+  });
+
+  // Handle 'load more messages' event
+  socket.on('load more messages', async ({ roomName, lastTimestamp }) => {
+    // Fetch the next 25 older messages
+    const messages = await messagesCollection.find({
+      roomName: roomName,
+      timestamp: { $lt: new Date(lastTimestamp) }
+    })
+    .sort({ timestamp: -1 }) // Sort by newest first
+    .limit(25)
+    .toArray();
+  
+    // Reverse the messages to display in chronological order
+    messages.reverse();
+  
+    // **Define 'usernames' before using it**
+    const usernames = [...new Set(messages.map(msg => msg.username))];
+  
+    // Fetch profilePics for these usernames
+    const usersData = await usersCollection.find({ username: { $in: usernames } }).toArray();
+  
+    // Create a map of username to profilePic
+    const userProfilePicMap = {};
+    usersData.forEach(user => {
+      userProfilePicMap[user.username] = user.profilePic || defaultProfilePicUrl;
+    });
+  
+    // Attach profilePic to each message
+    messages.forEach(msg => {
+      msg.profilePic = userProfilePicMap[msg.username] || defaultProfilePicUrl;
+    });
+  
+    // Send the messages to the client
+    socket.emit('more chat history', messages);
   });
   
 
@@ -828,12 +931,13 @@ io.on('connection', (socket) => {
     // Store full user object with profile pic
     users[socket.id] = {
       username: user.username,
-      profilePic: user.profilePic || '/uploads/default-avatar.png'
+      profilePic: user.profilePic || defaultProfilePicUrl
     };
   
     // Emit updated user list
     io.emit('user list', Object.values(users));
   });
+  
 
   // Handle disconnection
   socket.on('disconnect', () => {
@@ -893,6 +997,7 @@ io.on('connection', (socket) => {
   };
   // Store the message in the database
   await messagesCollection.insertOne(chatMessage);
+  await messagesCollection.createIndex({ timestamp: -1 });
   console.log('Storing message in DB:', chatMessage);
 
   // Emit the message to the room
