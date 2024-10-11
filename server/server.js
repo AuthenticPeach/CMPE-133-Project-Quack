@@ -917,6 +917,26 @@ io.on('connection', (socket) => {
     socket.emit('error', 'Server error: Database not connected');
     return;
   }
+  socket.on('edit message', async (data) => {
+    console.log('Received edit message event:', data); // Debugging log
+    const { messageId, newContent } = data;
+
+    try {
+      const result = await messagesCollection.updateOne(
+        { _id: new ObjectId(messageId) },
+        { $set: { message: newContent, edited: true } }
+      );
+
+      if (result.modifiedCount > 0) {
+        io.emit('message edited', { messageId, newContent });
+        console.log(`Message with ID ${messageId} was updated successfully.`);
+      } else {
+        console.log(`Message with ID ${messageId} not found.`);
+      }
+    } catch (error) {
+      console.error('Error updating message:', error);
+    }
+  });
 
   // Handle when a user joins a group chat room
   socket.on('join room', async (roomName) => {
@@ -1181,3 +1201,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
