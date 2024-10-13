@@ -5,8 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet"/>
-    <link rel="stylesheet" href="profile.css">
+    <link
+      href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="profile.css" />
   </head>
   <body>
     <nav class="sidebar close">
@@ -42,25 +45,19 @@
             </li>
 
             <li class="nav-link">
-              <a href="#">
+              <a href="#" class="contact-btn">
                 <i class="bx bxs-contact icon"></i>
-                <span class="text nav-text">Contact</span>
+                <span class="text nav-text" id="contactText">Contact</span>
               </a>
             </li>
 
             <li class="nav-link">
-              <a href="#">
+              <a href="#" class="favorite-btn">
                 <i class="bx bx-heart icon"></i>
-                <span class="text nav-text">Favorites</span>
+                <span class="text nav-text" id="favoriteText">Favorites</span>
               </a>
             </li>
 
-            <li class="nav-link">
-              <a href="#">
-                <i class="bx bx-archive icon"></i>
-                <span class="text nav-text">Archive</span>
-              </a>
-            </li>
           </ul>
         </div>
 
@@ -78,7 +75,7 @@
                 src=""
                 alt=""
                 class="profile-pic"
-                style="width: 40px; margin: 8px; height: auto"
+                style="width: 40px; margin: 10px; height: auto"
               />
               <p class="text nav-text full-name"></p>
             </a>
@@ -87,7 +84,17 @@
       </div>
     </nav>
 
+    <!-- New Sidebar (Hidden Initially) -->
+    <nav class="sidebar2">
+      <h1 id="title">CONTACT</h1>
+      <ul class="contactList" style="display: none; overflow-y: auto; max-height: calc(100vh - 90px); overflow-x: hidden;"></ul>
+      <ul class="favoriteList" style="display: none; overflow-y: auto; max-height: calc(100vh - 90px); overflow-x: hidden;"></ul>
+    </nav>
+
     <section class="home">
+      <button type="button" class="normalButton" id="deleteAccountBtn">
+        Delete Account
+      </button>
       <div class="grid-container">
         <div>
           <img class="profile-pic" src="" alt="Profile Picture" />
@@ -103,7 +110,7 @@
 
         <div>
           <h4>Your Profile</h4>
-          <form id="profile-form">
+          <form class="profile-form">
             <p>
               <label>First Name:</label>
               <input type="text" name="firstName" id="firstName" readonly />
@@ -157,7 +164,7 @@
               </button>
             </div>
           </form>
-          <form id="profile-form">
+          <form class="profile-form">
             <button type="button" class="normalButton" id="editPasswordBtn">
               Edit Password
             </button>
@@ -228,12 +235,308 @@
     <script>
       const body = document.querySelector("body"),
         sidebar = body.querySelector("nav"),
+        sidebar2 = document.querySelector(".sidebar2"),
         toggle = body.querySelector(".toggle"),
-        modeText = body.querySelector(".mode-text");
+        contactsBtn = document.querySelector(".contact-btn"),
+        contactIcon = document.querySelector(".bxs-contact"),
+        contactText = document.getElementById('contactText')
+        favoriteBtn = document.querySelector(".favorite-btn");
+        favoriteIcon = document.querySelector(".bx-heart"),
+        favoriteText = document.getElementById('favoriteText')
+
+      contactsList = document.getElementsByClassName("contactList")[0];
+      favoriteList = document.getElementsByClassName("favoriteList")[0];
 
       toggle.addEventListener("click", () => {
         sidebar.classList.toggle("close");
+        adjustSidebar2();
       });
+
+      contactsBtn.addEventListener("click", () => {
+        document.getElementById("title").textContent = "CONTACT";
+        if (
+          sidebar2.classList.contains("open") &
+          (contactsList.style.display === "block")
+        ) {
+          contactsList.style.display = "none";
+          sidebar2.classList.toggle("open");
+          contactsBtn.style.backgroundColor = '';
+          contactIcon.style.color = '';
+          contactText.style.color = '';
+          adjustSidebar2(); // Adjust position of content
+        } else if (
+          sidebar2.classList.contains("open") &
+          (favoriteList.style.display === "block")
+        ) {
+          contactsList.style.display = "block";
+          favoriteList.style.display = "none";
+          contactsBtn.style.backgroundColor = 'var(--text-color)';
+          contactIcon.style.color = 'var(--sidebar-color)';
+          contactText.style.color = 'var(--sidebar-color)';
+          favoriteBtn.style.backgroundColor = '';
+          favoriteIcon.style.color = '';
+          favoriteText.style.color = ''
+          adjustSidebar2();
+        } else {
+          sidebar2.classList.toggle("open");
+          contactsList.style.display = "block";
+          favoriteList.style.display = "none";
+          contactsBtn.style.backgroundColor = 'var(--text-color)';
+          contactIcon.style.color = 'var(--sidebar-color)';
+          contactText.style.color = 'var(--sidebar-color)';
+          adjustSidebar2();
+        }
+
+        // Fetch and display the contacts list
+        fetch(`/get-contacts?username=${username}`)
+          .then((response) => response.json())
+          .then((data) => {
+            contactsList.innerHTML = ""; // Clear the previous list
+
+            if (data.contacts.length === 0) {
+              // Display a message if contacts list is empty
+              var emptyMessage = document.createElement("li");
+              emptyMessage.textContent = "Your contacts list is empty.";
+              emptyMessage.style.fontStyle = "italic";
+              contactsList.appendChild(emptyMessage);
+            } else {
+              data.contacts.forEach(function (contact) {
+                var div1 = document.createElement("div");
+                var profileImg = document.createElement("img");
+                profileImg.src =
+                  contact.profilePic || "/uploads/default-avatar.png";
+                var name = document.createElement("p");
+                name.textContent = contact.username;
+                div1.appendChild(profileImg);
+                div1.appendChild(name);
+
+                var div2 = document.createElement("div");
+                div2.style.marginRight = "9px"
+                var favoriteImg = document.createElement("img");
+                favoriteImg.src = contact.isFavorite
+                  ? "img/favoriteBtn.jpg"
+                  : "img/unfavoriteBtn.jpg";
+                var deleteBtn = document.createElement("i");
+                deleteBtn.className = "bx bxs-x-circle";
+                deleteBtn.addEventListener("click", function () {
+                  removeContact(contact.username);
+                });
+                div2.appendChild(favoriteImg);
+                div2.appendChild(deleteBtn);
+
+                var div3 = document.createElement("div");
+                div3.className = "contact_list";
+                div3.appendChild(div1);
+                div3.appendChild(div2);
+
+                var li = document.createElement("li");
+                li.style.marginTop = "30px";
+
+                li.appendChild(div3);
+
+                // Handle adding/removing from favorites
+                favoriteImg.addEventListener("click", function () {
+                  if (contact.isFavorite) {
+                    removeFavorite(contact.username);
+                  } else {
+                    addFavorite(contact.username);
+                  }
+                });
+
+                contactsList.appendChild(li);
+              });
+            }
+          })
+          .catch((error) => console.error("Error fetching contacts:", error));
+      });
+
+      function addFavorite(contactUsername) {
+        fetch(`/add-favorite`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username,
+            contactUsername: contactUsername,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(`${contactUsername} has been added to your favorites.`);
+              contactsBtn.click(); // Refresh contacts
+              favoriteBtn.click(); // Open favorites
+              favoriteBtn.click(); // Close favorites to trigger refresh
+            } else {
+              alert("Failed to add to favorites.");
+            }
+          })
+          .catch((error) => console.error("Error adding to favorites:", error));
+      }
+
+      function removeFavorite(contactUsername) {
+        fetch(`/remove-favorite`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username,
+            contactUsername: contactUsername,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(`${contactUsername} has been removed from your favorites.`);
+              contactsBtn.click(); // Refresh contacts
+              favoriteBtn.click(); // Open favorites
+              favoriteBtn.click(); // Close favorites to trigger refresh
+            } else {
+              alert("Failed to remove from favorites.");
+            }
+          })
+          .catch((error) =>
+            console.error("Error removing from favorites:", error)
+          );
+      }
+
+      // Function to remove contact
+      function removeContact(contactUsername) {
+        fetch(`/remove-contact`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: username,
+            contactUsername: contactUsername,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(`${contactUsername} has been removed from your contacts.`);
+              contactsBtn.click(); // Simulate another click to refresh the list
+            } else {
+              alert("Failed to remove contact.");
+            }
+          })
+          .catch((error) => console.error("Error removing contact:", error));
+      }
+
+      favoriteBtn.addEventListener("click", () => {
+        document.getElementById("title").textContent = "FAVORITE";
+        if (
+          sidebar2.classList.contains("open") &
+          (favoriteList.style.display === "block")
+        ) {
+          favoriteList.style.display = "none";
+          sidebar2.classList.toggle("open");
+          favoriteBtn.style.backgroundColor = '';
+          favoriteIcon.style.color = '';
+          favoriteText.style.color = ''
+          adjustSidebar2(); // Adjust position of content
+        } else if (
+          sidebar2.classList.contains("open") &
+          (contactsList.style.display === "block")
+        ) {
+          contactsList.style.display = "none";
+          favoriteList.style.display = "block";
+          favoriteBtn.style.backgroundColor = 'var(--text-color)';
+          favoriteIcon.style.color = 'var(--sidebar-color)';
+          favoriteText.style.color = 'var(--sidebar-color';
+          contactsBtn.style.backgroundColor = '';
+          contactIcon.style.color = '';
+          contactText.style.color = '';
+          adjustSidebar2();
+        } else {
+          sidebar2.classList.toggle("open");
+          contactsList.style.display = "none";
+          favoriteList.style.display = "block";
+          favoriteBtn.style.backgroundColor = 'var(--text-color)';
+          favoriteIcon.style.color = 'var(--sidebar-color)';
+          favoriteText.style.color = 'var(--sidebar-color';
+          adjustSidebar2();
+        }
+
+        // Fetch and display the favorites list
+        fetch(`/get-contacts?username=${username}`)
+          .then((response) => response.json())
+          .then((data) => {
+            favoriteList.innerHTML = ""; // Clear the previous list
+
+            // Filter contacts to get favorites
+            var favoriteContacts = data.contacts.filter(
+              (contact) => contact.isFavorite
+            );
+
+            if (favoriteContacts.length === 0) {
+              // Display a message if favorites list is empty
+              var emptyMessage = document.createElement("li");
+              emptyMessage.textContent = "Your favorites list is empty.";
+              emptyMessage.style.fontStyle = "italic";
+              favoriteList.appendChild(emptyMessage);
+            } else {
+              favoriteContacts.forEach(function (contact) {
+                var div1 = document.createElement("div");
+                div1.style.display = "flex";
+                var profileImg = document.createElement("img");
+                profileImg.src =
+                  contact.profilePic || "/uploads/default-avatar.png";
+                var name = document.createElement("p");
+                name.textContent = contact.username;
+                div1.appendChild(profileImg);
+                div1.appendChild(name);
+
+                var unfavoriteBtn = document.createElement("img");
+                unfavoriteBtn.src = "img/favoriteBtn.jpg";
+                unfavoriteBtn.style.cursor = "pointer";
+                unfavoriteBtn.addEventListener("click", function () {
+                  removeFavorite(contact.username);
+                });
+
+                var div2 = document.createElement("div");
+                div2.className = "favorite_list";
+                div2.appendChild(unfavoriteBtn);
+                div2.appendChild(div1);
+
+                var li = document.createElement("li");
+                li.appendChild(div2);
+                li.style.marginTop = "30px";
+
+                favoriteList.appendChild(li);
+              });
+            }
+          })
+          .catch((error) =>
+            console.error("Error fetching favorite contacts:", error)
+          );
+      });
+
+      function adjustSidebar2() {
+        if (sidebar.classList.contains("close")) {
+          sidebar2.style.left = "88px";
+          document.querySelector(".home").style.left =
+            sidebar2.classList.contains("open") ? "388px" : "88px";
+          if (sidebar2.classList.contains("open")) {
+            document.querySelector(".home").style.width = "calc(100% - 390px)";
+          } else {
+            document.querySelector(".home").style.width = "calc(100% - 88px)";
+          }
+        } else {
+          sidebar2.style.left = "250px";
+          document.querySelector(".home").style.left =
+            sidebar2.classList.contains("open") ? "550px" : "250px";
+          if (sidebar2.classList.contains("open")) {
+            document.querySelector(".home").style.width = "calc(100% - 550px)";
+            document.querySelector(".home").style.overflow = "hidden";
+          } else {
+            document.querySelector(".home").style.width = "calc(100% - 250px)";
+          }
+        }
+      }
     </script>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -267,6 +570,8 @@
       );
       const changePasswordBtn = document.getElementById("changePasswordBtn");
       const passwordMessage = document.getElementById("password-message");
+
+      const deleteAccountBtn = document.getElementById('deleteAccountBtn'); 
 
       // Retrieve the username from localStorage
       const username = localStorage.getItem("username");
@@ -619,6 +924,32 @@
               "An error occurred while changing the password.";
           });
       });
+
+      // Delete Account 
+      deleteAccountBtn.addEventListener("click", function() {
+        if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+          return;
+        }
+        fetch("/delete-account", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({username}),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            alert("Your account has been deleted");
+            window.location.href = '/signin';
+          } else {
+            alert('Failed to delete account.');
+          }
+        }) 
+        .catch((error) => {
+          console.error("Error deleting account:", error);
+        });
+      }) 
     </script>
   </body>
 </html>

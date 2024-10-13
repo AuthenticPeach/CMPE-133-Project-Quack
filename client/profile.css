@@ -1,4 +1,3 @@
-
 * {
   margin: 0;
   padding: 0;
@@ -28,19 +27,37 @@ body {
 }
 
 /* ===== Sidebar ===== */
-.sidebar {
+.sidebar,
+.sidebar2 {
   position: fixed;
   top: 0;
-  left: 0;
   height: 100%;
   width: 250px;
   padding: 10px 14px;
   background: var(--sidebar-color);
   transition: var(--tran-05);
+}
+
+.sidebar {
+  left: 0;
   z-index: 100;
 }
+
+.sidebar2 {
+  width: 300px;
+  left: 250px;
+  display: none;
+  padding-right: 5px;
+  background: var(--body-color);
+  z-index: 1;
+}
+
 .sidebar.close {
   width: 88px;
+}
+
+.sidebar2.open {
+  display: block;
 }
 
 /* ===== Reusable code - Here ===== */
@@ -75,11 +92,11 @@ body {
 }
 
 .sidebar .text {
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 500;
   white-space: nowrap;
   opacity: 1;
-  margin-left: 152x;
+  margin-left: 10px;
 }
 .sidebar.close .text {
   opacity: 0;
@@ -128,8 +145,8 @@ header .image-text .profession {
   transform: translateY(-50%) rotate(180deg);
   height: 25px;
   width: 25px;
-  background-color: var(--primary-color);
-  color: var(--sidebar-color);
+  background-color: var(--sidebar-color);
+  color: var(--primary-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -137,10 +154,6 @@ header .image-text .profession {
   font-size: 22px;
   cursor: pointer;
   transition: var(--tran-05);
-}
-
-body.dark .sidebar header .toggle {
-  color: var(--text-color);
 }
 
 .sidebar.close .toggle {
@@ -170,10 +183,6 @@ body.dark .sidebar header .toggle {
 .sidebar li a:hover .icon,
 .sidebar li a:hover .text {
   color: var(--sidebar-color);
-}
-body.dark .sidebar li a:hover .icon,
-body.dark .sidebar li a:hover .text {
-  color: var(--text-color);
 }
 
 .sidebar .menu-bar {
@@ -220,17 +229,14 @@ body.dark .sidebar li a:hover .text {
   transition: var(--tran-04);
 }
 
-body.dark .switch::before {
+.switch::before {
   left: 20px;
 }
 
 .home {
   position: absolute;
   top: 0;
-  top: 0;
-  left: 250px;
   height: 100vh;
-  width: calc(100% - 250px);
   transition: var(--tran-05);
   background: linear-gradient(
       rgba(220, 216, 216, 0.5),
@@ -238,6 +244,7 @@ body.dark .switch::before {
     ),
     url("img/Background.png");
   background-size: cover;
+  overflow-y: auto;
 }
 
 .home .text {
@@ -248,12 +255,19 @@ body.dark .switch::before {
 }
 
 .sidebar.close ~ .home {
-  left: 78px;
+  left: 88px;
   height: 100vh;
-  width: calc(100% - 78px);
+  width: calc(100% - 88px);
 }
-body.dark .home .text {
-  color: var(--text-color);
+
+.sidebar2 li {
+  list-style: none;
+  margin-top: 10px;
+}
+
+.sidebar2 li a {
+  text-decoration: none;
+  color: black;
 }
 
 .grid-container {
@@ -279,6 +293,7 @@ body.dark .home .text {
   grid-column: span 2;
   min-height: 150px;
   padding-bottom: 0;
+  
 }
 
 .profile-pic {
@@ -309,12 +324,119 @@ body.dark .home .text {
   background-color: #0704b9;
 }
 
+.hidden {
+  display: none;
+}
+
+.contact_list,
+.favorite_list {
+  display: flex;
+  justify-content: space-between;
+}
+
+.contact_list div {
+  display: flex;
+}
+.contact_list div:first-of-type {
+  width: 180px;
+}
+.contact_list div:first-of-type img {
+  width: 45x;
+  height: 45px;
+  border-radius: 50%;
+}
+.contact_list div:first-of-type p {
+  font-size: 22px;
+  margin: auto 0 auto 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact_list div:nth-of-type(2) img {
+  width: 23px;
+  height: 23px;
+  margin: auto 15px;
+  cursor: pointer;
+}
+.contact_list div:nth-of-type(2) i {
+  color: red;
+  align-items: center;
+  font-size: 25px;
+  margin: auto;
+  cursor: pointer;
+}
+
+.favorite_list img {
+  height: 35px;
+  width: 35px;
+  margin: auto 0;
+}
+.favorite_list div {
+  width: 235px;
+  margin-left: 20px;
+}
+.favorite_list div img {
+  height: 45px;
+  width: 45px;
+  border-radius: 50%;
+}
+.favorite_list div p {
+  font-size: 22px;
+  margin: auto 0 auto 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#title {
+  margin-top: 13px;
+  font-size: 30px;
+  position: sticky;
+  top: 0;
+}
+
+.favoriteList::-webkit-scrollbar,
+.contactList::-webkit-scrollbar {
+  width: 5px;
+  border-radius: 50%;
+}
+
+.favoriteList::-webkit-scrollbar-track,
+.contactList::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 20px;
+}
+
+.favoriteList::-webkit-scrollbar-thumb,
+.contactList::-webkit-scrollbar-thumb {
+  background-color: #8ca39f;
+  border-radius: 20px;
+}
+
+.favoriteList::-webkit-scrollbar-thumb:hover,
+.contactList::-webkit-scrollbar-thumb:hover {
+  background-color: #226c5c;
+}
+
+/* Below is for profile page */
+#bio {
+  min-width: 850px;
+  max-width: 850px;
+  min-height: 160px;
+  font-size: 16px;
+  padding: 28px;
+  margin: 1px auto;
+  display: none;
+  overflow-y: auto;
+}
+
 .normalButton {
   background-color: #226c5c;
   color: white;
   border: none;
   padding: 5px 10px;
-  font-size: 15px;
+  font-size: 17px;
   cursor: pointer;
   border-radius: 5px;
   margin-top: 20px;
@@ -325,20 +447,6 @@ body.dark .home .text {
 .normalButton:hover {
   background-color: #1a5548;
   transform: scale(1.05);
-}
-
-.hidden {
-  display: none;
-}
-
-#bio {
-  min-width: 850px;
-  max-width: 850px;
-  min-height: 180px;
-  font-size: 16px;
-  padding: 28px;
-  margin: 1px auto;
-  display: none;
 }
 
 #emoji-button {
@@ -360,12 +468,12 @@ body.dark .home .text {
 }
 
 #save-bio-btn {
-  margin-left: 805px;
-  width: 90px;
+  margin-left: 802px;
+  width: 92px;
   transform: translateY(-35px);
 }
 
-#profile-form {
+.profile-form {
   margin: 0 auto;
   text-align: left;
   width: 90%;
@@ -380,7 +488,7 @@ label {
   font-weight: bold;
 }
 
-#profile-form input {
+.profile-form input {
   height: 25px;
   padding: 5px;
   margin-top: 15px;
@@ -400,32 +508,39 @@ h5 {
   margin-top: 10px;
 }
 
-#profile-form input {
+.profile-form input {
   font-size: 15px;
   border: none;
   background-color: #ecf1f0;
   border-radius: 5px;
 }
 
+#deleteAccountBtn {
+  position: absolute;
+  right: 20px;
+  background-color: red;
+  width: 111px;
+}
+
 #showBtn {
-  width: 115px;
-  margin-left: 195px;
+  width: 123px;
+  margin-left: 177px;
 }
 
 #editBtn {
-  width: 100px;
+  width: 111px;
   background-color: #f4a62a;
 }
 
 #cancelBtn {
   display: none;
   background-color: red;
-  margin-left: 210px;
+  margin-left: 200px;
   width: 75px;
 }
 
 #updateBtn {
-  width: 125px;
+  width: 136px;
   display: none;
 }
 
@@ -443,20 +558,20 @@ h5 {
 
 #editPasswordBtn {
   background-color: #f4a62a;
-  margin: 0 290px;
+  margin: 0 271px;
   position: relative;
   top: -8px;
-  width: 130px;
+  width: 149px;
 }
 
 #changePasswordBtn {
-  width: 160px;
+  width: 168px;
 }
 
 #cancelPasswordBtn {
   background-color: red;
   width: 75px;
-  margin-left: 175px;
+  margin-left: 169px;
 }
 
 #password-message {
