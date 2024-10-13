@@ -195,9 +195,11 @@ a.download-button:hover {
 .reply-button {
   background-color: transparent;
   border: none;
+  display: none;
+  padding: 4px;
   color: #007BFF;
   cursor: pointer;
-  margin-left: auto;
+  margin-left: 5px;
   font-size: 14px;
 }
 
@@ -209,6 +211,17 @@ a.download-button:hover {
   pointer-events: none; /* Allow click to pass through to the button */
 }
 
+.message-container:hover .reply-button,
+.message-container:hover .edit-button {
+  display: inline-block;
+  display: inline-block;
+}
+
+.edit-button {
+  display: none;
+  font-size: 0.8em;
+  padding: 4px;
+}
 
 
 /* Responsive adjustments */
