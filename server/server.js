@@ -525,6 +525,8 @@ app.post('/update-profile', async (req, res) => {
       { username: username },
       {
         $set: {
+          firstName: firstName,
+          lastName: lastName,
           phoneNumber: phoneNumber,
           normalizedPhoneNumber: normalizedPhoneNumber // Update the normalized phone number
         }
@@ -583,6 +585,35 @@ app.post('/change-password', async (req, res) => {
     res.status(500).json({ success: false, message: 'An error occurred' });
   }
 });
+
+// Route to delete account
+app.delete("/delete-account", async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const user = await usersCollection.findOne({ username: username });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const result = await usersCollection.deleteOne({ username: username });
+
+    if (result.deletedCount === 1) {
+      res.json({ success: true, message: "Account deleted successfully" });
+    } else {
+      res
+        .status(500)
+        .json({ success: false, message: "Failed to delete account" });
+    }
+  } catch (error) {
+    console.error("Error deleting account:", error);
+    res.status(500).json({ success: false, message: "An error occurred" });
+  }
+});
+
 ///Inbox system
 
 // Search users endpoint
