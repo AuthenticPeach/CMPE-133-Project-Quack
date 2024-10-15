@@ -16,7 +16,7 @@ const sanitizeFilename = require('sanitize-filename');
 // Environment variables configuration
 require('dotenv').config();
 
-const defaultProfilePicUrl = 'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png';
+const defaultProfilePicUrl = 'https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/p8ogcgmilh9cwcegzfdk.png';
 
 // MongoDB connection string from MongoDB Atlas
 const uri = 'mongodb+srv://travispeach:ebr4SFmM7vLTp9p@quackcluster1.hwojm.mongodb.net/';
@@ -62,6 +62,8 @@ const fileFilter = (req, file, cb) => {
     cb(new Error('Invalid file type. Only images, text files, and PDFs are allowed.'));
   }
 };
+
+let usersCollection, messagesCollection, inboxCollection;
 
 // Multer upload middleware
 const upload = multer({ storage: storage, fileFilter: fileFilter });
@@ -792,6 +794,17 @@ app.post('/remove-contact', async (req, res) => {
   }
 });
 
+app.get('/inbox', async (req, res) => {
+  const { username } = req.query;
+
+  try {
+    const messages = await inboxCollection.find({ toUser: username, isRead: false }).toArray();
+    res.json({ success: true, messages });
+  } catch (error) {
+    console.error('Error fetching inbox:', error);
+    res.status(500).json({ success: false, message: 'Error fetching inbox.' });
+  }
+});
 
 app.post('/send-message', async (req, res) => {
   const { fromUser, toUser, message } = req.body;
@@ -804,6 +817,13 @@ app.post('/send-message', async (req, res) => {
       timestamp: new Date(),
       isRead: false
     });
+
+    // Notify the recipient if they are online
+    const recipientSocket = Object.values(users).find(user => user.username === toUser);
+    if (recipientSocket) {
+      io.to(recipientSocket.socketId).emit('new inbox message', { fromUser, message });
+    }
+
     res.json({ success: true });
   } catch (error) {
     console.error('Error sending message:', error);
@@ -811,17 +831,6 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-app.get('/inbox', async (req, res) => {
-  const { username } = req.query;
-
-  try {
-    const messages = await inboxCollection.find({ toUser: username, isRead: false }).toArray();
-    res.json({ success: true, messages });
-  } catch (error) {
-    console.error('Error fetching inbox:', error);
-    res.status(500).json({ success: false, message: 'Error fetching inbox.' });
-  }
-});
 
 app.post('/mark-as-read', async (req, res) => {
   const { messageId } = req.body;
@@ -1116,13 +1125,25 @@ io.on('connection', (socket) => {
     // Store full user object with profile pic
     users[socket.id] = {
       username: user.username,
-      profilePic: user.profilePic || defaultProfilePicUrl
+      profilePic: user.profilePic || defaultProfilePicUrl,
+      socketId: socket.id // Store socket ID for real-time notifications     
     };
   
     // Emit updated user list
     io.emit('user list', Object.values(users));
   });
   
+  // Handle inbox notifications
+  socket.on('check inbox', async (username) => {
+    try {
+      const messages = await inboxCollection.find({ toUser: username, isRead: false }).toArray();
+      if (messages.length > 0) {
+        socket.emit('new inbox messages', messages.length);
+      }
+    } catch (error) {
+      console.error('Error checking inbox:', error);
+    }
+  });
 
   // Handle disconnection
   socket.on('disconnect', () => {
@@ -1219,12 +1240,14 @@ async function connectDB() {
     const db = client.db('chatApp');
     usersCollection = db.collection('users');
     messagesCollection = db.collection('messages');
+    inboxCollection = db.collection('inbox'); // Initialize the inbox collection
     console.log('Connected to MongoDB and collections initialized');
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
     process.exit(1);  // Exit if unable to connect to MongoDB
   }
 }
+
 
 connectDB();
 

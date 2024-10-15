@@ -58,19 +58,24 @@
     <div class="modal-content">
       <span class="close">&times;</span>
       <h3>Your Inbox</h3>
-      <p id="inbox-message">Your inbox is looking pretty empty!</p>
+<!----     <p id="inbox-message">Your inbox is looking pretty empty!</p> -->  
+    <ul id="inbox-messages-list"></ul>
     </div>
   </div>
 
-  <!-- User Interaction Modal -->
-  <div id="userModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h3 id="modal-username">Username</h3>
-      <button id="add-friend-btn" onclick="addContact(username)">Add Friend</button>
-      <button id="start-chat-btn" onclick="startPrivateChat(username)">Start Chat</button>
-    </div>
+<!-- User Interaction Modal -->
+<div id="userModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3 id="modal-username">Username</h3>
+    <button id="add-friend-btn">Add Friend</button>
+    <button id="start-chat-btn">Start Chat</button>
+    <!-- New message form -->
+    <h4>Send a Message</h4>
+    <textarea id="message-text" placeholder="Type your message..."></textarea>
+    <button id="send-message-btn">Send Message</button>
   </div>
+</div>
 
   <!-- Contacts List -->
   <ul id="contacts-list" style="display: none;"></ul>
@@ -164,6 +169,80 @@
     }
   }
 
+
+  // Fetch inbox messages on load
+  fetch(`/inbox?username=${encodeURIComponent(username)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success && data.messages.length > 0) {
+        // Update the inbox notification
+        var inboxButton = document.getElementById('inbox-button');
+        inboxButton.textContent = `Inbox (${data.messages.length})`;
+      }
+    })
+    .catch(error => console.error('Error fetching inbox:', error));
+
+  // Listen for real-time inbox notifications
+  socket.on('new inbox message', (data) => {
+    alert(`You have a new message from ${data.fromUser}: "${data.message}"`);
+    // Optionally, update the inbox button
+    var inboxButton = document.getElementById('inbox-button');
+    var currentCount = parseInt(inboxButton.textContent.match(/\d+/)) || 0;
+    inboxButton.textContent = `Inbox (${currentCount + 1})`;
+  });
+
+// Open the inbox modal
+inboxBtn.onclick = function() {
+  inboxModal.style.display = 'block';
+
+  // Fetch inbox messages
+  fetch(`/inbox?username=${encodeURIComponent(username)}`)
+    .then(response => response.json())
+    .then(data => {
+      var inboxMessagesList = document.getElementById('inbox-messages-list');
+      inboxMessagesList.innerHTML = ''; // Clear existing messages
+
+      if (data.success && data.messages.length > 0) {
+        data.messages.forEach(function(message) {
+          var li = document.createElement('li');
+          li.textContent = `${message.fromUser}: ${message.message}`;
+
+          // Mark message as read when clicked
+          li.addEventListener('click', function() {
+            markMessageAsRead(message._id);
+            li.style.fontWeight = 'normal'; // Visually indicate it's read
+          });
+
+          inboxMessagesList.appendChild(li);
+        });
+      } else {
+        inboxMessagesList.innerHTML = '<li>Your inbox is looking pretty empty!</li>';
+      }
+    })
+    .catch(error => console.error('Error fetching inbox messages:', error));
+}
+
+function markMessageAsRead(messageId) {
+  fetch('/mark-as-read', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ messageId: messageId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      console.log('Message marked as read');
+      // Optionally update the inbox count
+    } else {
+      console.error('Failed to mark message as read');
+    }
+  })
+  .catch(error => console.error('Error marking message as read:', error));
+}
+
+
     // Search functionality for finding users
     var searchInput = document.getElementById('search-input');
     searchInput.addEventListener('input', function() {
@@ -184,6 +263,33 @@
       }
     });
 
+
+    function sendMessage(toUser, message) {
+      fetch('/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fromUser: username, // 'username' should be defined earlier in your script
+          toUser: toUser,
+          message: message
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Message sent successfully');
+          // Clear the message textarea
+          document.getElementById('message-text').value = '';
+        } else {
+          alert('Failed to send message');
+        }
+      })
+      .catch(error => console.error('Error sending message:', error));
+    }
+
+
     function searchUsers(query, type) {
       fetch(`/search-users?query=${encodeURIComponent(query)}&type=${type}`)
         .then(response => response.json())
@@ -196,18 +302,26 @@
               var li = document.createElement('li');
               li.textContent = user.username;
               li.addEventListener('click', function() {
-                // Set the username for modal
-                var modalUsername = document.getElementById('modal-username');
-                var addFriendBtn = document.getElementById('add-friend-btn');
-                var startChatBtn = document.getElementById('start-chat-btn');
+              // Set the username for modal
+              var modalUsername = document.getElementById('modal-username');
+              var addFriendBtn = document.getElementById('add-friend-btn');
+              var startChatBtn = document.getElementById('start-chat-btn');
 
-                modalUsername.textContent = user.username;
-                addFriendBtn.onclick = function() { addContact(user.username); };
-                startChatBtn.onclick = function() { startPrivateChat(user.username); };
+              modalUsername.textContent = user.username;
+              addFriendBtn.onclick = function() { addContact(user.username); };
+              startChatBtn.onclick = function() { startPrivateChat(user.username); };
 
-                // Display the modal
-                document.getElementById('userModal').style.display = 'block';
-              });
+              // Set up the send message button
+              var sendMessageBtn = document.getElementById('send-message-btn');
+              sendMessageBtn.onclick = function() {
+                var messageText = document.getElementById('message-text').value;
+                sendMessage(user.username, messageText);
+              };
+
+              // Display the modal
+              document.getElementById('userModal').style.display = 'block';
+            });
+
               searchResults.appendChild(li);
             });
           } else {
@@ -405,7 +519,7 @@ favoritesBtn.addEventListener('click', function() {
   .catch(error => console.error('Error adding to favorites:', error));
 }
 
-function removeFavorite(contactUsername) {
+    function removeFavorite(contactUsername) {
   fetch(`/remove-favorite`, {
     method: 'POST',
     headers: {
