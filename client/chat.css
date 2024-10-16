@@ -222,6 +222,30 @@ a.download-button:hover {
   font-size: 0.8em;
   padding: 4px;
 }
+.message-container:hover .reaction-button {
+  display: inline-block;
+  display: inline-block;
+}
+.reaction-button {
+  display: none;
+  font-size: 0.8em;
+  padding: 3px;
+}
+
+/* Reactions Styling */
+.reactions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.reactions span {
+  background-color: #f0f0f0;
+  padding: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
 
 
 /* Responsive adjustments */
