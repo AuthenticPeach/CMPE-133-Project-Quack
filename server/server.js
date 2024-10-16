@@ -749,8 +749,6 @@ app.post('/remove-favorite', async (req, res) => {
   }
 });
 
-
-
 app.post('/add-field-to-users', async (req, res) => {
   try {
     await usersCollection.updateMany(
@@ -794,12 +792,24 @@ app.post('/remove-contact', async (req, res) => {
   }
 });
 
+// Modify the /inbox route to return all messages grouped by sender
 app.get('/inbox', async (req, res) => {
   const { username } = req.query;
 
   try {
-    const messages = await inboxCollection.find({ toUser: username, isRead: false }).toArray();
-    res.json({ success: true, messages });
+    // Fetch all messages sent to the user
+    const messages = await inboxCollection.find({ toUser: username }).toArray();
+
+    // Group messages by sender
+    const threads = {};
+    for (const message of messages) {
+      if (!threads[message.fromUser]) {
+        threads[message.fromUser] = [];
+      }
+      threads[message.fromUser].push(message);
+    }
+
+    res.json({ success: true, threads });
   } catch (error) {
     console.error('Error fetching inbox:', error);
     res.status(500).json({ success: false, message: 'Error fetching inbox.' });
@@ -831,7 +841,6 @@ app.post('/send-message', async (req, res) => {
   }
 });
 
-
 app.post('/mark-as-read', async (req, res) => {
   const { messageId } = req.body;
 
@@ -844,6 +853,36 @@ app.post('/mark-as-read', async (req, res) => {
   } catch (error) {
     console.error('Error marking message as read:', error);
     res.status(500).json({ success: false, message: 'Error marking message as read.' });
+  }
+});
+
+app.post('/toggle-read-status', async (req, res) => {
+  const { messageId, isRead } = req.body;
+
+  try {
+    await inboxCollection.updateOne(
+      { _id: new ObjectId(messageId) },
+      { $set: { isRead: isRead } }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating message read status:', error);
+    res.status(500).json({ success: false, message: 'Error updating message read status.' });
+  }
+});
+
+app.post('/delete-thread', async (req, res) => {
+  const { username, fromUser } = req.body;
+
+  try {
+    await inboxCollection.deleteMany({
+      toUser: username,
+      fromUser: fromUser
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting thread:', error);
+    res.status(500).json({ success: false, message: 'Error deleting thread.' });
   }
 });
 

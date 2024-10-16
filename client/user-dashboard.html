@@ -77,6 +77,17 @@
   </div>
 </div>
 
+<!-- Profile Modal -->
+<div id="profileModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3 id="profile-modal-username">Username</h3>
+    <img id="profile-modal-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
+    <p id="profile-modal-bio">Bio</p>
+    <!-- Add other profile fields as needed -->
+  </div>
+</div>
+
   <!-- Contacts List -->
   <ul id="contacts-list" style="display: none;"></ul>
   
@@ -137,12 +148,70 @@
       window.location.href = `/chat?room=${roomName}&username=${encodeURIComponent(username)}`;
     }
 
+    function openSendMessageModal(toUsername) {
+  // Set the username for modal
+  var modalUsername = document.getElementById('modal-username');
+  var addFriendBtn = document.getElementById('add-friend-btn');
+  var startChatBtn = document.getElementById('start-chat-btn');
+
+  modalUsername.textContent = toUsername;
+  addFriendBtn.onclick = function() { addContact(toUsername); };
+  startChatBtn.onclick = function() { startPrivateChat(toUsername); };
+
+  // Set up the send message button
+  var sendMessageBtn = document.getElementById('send-message-btn');
+  sendMessageBtn.onclick = function() {
+    var messageText = document.getElementById('message-text').value;
+    sendMessage(toUsername, messageText);
+  };
+
+  // Display the modal
+  document.getElementById('userModal').style.display = 'block';
+}
+
+  function viewUserProfile(contactUsername) {
+    // Fetch the user's profile data
+    fetch(`/get-user-profile?username=${encodeURIComponent(contactUsername)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Populate the modal with the user's data
+          document.getElementById('profile-modal-username').textContent = `${data.firstName} ${data.lastName}`;
+          document.getElementById('profile-modal-pic').src = data.profilePic || '/uploads/default-avatar.png';
+          document.getElementById('profile-modal-bio').textContent = data.bio || 'No bio available.';
+          // Display the modal
+          document.getElementById('profileModal').style.display = 'block';
+        } else {
+          alert('Failed to load profile.');
+        }
+      })
+      .catch(error => console.error('Error fetching profile:', error));
+  }
+
+
   // Modal script for Inbox and User Interaction
   var inboxModal = document.getElementById('inboxModal');
   var userModal = document.getElementById('userModal');
   var inboxBtn = document.getElementById('inbox-button');
-  var userClose = document.getElementsByClassName('close')[1]; // Getting the second close button
-  var inboxClose = document.getElementsByClassName('close')[0]; // Getting the first close button
+
+  // Close the inbox modal when clicking x
+  var inboxClose = document.getElementsByClassName('close')[0]; // First close button
+  inboxClose.onclick = function() {
+    inboxModal.style.display = 'none';
+  };
+
+  // Close the user modal when clicking x
+  var userClose = document.getElementsByClassName('close')[1]; // Second close button
+  userClose.onclick = function() {
+    userModal.style.display = 'none';
+  };  
+
+  // Close the profile modal when clicking x
+  var profileModal = document.getElementById('profileModal');
+  var profileClose = document.getElementsByClassName('close')[2]; // Third close button
+  profileClose.onclick = function() {
+    profileModal.style.display = 'none';
+  };
 
   // Open the inbox modal
   inboxBtn.onclick = function() {
@@ -159,7 +228,7 @@
     userModal.style.display = 'none';
   }
 
-  // When the user clicks anywhere outside of either modal, close it
+  // When the user clicks anywhere outside of any modal, close it
   window.onclick = function(event) {
     if (event.target == inboxModal) {
       inboxModal.style.display = 'none';
@@ -167,7 +236,10 @@
     if (event.target == userModal) {
       userModal.style.display = 'none';
     }
-  }
+    if (event.target == profileModal) {
+      profileModal.style.display = 'none';
+    }
+  };
 
 
   // Fetch inbox messages on load
@@ -190,10 +262,99 @@
     var currentCount = parseInt(inboxButton.textContent.match(/\d+/)) || 0;
     inboxButton.textContent = `Inbox (${currentCount + 1})`;
   });
-
+  
 // Open the inbox modal
 inboxBtn.onclick = function() {
   inboxModal.style.display = 'block';
+
+  // Fetch inbox messages
+  fetch(`/inbox?username=${encodeURIComponent(username)}`)
+    .then(response => response.json())
+    .then(async data => {
+      var inboxMessagesList = document.getElementById('inbox-messages-list');
+      inboxMessagesList.innerHTML = ''; // Clear existing messages
+
+      if (data.success && Object.keys(data.threads).length > 0) {
+        // For each thread (sender)
+        for (const fromUser in data.threads) {
+          const messages = data.threads[fromUser];
+
+          // Fetch sender's profile picture
+          const userData = await fetch(`/get-user-profile?username=${encodeURIComponent(fromUser)}`)
+            .then(res => res.json());
+
+          const profilePic = userData.success ? userData.profilePic : '/uploads/default-avatar.png';
+
+          // Create a container for the thread
+          const threadDiv = document.createElement('div');
+          threadDiv.classList.add('thread');
+
+          // Header for the thread
+          const threadHeader = document.createElement('div');
+          threadHeader.classList.add('thread-header');
+
+          const profileImg = document.createElement('img');
+          profileImg.src = profilePic;
+          profileImg.classList.add('thread-profile-pic');
+
+          const senderName = document.createElement('span');
+          senderName.textContent = fromUser;
+          senderName.classList.add('thread-sender-name');
+
+          // "Delete Thread" button
+          const deleteThreadBtn = document.createElement('button');
+          deleteThreadBtn.textContent = 'Delete Thread';
+          deleteThreadBtn.classList.add('delete-thread-btn');
+          deleteThreadBtn.addEventListener('click', function() {
+            deleteThread(fromUser);
+            threadDiv.remove();
+          });
+
+          // Append header elements
+          threadHeader.appendChild(profileImg);
+          threadHeader.appendChild(senderName);
+          threadHeader.appendChild(deleteThreadBtn);
+
+          // Messages container
+          const messagesList = document.createElement('ul');
+          messagesList.classList.add('messages-list');
+
+          // Sort messages by timestamp (optional)
+          messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+          // For each message in the thread
+          messages.forEach(function(message) {
+            const li = document.createElement('li');
+            li.textContent = message.message;
+
+            // Visually distinguish read/unread
+            li.style.fontWeight = message.isRead ? 'normal' : 'bold';
+
+            // Mark as Read button
+            const markAsReadBtn = document.createElement('button');
+            markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
+            markAsReadBtn.addEventListener('click', function() {
+              toggleReadStatus(message._id, !message.isRead);
+              message.isRead = !message.isRead;
+              li.style.fontWeight = message.isRead ? 'normal' : 'bold';
+              markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
+            });
+
+            li.appendChild(markAsReadBtn);
+            messagesList.appendChild(li);
+          });
+
+          threadDiv.appendChild(threadHeader);
+          threadDiv.appendChild(messagesList);
+          inboxMessagesList.appendChild(threadDiv);
+        }
+      } else {
+        inboxMessagesList.innerHTML = '<li>Your inbox is looking pretty empty!</li>';
+      }
+    })
+    .catch(error => console.error('Error fetching inbox messages:', error));
+};
+
 
   // Fetch inbox messages
   fetch(`/inbox?username=${encodeURIComponent(username)}`)
@@ -220,7 +381,7 @@ inboxBtn.onclick = function() {
       }
     })
     .catch(error => console.error('Error fetching inbox messages:', error));
-}
+
 
 function markMessageAsRead(messageId) {
   fetch('/mark-as-read', {
@@ -386,6 +547,19 @@ contactsBtn.addEventListener('click', function() {
           var contactName = document.createElement('span');
           contactName.textContent = contact.username;
 
+          // Create the "Send Message" button
+          var sendMessageButton = document.createElement('button');
+          sendMessageButton.textContent = 'Send Message';
+          sendMessageButton.style.marginLeft = '10px';
+          sendMessageButton.style.backgroundColor = '#007bff';
+          sendMessageButton.style.color = 'white';
+          sendMessageButton.style.border = 'none';
+          sendMessageButton.style.borderRadius = '5px';
+          sendMessageButton.style.cursor = 'pointer';
+          sendMessageButton.addEventListener('click', function() {
+            openSendMessageModal(contact.username);
+          });
+
           // Create the remove button
           var removeButton = document.createElement('button');
           removeButton.textContent = 'Remove';
@@ -397,6 +571,19 @@ contactsBtn.addEventListener('click', function() {
           removeButton.style.cursor = 'pointer';
           removeButton.addEventListener('click', function() {
             removeContact(contact.username);
+          });
+
+            // Create the "View Profile" button
+          var viewProfileButton = document.createElement('button');
+          viewProfileButton.textContent = 'View Profile';
+          viewProfileButton.style.marginLeft = '10px';
+          viewProfileButton.style.backgroundColor = '#28a745';
+          viewProfileButton.style.color = 'white';
+          viewProfileButton.style.border = 'none';
+          viewProfileButton.style.borderRadius = '5px';
+          viewProfileButton.style.cursor = 'pointer';
+          viewProfileButton.addEventListener('click', function() {
+            viewUserProfile(contact.username);
           });
 
           // Create the favorite/unfavorite button
@@ -420,6 +607,8 @@ contactsBtn.addEventListener('click', function() {
           // Append the profile picture, contact name, and buttons to the list item
           li.appendChild(profileImg);
           li.appendChild(contactName);
+          li.appendChild(sendMessageButton);
+          li.appendChild(viewProfileButton);
           li.appendChild(favoriteButton);
           li.appendChild(removeButton);
 
@@ -467,6 +656,32 @@ favoritesBtn.addEventListener('click', function() {
           var contactName = document.createElement('span');
           contactName.textContent = contact.username;
 
+          // **Add "Send Message" Button**
+          var sendMessageButton = document.createElement('button');
+          sendMessageButton.textContent = 'Send Message';
+          sendMessageButton.style.marginLeft = '10px';
+          sendMessageButton.style.backgroundColor = '#007bff';
+          sendMessageButton.style.color = 'white';
+          sendMessageButton.style.border = 'none';
+          sendMessageButton.style.borderRadius = '5px';
+          sendMessageButton.style.cursor = 'pointer';
+          sendMessageButton.addEventListener('click', function() {
+            openSendMessageModal(contact.username);
+          });
+
+          // **Add "View Profile" Button**
+          var viewProfileButton = document.createElement('button');
+          viewProfileButton.textContent = 'View Profile';
+          viewProfileButton.style.marginLeft = '10px';
+          viewProfileButton.style.backgroundColor = '#28a745';
+          viewProfileButton.style.color = 'white';
+          viewProfileButton.style.border = 'none';
+          viewProfileButton.style.borderRadius = '5px';
+          viewProfileButton.style.cursor = 'pointer';
+          viewProfileButton.addEventListener('click', function() {
+            viewUserProfile(contact.username);
+          });
+
           // Create the unfavorite button
           var unfavoriteButton = document.createElement('button');
           unfavoriteButton.textContent = 'Unfavorite';
@@ -483,6 +698,8 @@ favoritesBtn.addEventListener('click', function() {
           // Append elements to the list item
           li.appendChild(profileImg);
           li.appendChild(contactName);
+          li.appendChild(sendMessageButton);
+          li.appendChild(viewProfileButton);
           li.appendChild(unfavoriteButton);
 
           favoritesList.appendChild(li);
@@ -567,6 +784,69 @@ favoritesBtn.addEventListener('click', function() {
       })
       .catch(error => console.error('Error removing contact:', error));
     }
+
+    function openSendMessageModal(toUsername) {
+      // Set the username for modal
+      var modalUsername = document.getElementById('modal-username');
+      var addFriendBtn = document.getElementById('add-friend-btn');
+      var startChatBtn = document.getElementById('start-chat-btn');
+
+      modalUsername.textContent = toUsername;
+      addFriendBtn.onclick = function() { addContact(toUsername); };
+      startChatBtn.onclick = function() { startPrivateChat(toUsername); };
+
+      // Set up the send message button
+      var sendMessageBtn = document.getElementById('send-message-btn');
+      sendMessageBtn.onclick = function() {
+        var messageText = document.getElementById('message-text').value;
+        sendMessage(toUsername, messageText);
+      };
+
+      // Display the modal
+      document.getElementById('userModal').style.display = 'block';
+    }
+
+
+    function toggleReadStatus(messageId, isRead) {
+  fetch('/toggle-read-status', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ messageId: messageId, isRead: isRead })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        console.log('Message read status updated');
+        // Optionally update the inbox count
+      } else {
+        console.error('Failed to update message read status');
+      }
+    })
+    .catch(error => console.error('Error updating message read status:', error));
+}
+
+    function deleteThread(fromUser) {
+      fetch('/delete-thread', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username: username, fromUser: fromUser })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert(`Thread with ${fromUser} has been deleted.`);
+            // Optionally refresh the inbox
+          } else {
+            alert('Failed to delete thread.');
+          }
+        })
+        .catch(error => console.error('Error deleting thread:', error));
+    }
+
 
   </script>
 
