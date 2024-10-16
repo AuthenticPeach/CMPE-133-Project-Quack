@@ -149,8 +149,6 @@
     socket.on('chat message', function(msg) {
       console.log('Received message:', msg);
       const item = createMessageElement(msg);
-
-  // Append the message to the messages list
       document.getElementById('messages').appendChild(item);
       window.scrollTo(0, document.body.scrollHeight);
     });
@@ -282,6 +280,7 @@
           fileElement.src = msg.fileUrl;
           fileElement.style.maxWidth = '200px';
           fileElement.style.display = 'block';
+          contentDiv.appendChild(fileElement);
         } else if (['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(msg.fileType)) {
           // Display file link with file name
           fileElement = document.createElement('a');

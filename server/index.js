@@ -4,9 +4,9 @@ import { v2 as cloudinary } from 'cloudinary';
 
     // Configuration
     cloudinary.config({ 
-        cloud_name: 'dzify5sdy', 
-        api_key: '813715627799734', 
-        api_secret: '<your_api_secret>' // Click 'View API Keys' above to copy your API secret
+        cloud_name: 'dxseoqcpb', 
+        api_key: '847592284682929', 
+        api_secret: 'yiTBh8MGmd2SxuX9fNWNUuuCUhA' // Click 'View API Keys' above to copy your API secret
     });
     
     // Upload an image

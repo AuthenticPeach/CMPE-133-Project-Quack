@@ -30,9 +30,9 @@ if (!fs.existsSync(tempDir)) {
 
 // Cloudinary configuration
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: 'dxseoqcpb', 
+  api_key: '847592284682929', 
+  api_secret: 'yiTBh8MGmd2SxuX9fNWNUuuCUhA' 
 });
 
 // Multer storage configuration
