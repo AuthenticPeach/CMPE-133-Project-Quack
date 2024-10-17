@@ -233,3 +233,22 @@ button {
 .messages-list button {
   margin-left: 10px;
 }
+
+/* Styling for the modal form */
+#create-group-form {
+  display: flex;
+  flex-direction: column; 
+  gap: 15px; 
+}
+
+#group-name,
+#group-description,
+#invite-users {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box; 
+}
+
+#invite-users {
+  min-width: 300px; 
+}
