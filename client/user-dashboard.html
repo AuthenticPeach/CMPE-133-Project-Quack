@@ -51,11 +51,11 @@
     </ul>
 
     <!-- Section for Group Creation -->
-    <h3>Create a Group Chat Room</h3>
-    <ul id="group-list">
-      <li><button id="create-group-chat" onclick="createGroupChat()">Create Group</button></li>
-    </ul>
-  
+     <h3>Create a Group Chat Room</h3>
+     <ul id="group-list">
+      <li><button id="create-group-chat">Create Group</button></li>
+     </ul>
+
     <p id="message"></p>
   </div>
 
@@ -152,22 +152,6 @@
     function joinRoom(roomName) {
       socket.emit('join room', roomName);
       window.location.href = `/chat?room=${roomName}&username=${encodeURIComponent(username)}`;
-    }
-
-    function createGroupChat(groupName, groupDescription, invitedUsers) {
-    // Emit group creation event to the server via Socket.IO
-      socket.emit('create group chat', {
-        groupName: groupName,
-        groupDescription: groupDescription,
-        invitedUsers: invitedUsers,
-        creator: username // Assuming username is available from localStorage
-      });
-
-      // Redirect the user to the new group chat room once the group is created
-      socket.on('group created', function(group) {
-        // Redirect to the new group chat room
-        window.location.href = `/chat?room=${group.groupId}&username=${encodeURIComponent(username)}`;
-      });
     }
 
     function openSendMessageModal(toUsername) {
