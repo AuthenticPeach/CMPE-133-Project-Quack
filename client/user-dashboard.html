@@ -50,6 +50,12 @@
       <li><button onclick="joinRoom('random')">Random Room</button></li>
     </ul>
 
+    <!-- Section for Group Creation -->
+     <h3>Create a Group Chat Room</h3>
+     <ul id="group-list">
+      <li><button id="create-group-chat">Create Group</button></li>
+     </ul>
+
     <p id="message"></p>
   </div>
 
@@ -90,7 +96,34 @@
 
   <!-- Contacts List -->
   <ul id="contacts-list" style="display: none;"></ul>
-  
+
+<!-- Group Creation Modal -->
+<div id="createGroupModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h3>Create a New Group Chat</h3>
+    <form id="create-group-form">
+      <div>
+        <label for="group-name">Group Name</label>
+        <input type="text" id="group-name" required>
+      </div>
+      <div>
+        <label for="group-description">Group Description (Optional)</label>
+        <textarea id="group-description"></textarea>
+      </div>
+      <div>
+        <label for="invite-users">Invite Users</label>
+        <input type="text" id="invite-users" placeholder="Search by username or select from contacts">
+      </div>
+      <ul id="contacts-list">
+        <!-- Dynamically populated with contacts -->
+      </ul>
+      
+      <button type="submit">Create Group</button>
+    </form>
+  </div>
+</div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
     var socket = io();
@@ -239,8 +272,25 @@
     if (event.target == profileModal) {
       profileModal.style.display = 'none';
     }
+    if (event.target == createGroupModal) {
+      createGroupModal.style.display = 'none';
+    }
   };
 
+  // Modal script for Group Creation
+  var createGroupBtn = document.getElementById('create-group-chat');
+  var createGroupModal = document.getElementById('createGroupModal');
+
+  // Open the Group Creation Modal
+  createGroupBtn.onclick = function() {
+    createGroupModal.style.display = 'block';
+  }
+
+  // Close the Group Creation modal when clicking x
+  var groupClose = document.getElementsByClassName('close')[3]; // Fourth close button 
+  groupClose.onclick = function() {
+    createGroupModal.style.display = 'none';
+  }
 
   // Fetch inbox messages on load
   fetch(`/inbox?username=${encodeURIComponent(username)}`)
