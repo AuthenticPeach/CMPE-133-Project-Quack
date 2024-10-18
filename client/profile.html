@@ -16,7 +16,7 @@
       <header>
         <div class="image-text">
           <span class="image">
-            <img src="img/Logo.png" alt="" />
+            <img src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png" alt="Quack Logo" />
           </span>
 
           <div class="text logo-text">
@@ -92,7 +92,7 @@
     </nav>
 
     <section class="home">
-      <button type="button" class="normalButton" id="deleteAccountBtn">
+      <button type="button" class="normalButton" id="deleteAccountBtn" style="display: none;">
         Delete Account
       </button>
       <div class="grid-container">
@@ -230,6 +230,18 @@
           <p id="bio-message"></p>
         </div>
       </div>
+
+      <div id="deleteAccountModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h3>Deleting Account</h3>
+          <p>Delete your account will remove all of your information from our database. This action cannot be undone.</p>
+          <label for="currentPassword">Please enter your password to confirm:</label>
+          <input type="password" id="currentPassword" required>
+          <button id="confirmDelete" class="normalButton">Delete Account</button>
+          <p id="delete-message"></p>
+        </div>
+      </div>
     </section>
 
     <script>
@@ -314,8 +326,8 @@
                 div2.style.marginRight = "9px"
                 var favoriteImg = document.createElement("img");
                 favoriteImg.src = contact.isFavorite
-                  ? "img/favoriteBtn.jpg"
-                  : "img/unfavoriteBtn.jpg";
+                  ? "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990835/base/kislo9bww6jfnvoagsgz.jpg"
+                  : "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990834/base/g9e7wjf9lc2gnqpizlsd.jpg";
                 var deleteBtn = document.createElement("i");
                 deleteBtn.className = "bx bxs-x-circle";
                 deleteBtn.addEventListener("click", function () {
@@ -491,7 +503,7 @@
                 div1.appendChild(name);
 
                 var unfavoriteBtn = document.createElement("img");
-                unfavoriteBtn.src = "img/favoriteBtn.jpg";
+                unfavoriteBtn.src = "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990835/base/kislo9bww6jfnvoagsgz.jpg";
                 unfavoriteBtn.style.cursor = "pointer";
                 unfavoriteBtn.addEventListener("click", function () {
                   removeFavorite(contact.username);
@@ -571,7 +583,11 @@
       const changePasswordBtn = document.getElementById("changePasswordBtn");
       const passwordMessage = document.getElementById("password-message");
 
+      // Elements for delete account
+      const deleteMessage = document.getElementById("delete-message");
       const deleteAccountBtn = document.getElementById('deleteAccountBtn'); 
+      const deleteAccountModal = document.getElementById('deleteAccountModal');
+      const confirmDeleteBtn = document.getElementById('confirmDelete');
 
       // Retrieve the username from localStorage
       const username = localStorage.getItem("username");
@@ -763,11 +779,13 @@
           usernameElement.style.display = "inline";
           emailElement.style.display = "inline";
           phoneElement.style.display = "inline";
+          deleteAccountBtn.style.display = 'block';
           document.getElementById("showBtn").textContent = "Hide Profile";
         } else {
           usernameElement.style.display = "none";
           emailElement.style.display = "none";
           phoneElement.style.display = "none";
+          deleteAccountBtn.style.display = 'none';
           document.getElementById("showBtn").textContent = "Show Profile";
         }
       });
@@ -777,7 +795,7 @@
         usernameElement.style.display = "inline";
         emailElement.style.display = "inline";
         phoneElement.style.display = "inline";
-
+        deleteAccountBtn.style.display = 'block';
         document.getElementById("showBtn").style.display = "none";
         document.getElementById("editBtn").style.display = "none";
         document.getElementById("updateBtn").style.display = "block";
@@ -814,6 +832,9 @@
           passwordChangeSection.style.display = "none";
           document.getElementById("editPasswordBtn").style.display = "block";
           document.getElementById("editPasswordBtn").style.top = "0";
+          currentPasswordInput.value = '';
+          newPasswordInput.value = '';
+          confirmNewPasswordInput.value = '';
           passwordMessage.style.display = "none";
         });
 
@@ -892,8 +913,27 @@
 
         if (newPassword.length < 8) {
           passwordMessage.textContent =
-            "New password must be at least 8 characters long.";
+            "✖ New password must be at least 8 characters long.";
           return;
+        } else if (!/[A-Z]/.test(newPassword)) {
+          passwordMessage.textContent =
+            "✖ New password must be contain upper case letters (A-Z).";
+          return;
+        } else if (!/[a-z]/.test(newPassword)) {
+          passwordMessage.textContent =
+            "✖ New password must be contain lower case letters (a-z).";
+          return;
+        } else if (!/\d/.test(newPassword)) {
+          passwordMessage.textContent =
+            "✖ New password must be contain number (0-9).";
+          return;
+        } else if (!/[!@#$%^&*()\-\+=|{};:?.\\_]/.test(newPassword)) {
+          passwordMessage.textContent =
+            "✖ New password must be contain special character.";
+          return;
+        } else {
+          passwordMessage.textContent =
+            "";
         }
 
         // Additional password strength validations can be added here
@@ -926,16 +966,44 @@
       });
 
       // Delete Account 
-      deleteAccountBtn.addEventListener("click", function() {
-        if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      deleteAccountBtn.addEventListener('click', function() {
+      // Show the modal when the delete account button is clicked
+        deleteAccountModal.style.display = 'block';
+      });
+
+      // Close the inbox modal when clicking x
+      var deleteAccountClose = document.getElementsByClassName('closeBtn')[0]; 
+      deleteAccountClose.onclick = function() {
+        deleteAccountModal.style.display = 'none';
+        const passwordInput = document.getElementById('currentPassword');
+        passwordInput.value = '';
+        deleteMessage.textContent = "";
+      };
+
+      // When the user clicks anywhere outside of any modal, close it
+      window.onclick = function(event) {
+        if (event.target == deleteAccountModal) {
+          deleteAccountModal.style.display = 'none';
+          const passwordInput = document.getElementById('currentPassword');
+          passwordInput.value = '';
+          deleteMessage.textContent = "";
+        }
+      };
+
+      confirmDeleteBtn.addEventListener("click", function() {
+        const currentPassword = document.getElementById('currentPassword').value;
+  
+        if (!currentPassword) {
+          alert('Please enter your password.');
           return;
         }
+
         fetch("/delete-account", {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({username}),
+          body: JSON.stringify({username, currentPassword}),
         })
         .then((response) => response.json())
         .then((data) => {
@@ -943,7 +1011,8 @@
             alert("Your account has been deleted");
             window.location.href = '/signin';
           } else {
-            alert('Failed to delete account.');
+            deleteMessage.textContent =
+                data.message || "Failed to delete account.";
           }
         }) 
         .catch((error) => {
