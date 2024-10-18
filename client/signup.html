@@ -21,8 +21,8 @@
         <input type="text" id="lastName" placeholder="Last Name" required maxlength="50" pattern="[A-Za-z ]{1,50}">
         <input type="text" id="username" placeholder="Username" required maxlength="30" pattern="[A-Za-z0-9]{3,30}">
         <input type="email" id="email" placeholder="Email" required maxlength="100">
-        <input type="tel" id="phoneNumber" placeholder="Phone Number" required maxlength="15" pattern="[0-9+()-\s]{7,15}">
-        <input type="password" id="password" placeholder="Password" required minlength="8" maxlength="50" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?:{}])[A-Za-z\d!@#$%^&*(),.?:{}]{8,}">
+        <input type="tel" id="phoneNumber" placeholder="Phone Number" required maxlength="15" pattern="[0-9+\(\)\-\s]{7,15}">
+        <input type="password" id="password" placeholder="Password" required minlength="8" maxlength="50">
         <p id="password-strength"></p>
         <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="8" maxlength="50">
         <button type="submit">SIGN UP</button>
@@ -48,6 +48,11 @@
         errorMessage.textContent = 'Passwords do not match';
         return;
       }
+      
+      // Check if password strength
+       if (checkPasswordStrength() == -1) {
+        return;
+       };
 
       const data = {
         firstName: document.getElementById('firstName').value.trim(),
@@ -80,34 +85,43 @@
         errorMessage.textContent = 'An error occurred during signup.';
       });
     });
-  </script>
 
-  <script>
     const passwordInput = document.getElementById('password');
     const passwordStrength = document.getElementById('password-strength');
-  
-    passwordInput.addEventListener('input', function() {
-      const password = passwordInput.value;  
+
+    // Function to check the strength of the password
+    function checkPasswordStrength() {
+      const password = passwordInput.value;
       
-      if (password.length <= 8) {
+      if (password.length < 8) {
         passwordStrength.style.display = 'block';
         passwordStrength.textContent = '✖ At least 8 characters in length';
+        return -1;
       } else if (!/[A-Z]/.test(password)) {
         passwordStrength.style.display = 'block';
         passwordStrength.textContent = '✖ Should contain upper case letters (A-Z)';
+        return -1;
       } else if (!/[a-z]/.test(password)) {
         passwordStrength.style.display = 'block';
         passwordStrength.textContent = '✖ Should contain lower case letters (a-z)';
+        return -1;
       } else if (!/\d/.test(password)) {
         passwordStrength.style.display = 'block';
         passwordStrength.textContent = '✖ Should contain number (0-9)';
-      } else if (!/[!@#$%^&*(),.?:{}]/.test(password)) {
+        return -1;
+      } else if (!/[!@#$%^&*()\-\+=|{};:?.\\_]/.test(password)) {
         passwordStrength.style.display = 'block';
         passwordStrength.textContent = '✖ Should contain special character';
+        return -1;
       } else {
         passwordStrength.style.display = 'none';
       }    
-    });
+    }
+
+    // Add event listener to the password input
+    passwordInput.addEventListener('input', checkPasswordStrength);
   </script>
+
+ 
 </body>
 </html>

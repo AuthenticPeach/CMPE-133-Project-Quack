@@ -590,10 +590,17 @@ app.post('/change-password', async (req, res) => {
 
 // Route to delete account
 app.delete("/delete-account", async (req, res) => {
-  const { username } = req.body;
+  const { username, currentPassword } = req.body;
 
   try {
     const user = await usersCollection.findOne({ username: username });
+
+     // Compare current password with stored password
+     const match = await bcrypt.compare(currentPassword, user.password);
+
+     if (!match) {
+       return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+     }
 
     if (!user) {
       return res
