@@ -12,6 +12,12 @@ const { MongoClient, ObjectId } = require('mongodb');
 const bcrypt = require('bcrypt');
 const cloudinary = require('cloudinary').v2;
 const sanitizeFilename = require('sanitize-filename');
+const createDOMPurify = require('dompurify');
+const { JSDOM } = require('jsdom');
+const window = new JSDOM('').window;
+const DOMPurify = createDOMPurify(window);
+
+
 
 // Environment variables configuration
 require('dotenv').config();
@@ -485,12 +491,13 @@ app.get('/get-user-profile', async (req, res) => {
 
     res.json({
       success: true,
-      profilePic: user.profilePic || defaultProfilePicUrl,
-      bio: user.bio || '',
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      email: user.email || '',
-      phoneNumber: user.phoneNumber || ''
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      bio: user.bio,
+      profilePic: user.profilePic || '/uploads/default-avatar.png',
+      connectedAccounts: user.connectedAccounts || {}
     });
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -956,13 +963,38 @@ app.post('/change-password', async (req, res) => {
   }
 });
 
+app.post('/save-connected-accounts', async (req, res) => {
+  const { username, connectedAccounts } = req.body;
+
+  try {
+    // Sanitize inputs
+    const sanitizedAccounts = {};
+    for (const [key, value] of Object.entries(connectedAccounts)) {
+      sanitizedAccounts[key] = DOMPurify.sanitize(value.trim());
+    }
+
+    const result = await usersCollection.updateOne(
+      { username },
+      { $set: { connectedAccounts: sanitizedAccounts } }
+    );
+
+    if (result.modifiedCount === 1 || result.upsertedCount === 1) {
+      console.log(`Connected accounts updated for user: ${username}`);
+      res.json({ success: true });
+    } else {
+      console.error(`Failed to update connected accounts for user: ${username}`);
+      res.json({ success: false, message: 'Failed to update connected accounts.' });
+    }
+  } catch (error) {
+    console.error('Error saving connected accounts:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while saving connected accounts.' });
+  }
+});
+
+
+
 const users = {}; // Track users by socket ID
 const rooms = {}; // Track rooms by room name
-const createDOMPurify = require('dompurify');
-const { JSDOM } = require('jsdom');
-const window = new JSDOM('').window;
-const DOMPurify = createDOMPurify(window);
-
 
 
 // Utility function to format timestamps

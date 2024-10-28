@@ -650,3 +650,80 @@ h5 {
   text-decoration: none;
   cursor: pointer;
 }
+
+/* Connected Accounts Styling */
+#connected-accounts {
+  grid-column: span 2;
+  background-color: white;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#connected-accounts h4 {
+  margin-bottom: 20px;
+}
+
+#connected-accounts-display {
+  margin-bottom: 20px;
+}
+
+#connected-accounts-display iframe,
+#connected-accounts-display .social-embed {
+  margin-bottom: 20px;
+}
+
+#connected-accounts-form {
+  margin-top: 20px;
+}
+
+#connected-accounts-form label {
+  width: 120px;
+}
+
+#connected-accounts-form input {
+  width: calc(100% - 140px);
+  height: 30px;
+  padding: 5px;
+  margin-bottom: 10px;
+}
+
+#edit-accounts-btn {
+  width: 200px;
+}
+
+#save-accounts-btn {
+  background-color: #28a745;
+}
+
+#cancel-accounts-btn {
+  background-color: red;
+}
+
+#accounts-message {
+  font-size: 16px;
+  color: red;
+  margin-top: 10px;
+}
+
+.account-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.social-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.account-item a {
+  font-size: 18px;
+  color: #226c5c;
+  text-decoration: none;
+}
+
+.account-item a:hover {
+  text-decoration: underline;
+}

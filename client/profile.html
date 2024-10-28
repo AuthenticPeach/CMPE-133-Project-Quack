@@ -231,6 +231,51 @@
         </div>
       </div>
 
+          <!-- Connected Accounts Section -->
+      <div id="connected-accounts">
+            <h4>Connected Accounts</h4>
+          <!-- Display Connected Accounts -->
+          <div id="connected-accounts-display"></div>
+
+          <!-- Form to Add/Edit Connected Accounts -->
+          <button id="edit-accounts-btn" class="normalButton">Edit Connected Accounts</button>
+          <form id="connected-accounts-form" class="profile-form" style="display: none;">
+            <p>
+              <label>YouTube:</label>
+              <input type="url" name="youtube" id="youtube" placeholder="https://www.youtube.com/..." />
+            </p>
+            <p>
+              <label>Twitch:</label>
+              <input type="url" name="twitch" id="twitch" placeholder="https://www.twitch.tv/..." />
+            </p>
+            <p>
+              <label>Twitter:</label>
+              <input type="url" name="twitter" id="twitter" placeholder="https://twitter.com/..." />
+            </p>
+            <p>
+              <label>Instagram:</label>
+              <input type="url" name="instagram" id="instagram" placeholder="https://www.instagram.com/..." />
+            </p>
+            <p>
+              <label>TikTok:</label>
+              <input type="url" name="tiktok" id="tiktok" placeholder="https://www.tiktok.com/@" />
+            </p>
+            <p>
+              <label>WhatsApp:</label>
+              <input type="tel" name="whatsapp" id="whatsapp" placeholder="Enter your phone number" />
+            </p>
+            <p>
+              <label>Snapchat:</label>
+              <input type="text" name="snapchat" id="snapchat" placeholder="Your Snapchat username" />
+            </p>
+            <div class="button-container">
+              <button type="button" class="normalButton" id="save-accounts-btn">Save Accounts</button>
+              <button type="button" class="normalButton" id="cancel-accounts-btn">Cancel</button>
+            </div>
+          </form>
+          <p id="accounts-message"></p>
+      </div>
+
       <div id="deleteAccountModal" class="modal">
         <div class="modal-content">
           <span class="closeBtn">&times;</span>
@@ -258,6 +303,21 @@
 
       contactsList = document.getElementsByClassName("contactList")[0];
       favoriteList = document.getElementsByClassName("favoriteList")[0];
+      let userData = {};
+
+      // Connected Accounts Elements
+      const connectedAccountsDisplay = document.getElementById('connected-accounts-display');
+      const editAccountsBtn = document.getElementById('edit-accounts-btn');
+      const connectedAccountsForm = document.getElementById('connected-accounts-form');
+      const saveAccountsBtn = document.getElementById('save-accounts-btn');
+      const cancelAccountsBtn = document.getElementById('cancel-accounts-btn');
+      const accountsMessage = document.getElementById('accounts-message');
+
+      // Event Listeners for Connected Accounts
+      editAccountsBtn.addEventListener('click', showConnectedAccountsForm);
+      saveAccountsBtn.addEventListener('click', saveConnectedAccounts);
+      cancelAccountsBtn.addEventListener('click', cancelConnectedAccountsEdit);
+
 
       toggle.addEventListener("click", () => {
         sidebar.classList.toggle("close");
@@ -361,6 +421,165 @@
           })
           .catch((error) => console.error("Error fetching contacts:", error));
       });
+
+// Function to show the Connected Accounts form
+function showConnectedAccountsForm() {
+        connectedAccountsForm.style.display = 'block';
+        editAccountsBtn.style.display = 'none';
+        connectedAccountsDisplay.style.display = 'none';
+
+        // Load existing accounts into the form
+        const accounts = userData.connectedAccounts || {};
+        document.getElementById('youtube').value = accounts.youtube || '';
+        document.getElementById('twitch').value = accounts.twitch || '';
+        document.getElementById('twitter').value = accounts.twitter || '';
+        document.getElementById('instagram').value = accounts.instagram || '';
+        document.getElementById('tiktok').value = accounts.tiktok || '';
+        document.getElementById('whatsapp').value = accounts.whatsapp || '';
+        document.getElementById('snapchat').value = accounts.snapchat || '';
+      }
+
+      // Function to cancel editing Connected Accounts
+      function cancelConnectedAccountsEdit() {
+        connectedAccountsForm.style.display = 'none';
+        editAccountsBtn.style.display = 'block';
+        connectedAccountsDisplay.style.display = 'block';
+        accountsMessage.textContent = '';
+      }
+
+      // Function to save Connected Accounts
+      function saveConnectedAccounts() {
+        const connectedAccounts = {
+          youtube: document.getElementById('youtube').value.trim(),
+          twitch: document.getElementById('twitch').value.trim(),
+          twitter: document.getElementById('twitter').value.trim(),
+          instagram: document.getElementById('instagram').value.trim(),
+          tiktok: document.getElementById('tiktok').value.trim(),
+          whatsapp: document.getElementById('whatsapp').value.trim(),
+          snapchat: document.getElementById('snapchat').value.trim()
+        };
+        console.log('Saving connected accounts:', connectedAccounts);
+
+  // Send data to the server
+  fetch('/save-connected-accounts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, connectedAccounts })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              accountsMessage.style.color = 'green';
+              accountsMessage.textContent = 'Connected accounts updated successfully.';
+              connectedAccountsForm.style.display = 'none';
+              editAccountsBtn.style.display = 'block';
+              // Update the display
+              userData.connectedAccounts = connectedAccounts;
+              displayConnectedAccounts();
+            } else {
+              accountsMessage.style.color = 'red';
+              accountsMessage.textContent = 'Failed to update connected accounts.';
+            }
+          })
+          .catch(error => {
+            console.error('Error saving connected accounts:', error);
+            accountsMessage.style.color = 'red';
+            accountsMessage.textContent = 'An error occurred while saving connected accounts.';
+          });
+      }
+
+      // Function to display Connected Accounts
+      function displayConnectedAccounts() {
+        connectedAccountsDisplay.innerHTML = ''; // Clear existing content
+        const accounts = userData.connectedAccounts || {};
+        const platforms = [
+          { name: 'YouTube', key: 'youtube', icon: 'youtube-icon.png' },
+          { name: 'Twitch', key: 'twitch', icon: 'twitch-icon.png' },
+          { name: 'Twitter', key: 'twitter', icon: 'twitter-icon.png' },
+          { name: 'Instagram', key: 'instagram', icon: 'instagram-icon.png' },
+          { name: 'TikTok', key: 'tiktok', icon: 'tiktok-icon.png' },
+          { name: 'WhatsApp', key: 'whatsapp', icon: 'whatsapp-icon.png' },
+          { name: 'Snapchat', key: 'snapchat', icon: 'snapchat-icon.png' },
+        ];
+
+        platforms.forEach(platform => {
+          const url = accounts[platform.key];
+          if (url) {
+            const accountDiv = document.createElement('div');
+            accountDiv.className = 'account-item';
+
+            const iconImg = document.createElement('img');
+            iconImg.src = `/icons/${platform.icon}`; // Make sure the icons are in the /icons/ directory
+            iconImg.alt = platform.name;
+            iconImg.className = 'social-icon';
+
+            const accountLink = document.createElement('a');
+            accountLink.href = url;
+            accountLink.target = '_blank';
+            accountLink.textContent = `My ${platform.name} Account`;
+
+            accountDiv.appendChild(iconImg);
+            accountDiv.appendChild(accountLink);
+
+            connectedAccountsDisplay.appendChild(accountDiv);
+          }
+        });
+
+        // Implement the embedding logic here (YouTube, Twitch, etc.)
+
+        // YouTube Embed
+        if (accounts.youtube) {
+          if (accounts.youtube.includes('youtube.com/watch')) {
+            const videoId = new URL(accounts.youtube).searchParams.get('v');
+            if (videoId) {
+              const iframe = document.createElement('iframe');
+              iframe.width = '560';
+              iframe.height = '315';
+              iframe.src = `https://www.youtube.com/embed/${videoId}`;
+              iframe.frameBorder = '0';
+              iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+              iframe.allowFullscreen = true;
+              connectedAccountsDisplay.appendChild(iframe);
+            }
+          } else {
+            const youtubeLink = document.createElement('a');
+            youtubeLink.href = accounts.youtube;
+            youtubeLink.target = '_blank';
+            youtubeLink.textContent = 'My YouTube Channel';
+            connectedAccountsDisplay.appendChild(youtubeLink);
+          }
+        }
+
+        // Twitter Embed
+        if (accounts.twitter) {
+          const twitterEmbed = document.createElement('a');
+          twitterEmbed.className = 'twitter-timeline';
+          twitterEmbed.href = accounts.twitter;
+          twitterEmbed.dataset.width = '400';
+          twitterEmbed.dataset.height = '600';
+          twitterEmbed.textContent = `Tweets by ${accounts.twitter.split('/').pop()}`;
+          
+          const accountDiv = document.createElement('div');
+          accountDiv.className = 'account-item';
+
+          accountDiv.appendChild(twitterEmbed);          
+          connectedAccountsDisplay.appendChild(twitterEmbed);
+
+          // Load Twitter widgets script
+          const script = document.createElement('script');
+          script.setAttribute('async', '');
+          script.src = 'https://platform.twitter.com/widgets.js';
+          script.charset = 'utf-8';
+          document.head.appendChild(script);
+        }
+
+        // Repeat similar blocks for other platforms (Twitch, Twitter, etc.)
+
+        // Re-display the connected accounts section
+        connectedAccountsDisplay.style.display = 'block';
+      }    
 
       function addFavorite(contactUsername) {
         fetch(`/add-favorite`, {
@@ -682,6 +901,15 @@
           usernameElement.value = username;
           emailElement.value = data.email;
           phoneElement.value = data.phoneNumber;
+        })
+        .then(response => response.json())
+        .then(data => {
+          userData = data; // Store the user data
+          // Display connected accounts
+          displayConnectedAccounts();
+        })
+        .catch(error => {
+          console.error('Error fetching profile:', error);
         });
 
       // Event listener for profile picture upload
