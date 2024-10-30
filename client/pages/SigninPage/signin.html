@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="signin.css">
+  <link rel="stylesheet" type="text/css" href="/pages/SigninPage/signin.css">
   <title>Sign In</title>
 </head>
 <body>
@@ -51,7 +51,7 @@
             const username = document.getElementById('username').value; // Get the username from the input field
             localStorage.setItem('username', username); // Store the username in localStorage
             socket.emit('set username', username); // Emit the set username event
-            window.location.href = '/user-dashboard.html'; // Redirect to the user dashboard
+            window.location.href = '/pages/UserDashboard/user-dashboard.html'; // Redirect to the user dashboard
         } else {
             errorMessage.style.display = 'block';
             errorMessage.textContent = response.message; // Show the error message

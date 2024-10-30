@@ -335,19 +335,19 @@ app.get('/', (req, res) => {
 
 // Route for the signup page
 app.get('/signup', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'signup.html')); // Serve signup.html from client folder
+  res.sendFile(path.join(__dirname, '../client/pages/SignupPage/signup.html')); // Serve signup.html from client folder
 });
 
 app.get('/favicon.ico', (req, res) => res.status(204));
 
 // Serve the chat page
 app.get('/chat', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'chat.html'));
+  res.sendFile(path.join(__dirname, '../client/pages/ChatPage/chat.html'));
 });
 
 // Serve the user view page
 app.get('/user-dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'user-dashboard.html'));
+  res.sendFile(path.join(__dirname, '../client/pages/UserDashboard/user-dashboard.html'));
 });
 
 // Route to handle signup form POST request
@@ -470,12 +470,12 @@ app.post('/save-bio', async (req, res) => {
 
 
 app.get('/signin', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'signin.html'));
+  res.sendFile(path.join(__dirname, '../client/pages/SigninPage/signin.html'));
 });
 
 // Serve the profile page
 app.get('/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', 'profile.html'));
+  res.sendFile(path.join(__dirname, '../client/pages/ProfilePage/profile.html'));
 });
 
 // Route to fetch user profile including bio and profile picture

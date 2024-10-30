@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="signup.css">
+  <link rel="stylesheet" type="text/css" href="/pages/SignupPage/signup.css">
   <title>Signup Form</title>
 </head>
 <body>
@@ -75,7 +75,7 @@
       .then(response => {
         if (response.success) {
           // Redirect to user-dashboard.html
-          window.location.href = '/user-dashboard.html';
+          window.location.href = '/pages/UserDashboard/user-dashboard.html';
         } else {
           errorMessage.textContent = response.message; // Show the error message
         }
