@@ -446,33 +446,33 @@ function addContact(contactUsername) {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert(`Added ${contactUsername} to your friends!`);
+      alert(`Added ${contactUsername} to your contacts!`);
     } else {
       alert('Failed to add contact.');
     }
   });
 }
 
-// Display the friends list when clicking "Friends"
-var friendsBtn = document.getElementById('friends-button');
-friendsBtn.addEventListener('click', function() {
-var friendsList = document.getElementById('friends-list');
-friendsList.style.display = (friendsList.style.display === 'none') ? 'block' : 'none';
+// Display the contacts list when clicking "contacts"
+var contactsBtn = document.getElementById('contacts-button');
+contactsBtn.addEventListener('click', function() {
+var contactsList = document.getElementById('contacts-list');
+contactsList.style.display = (contactsList.style.display === 'none') ? 'block' : 'none';
 
-// Fetch and display the friends list
-fetch(`/get-friends?username=${username}`)
+// Fetch and display the contacts list
+fetch(`/get-contacts?username=${username}`)
 .then(response => response.json())
 .then(data => {
-  friendsList.innerHTML = ''; // Clear the previous list
+  contactsList.innerHTML = ''; // Clear the previous list
 
-  if (data.friends.length === 0) {
-    // Display a message if friends list is empty
+  if (data.contacts.length === 0) {
+    // Display a message if contacts list is empty
     var emptyMessage = document.createElement('li');
-    emptyMessage.textContent = 'Your friends list is empty.';
+    emptyMessage.textContent = 'Your contacts list is empty.';
     emptyMessage.style.fontStyle = 'italic';
-    friendsList.appendChild(emptyMessage);
+    contactsList.appendChild(emptyMessage);
   } else {
-    data.friends.forEach(function(contact) {
+    data.contacts.forEach(function(contact) {
       // Existing code to create list items
       var li = document.createElement('li');
 
@@ -553,36 +553,36 @@ fetch(`/get-friends?username=${username}`)
       li.appendChild(favoriteButton);
       li.appendChild(removeButton);
 
-      friendsList.appendChild(li);
+      contactsList.appendChild(li);
     });
   }
 })
-.catch(error => console.error('Error fetching friends:', error));
+.catch(error => console.error('Error fetching contacts:', error));
 });
 
-// Display the favorite friends list when clicking "Favorites"
+// Display the favorite contacts list when clicking "Favorites"
 var favoritesBtn = document.getElementById('favorites-button');
 favoritesBtn.addEventListener('click', function() {
 var favoritesList = document.getElementById('favorites-list');
 favoritesList.style.display = (favoritesList.style.display === 'none') ? 'block' : 'none';
 
 // Fetch and display the favorites list
-fetch(`/get-friends?username=${username}`)
+fetch(`/get-contacts?username=${username}`)
 .then(response => response.json())
 .then(data => {
   favoritesList.innerHTML = ''; // Clear the previous list
 
-  // Filter friends to get favorites
-  var favoritefriends = data.friends.filter(contact => contact.isFavorite);
+  // Filter contacts to get favorites
+  var favoritecontacts = data.contacts.filter(contact => contact.isFavorite);
 
-  if (favoritefriends.length === 0) {
+  if (favoritecontacts.length === 0) {
     // Display a message if favorites list is empty
     var emptyMessage = document.createElement('li');
     emptyMessage.textContent = 'Your favorites list is empty.';
     emptyMessage.style.fontStyle = 'italic';
     favoritesList.appendChild(emptyMessage);
   } else {
-    favoritefriends.forEach(function(contact) {
+    favoritecontacts.forEach(function(contact) {
       var li = document.createElement('li');
 
       // Create the profile picture element
@@ -647,7 +647,7 @@ fetch(`/get-friends?username=${username}`)
     });
   }
 })
-.catch(error => console.error('Error fetching favorite friends:', error));
+.catch(error => console.error('Error fetching favorite contacts:', error));
 });
 
 
@@ -667,7 +667,7 @@ body: JSON.stringify({
 .then(data => {
 if (data.success) {
   alert(`${contactUsername} has been added to your favorites.`);
-  friendsBtn.click(); // Refresh friends
+  contactsBtn.click(); // Refresh contacts
   favoritesBtn.click(); // Open favorites
   favoritesBtn.click(); // Close favorites to trigger refresh
 } else {
@@ -692,7 +692,7 @@ body: JSON.stringify({
 .then(data => {
 if (data.success) {
   alert(`${contactUsername} has been removed from your favorites.`);
-  friendsBtn.click(); // Refresh friends
+  contactsBtn.click(); // Refresh contacts
   favoritesBtn.click(); // Open favorites
   favoritesBtn.click(); // Close favorites to trigger refresh
 } else {
@@ -717,8 +717,8 @@ function removeContact(contactUsername) {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert(`${contactUsername} has been removed from your friends.`);
-      friendsBtn.click(); // Simulate another click to refresh the list
+      alert(`${contactUsername} has been removed from your contacts.`);
+      contactsBtn.click(); // Simulate another click to refresh the list
     } else {
       alert('Failed to remove contact.');
     }
