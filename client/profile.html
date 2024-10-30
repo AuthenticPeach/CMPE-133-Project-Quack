@@ -235,7 +235,8 @@
       <div id="connected-accounts">
             <h4>Connected Accounts</h4>
           <!-- Display Connected Accounts -->
-          <div id="connected-accounts-display"></div>
+          <div id="connected-accounts-display" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%;">
+          </div>
 
           <!-- Form to Add/Edit Connected Accounts -->
           <button id="edit-accounts-btn" class="normalButton">Edit Connected Accounts</button>
@@ -313,6 +314,40 @@
       const cancelAccountsBtn = document.getElementById('cancel-accounts-btn');
       const accountsMessage = document.getElementById('accounts-message');
 
+      // Elements for profile and bio
+      const uploadForm = document.getElementById("upload-form");
+      const profilePicElement = document.getElementsByClassName("profile-pic");
+      const messageElement = document.getElementById("message");
+      const bioElement = document.getElementById("bio");
+      const bioDisplayElement = document.getElementById("bio-display"); // Bio display element
+      const bioMessageElement = document.getElementById("bio-message");
+      const editBioBtn = document.getElementById("edit-bio-btn");
+      const saveBioBtn = document.getElementById("save-bio-btn");
+      const emojiButton = document.getElementById("emoji-button");
+
+      const firstNameElement = document.getElementById("firstName");
+      const lastNameElement = document.getElementById("lastName");
+      const usernameElement = document.getElementById("username");
+      const emailElement = document.getElementById("email");
+      const phoneElement = document.getElementById("phoneNumber");
+
+      // Elements for password changing
+      const passwordChangeSection = document.getElementById("password-change-section");
+      const currentPasswordInput = document.getElementById("current-password");
+      const newPasswordInput = document.getElementById("new-password");
+      const confirmNewPasswordInput = document.getElementById("confirm-new-password");
+      const changePasswordBtn = document.getElementById("changePasswordBtn");
+      const passwordMessage = document.getElementById("password-message");
+
+      // Elements for delete account
+      const deleteMessage = document.getElementById("delete-message");
+      const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+      const deleteAccountModal = document.getElementById('deleteAccountModal');
+      const confirmDeleteBtn = document.getElementById('confirmDelete');
+
+      // Retrieve the username from localStorage
+      const username = localStorage.getItem("username");      
+      
       // Event Listeners for Connected Accounts
       editAccountsBtn.addEventListener('click', showConnectedAccountsForm);
       saveAccountsBtn.addEventListener('click', saveConnectedAccounts);
@@ -422,8 +457,8 @@
           .catch((error) => console.error("Error fetching contacts:", error));
       });
 
-// Function to show the Connected Accounts form
-function showConnectedAccountsForm() {
+      // Function to show the Connected Accounts form
+      function showConnectedAccountsForm() {
         connectedAccountsForm.style.display = 'block';
         editAccountsBtn.style.display = 'none';
         connectedAccountsDisplay.style.display = 'none';
@@ -460,48 +495,77 @@ function showConnectedAccountsForm() {
         };
         console.log('Saving connected accounts:', connectedAccounts);
 
-  // Send data to the server
-  fetch('/save-connected-accounts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ username, connectedAccounts })
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              accountsMessage.style.color = 'green';
-              accountsMessage.textContent = 'Connected accounts updated successfully.';
-              connectedAccountsForm.style.display = 'none';
-              editAccountsBtn.style.display = 'block';
-              // Update the display
-              userData.connectedAccounts = connectedAccounts;
-              displayConnectedAccounts();
-            } else {
-              accountsMessage.style.color = 'red';
-              accountsMessage.textContent = 'Failed to update connected accounts.';
-            }
-          })
-          .catch(error => {
-            console.error('Error saving connected accounts:', error);
+      // Send data to the server
+      fetch('/save-connected-accounts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, connectedAccounts })
+      })        
+      .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            accountsMessage.style.color = 'green';
+            accountsMessage.textContent = 'Connected accounts updated successfully.';
+            connectedAccountsForm.style.display = 'none';
+            editAccountsBtn.style.display = 'block';
+            // Update the display
+            userData.connectedAccounts = connectedAccounts;
+            displayConnectedAccounts();
+          } else {
             accountsMessage.style.color = 'red';
-            accountsMessage.textContent = 'An error occurred while saving connected accounts.';
-          });
-      }
+            accountsMessage.textContent = data.message || 'Failed to update connected accounts.';
+          }
+        })
+        .catch(error => {
+          console.error('Error saving connected accounts:', error);
+          accountsMessage.style.color = 'red';
+          accountsMessage.textContent = 'An error occurred while saving connected accounts.';
+        });
+    }
 
       // Function to display Connected Accounts
       function displayConnectedAccounts() {
         connectedAccountsDisplay.innerHTML = ''; // Clear existing content
         const accounts = userData.connectedAccounts || {};
+
         const platforms = [
-          { name: 'YouTube', key: 'youtube', icon: 'youtube-icon.png' },
-          { name: 'Twitch', key: 'twitch', icon: 'twitch-icon.png' },
-          { name: 'Twitter', key: 'twitter', icon: 'twitter-icon.png' },
-          { name: 'Instagram', key: 'instagram', icon: 'instagram-icon.png' },
-          { name: 'TikTok', key: 'tiktok', icon: 'tiktok-icon.png' },
-          { name: 'WhatsApp', key: 'whatsapp', icon: 'whatsapp-icon.png' },
-          { name: 'Snapchat', key: 'snapchat', icon: 'snapchat-icon.png' },
+          {
+            name: 'YouTube',
+            key: 'youtube',
+            icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/lpuwky4wf5o5wbcf2wxn.webp',
+          },
+          {
+            name: 'Twitch',
+            key: 'twitch',
+            icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/xcrwvzrjrj4dw1yya56r.jpg',
+          },
+          {
+            name: 'Twitter/X',
+            key: 'twitter',
+            icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/tgfgmgjurtazvy9scjdb.jpg',
+          },
+          {
+            name: 'Instagram',
+            key: 'instagram',
+            icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223970/base/peoeigfk0yy9jbvpgrt3.png',
+          },
+          {
+            name: 'TikTok',
+            key: 'tiktok',
+            icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/m3evlfqli9pt3h4k61za.webp',
+          },
+          {
+            name: 'WhatsApp',
+            key: 'whatsapp',
+            icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730224314/base/tzghijqdnn7kofrqtghf.png',
+          },
+          {
+            name: 'Snapchat',
+            key: 'snapchat',
+            icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/k04o0c2jesojaxfxkedq.jpg',
+          },
         ];
 
         platforms.forEach(platform => {
@@ -511,7 +575,7 @@ function showConnectedAccountsForm() {
             accountDiv.className = 'account-item';
 
             const iconImg = document.createElement('img');
-            iconImg.src = `/icons/${platform.icon}`; // Make sure the icons are in the /icons/ directory
+            iconImg.src = platform.icon;
             iconImg.alt = platform.name;
             iconImg.className = 'social-icon';
 
@@ -526,31 +590,7 @@ function showConnectedAccountsForm() {
             connectedAccountsDisplay.appendChild(accountDiv);
           }
         });
-
-        // Implement the embedding logic here (YouTube, Twitch, etc.)
-
-        // YouTube Embed
-        if (accounts.youtube) {
-          if (accounts.youtube.includes('youtube.com/watch')) {
-            const videoId = new URL(accounts.youtube).searchParams.get('v');
-            if (videoId) {
-              const iframe = document.createElement('iframe');
-              iframe.width = '560';
-              iframe.height = '315';
-              iframe.src = `https://www.youtube.com/embed/${videoId}`;
-              iframe.frameBorder = '0';
-              iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-              iframe.allowFullscreen = true;
-              connectedAccountsDisplay.appendChild(iframe);
-            }
-          } else {
-            const youtubeLink = document.createElement('a');
-            youtubeLink.href = accounts.youtube;
-            youtubeLink.target = '_blank';
-            youtubeLink.textContent = 'My YouTube Channel';
-            connectedAccountsDisplay.appendChild(youtubeLink);
-          }
-        }
+      
 
         // Twitter Embed
         if (accounts.twitter) {
@@ -560,7 +600,7 @@ function showConnectedAccountsForm() {
           twitterEmbed.dataset.width = '400';
           twitterEmbed.dataset.height = '600';
           twitterEmbed.textContent = `Tweets by ${accounts.twitter.split('/').pop()}`;
-          
+
           const accountDiv = document.createElement('div');
           accountDiv.className = 'account-item';
 
@@ -573,6 +613,112 @@ function showConnectedAccountsForm() {
           script.src = 'https://platform.twitter.com/widgets.js';
           script.charset = 'utf-8';
           document.head.appendChild(script);
+        }
+
+        // Twitch Embed
+        if (accounts.twitch) {
+          const twitchUrl = new URL(accounts.twitch);
+          const pathname = twitchUrl.pathname.split('/').filter(Boolean);
+          let twitchChannel = null;
+
+          if (pathname[0]) {
+            twitchChannel = pathname[0];
+          }
+
+          if (twitchChannel) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://player.twitch.tv/?channel=${twitchChannel}&parent=${window.location.hostname}`;
+            iframe.frameBorder = '0';
+            iframe.allowFullscreen = true;
+            iframe.scrolling = 'no';
+            iframe.width = '560';
+            iframe.height = '315';
+            connectedAccountsDisplay.appendChild(iframe);
+          } else {
+            const twitchLink = document.createElement('a');
+            twitchLink.href = accounts.twitch;
+            twitchLink.target = '_blank';
+            twitchLink.textContent = 'My Twitch Channel';
+            connectedAccountsDisplay.appendChild(twitchLink);
+          }
+        }
+
+        // Instagram Embed
+        if (accounts.instagram) {
+          const instagramEmbed = document.createElement('blockquote');
+          instagramEmbed.className = 'instagram-media';
+          instagramEmbed.setAttribute('data-instgrm-permalink', accounts.instagram);
+          instagramEmbed.style.width = '100%';
+          connectedAccountsDisplay.appendChild(instagramEmbed);
+
+          // Load Instagram Embed Script
+          const script = document.createElement('script');
+          script.src = 'https://www.instagram.com/embed.js';
+          script.async = true;
+          document.head.appendChild(script);
+        }
+
+
+        // TikTok Embed with Sandbox
+        if (accounts.tiktok) {
+          const tiktokUrl = accounts.tiktok;
+          
+          const tiktokDiv = document.createElement('div');
+          tiktokDiv.className = 'account-item';
+          
+          const iconImg = document.createElement('img');
+          iconImg.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/m3evlfqli9pt3h4k61za.webp';
+          iconImg.alt = 'TikTok';
+          iconImg.style.width = '40px'; // Adjust size as needed
+
+          const tiktokLink = document.createElement('a');
+          tiktokLink.href = tiktokUrl;
+          tiktokLink.target = '_blank';
+          tiktokLink.textContent = 'View my TikTok';
+          
+          tiktokDiv.appendChild(iconImg);
+          tiktokDiv.appendChild(tiktokLink);
+          connectedAccountsDisplay.appendChild(tiktokDiv);
+        }
+
+        // For WhatsApp, display a clickable phone number
+        if (accounts.whatsapp) {
+          const whatsappLink = document.createElement('a');
+          whatsappLink.href = `https://wa.me/${accounts.whatsapp.replace(/\D/g, '')}`;
+          whatsappLink.target = '_blank';
+          whatsappLink.textContent = `Chat with me on WhatsApp`;
+
+          const accountDiv = document.createElement('div');
+          accountDiv.className = 'account-item';
+
+          const iconImg = document.createElement('img');
+          iconImg.src = platforms.find(p => p.key === 'whatsapp').icon;
+          iconImg.alt = 'WhatsApp';
+          iconImg.className = 'social-icon';
+
+          accountDiv.appendChild(iconImg);
+          accountDiv.appendChild(whatsappLink);
+          connectedAccountsDisplay.appendChild(accountDiv);
+        }
+
+        // For Snapchat, provide a link to the Snapchat profile
+        if (accounts.snapchat) {
+          const snapchatLink = document.createElement('a');
+          snapchatLink.href = `https://www.snapchat.com/add/${accounts.snapchat}`;
+          snapchatLink.target = '_blank';
+          snapchatLink.textContent = `Add me on Snapchat`;
+
+          const accountDiv = document.createElement('div');
+          accountDiv.className = 'account-item';
+
+          const iconImg = document.createElement('img');
+          iconImg.src = platforms.find(p => p.key === 'snapchat').icon;
+          iconImg.alt = 'Snapchat';
+          iconImg.className = 'social-icon';
+
+          accountDiv.appendChild(iconImg);
+          accountDiv.appendChild(snapchatLink);
+          connectedAccountsDisplay.appendChild(accountDiv);
         }
 
         // Repeat similar blocks for other platforms (Twitch, Twitter, etc.)
@@ -774,42 +920,6 @@ function showConnectedAccountsForm() {
     <script src="https://unpkg.com/emoji-button@latest"></script>
 
     <script>
-      const uploadForm = document.getElementById("upload-form");
-      const profilePicElement = document.getElementsByClassName("profile-pic");
-      const messageElement = document.getElementById("message");
-      const bioElement = document.getElementById("bio");
-      const bioDisplayElement = document.getElementById("bio-display"); // Bio display element
-      const bioMessageElement = document.getElementById("bio-message");
-      const editBioBtn = document.getElementById("edit-bio-btn");
-      const saveBioBtn = document.getElementById("save-bio-btn");
-      const emojiButton = document.getElementById("emoji-button");
-
-      const firstNameElement = document.getElementById("firstName");
-      const lastNameElement = document.getElementById("lastName");
-      const usernameElement = document.getElementById("username");
-      const emailElement = document.getElementById("email");
-      const phoneElement = document.getElementById("phoneNumber");
-
-      // Elements for password changing
-      const passwordChangeSection = document.getElementById(
-        "password-change-section"
-      );
-      const currentPasswordInput = document.getElementById("current-password");
-      const newPasswordInput = document.getElementById("new-password");
-      const confirmNewPasswordInput = document.getElementById(
-        "confirm-new-password"
-      );
-      const changePasswordBtn = document.getElementById("changePasswordBtn");
-      const passwordMessage = document.getElementById("password-message");
-
-      // Elements for delete account
-      const deleteMessage = document.getElementById("delete-message");
-      const deleteAccountBtn = document.getElementById('deleteAccountBtn'); 
-      const deleteAccountModal = document.getElementById('deleteAccountModal');
-      const confirmDeleteBtn = document.getElementById('confirmDelete');
-
-      // Retrieve the username from localStorage
-      const username = localStorage.getItem("username");
 
       // Redirect to the sign-in page if the username is not found
       if (!username) {
@@ -860,57 +970,40 @@ function showConnectedAccountsForm() {
         .then((response) => response.json())
         .then((data) => {
           if (data.profilePic) {
-            profilePicElement[0].src = data.profilePic;
-            profilePicElement[1].src = data.profilePic;
-          } else {
-            profilePicElement[0].src = "/uploads/default-avatar.png";
-            profilePicElement[1].src = "/uploads/default-avatar.png";
-          }
-          if (data.bio) {
-            bioDisplayElement.innerHTML = autoEmbedBio(data.bio);
+          profilePicElement[0].src = data.profilePic;
+          profilePicElement[1].src = data.profilePic;
+        } else {
+          profilePicElement[0].src = "/uploads/default-avatar.png";
+          profilePicElement[1].src = "/uploads/default-avatar.png";
+        }
+        if (data.bio) {
+          bioDisplayElement.innerHTML = autoEmbedBio(data.bio);
+          // Append Twitter widget script if needed...
+        } else {
+          bioDisplayElement.textContent = "No bio available";
+        }
 
-            // Append the Twitter widget script if there's a Twitter link
-            if (
-              data.bio.includes("twitter.com") ||
-              data.bio.includes("x.com")
-            ) {
-              const script = document.createElement("script");
-              script.setAttribute("async", "");
-              script.setAttribute(
-                "src",
-                "https://platform.twitter.com/widgets.js"
-              );
-              script.setAttribute("charset", "utf-8");
-              document.body.appendChild(script);
-            }
-          } else {
-            bioDisplayElement.textContent = "No bio available";
-          }
 
           // Display the user's full name
-          document.getElementsByClassName(
-            "full-name"
-          )[0].textContent = `${data.firstName} ${data.lastName}`;
-          document.getElementsByClassName(
-            "full-name"
-          )[1].textContent = `${data.firstName} ${data.lastName}`;
+          document.getElementsByClassName("full-name")[0].textContent = `${data.firstName} ${data.lastName}`;
+          document.getElementsByClassName("full-name")[1].textContent = `${data.firstName} ${data.lastName}`;
 
-          // Store firstname, lastname, username, email, phonenumber in a box
+          // Store firstname, lastname, username, email, phonenumber in inputs
           firstNameElement.value = data.firstName;
           lastNameElement.value = data.lastName;
           usernameElement.value = username;
           emailElement.value = data.email;
           phoneElement.value = data.phoneNumber;
-        })
-        .then(response => response.json())
-        .then(data => {
-          userData = data; // Store the user data
+
+          // Store the user data for connected accounts
+          userData = data;
+
           // Display connected accounts
           displayConnectedAccounts();
         })
         .catch(error => {
           console.error('Error fetching profile:', error);
-        });
+      });
 
       // Event listener for profile picture upload
       uploadForm.addEventListener("submit", function (event) {

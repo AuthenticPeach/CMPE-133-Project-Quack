@@ -292,7 +292,7 @@ header .image-text .profession {
 #Bio {
   grid-column: span 2;
   min-height: 150px;
-  padding-bottom: 0;
+  padding-bottom: 20px;
   
 }
 
@@ -465,6 +465,7 @@ header .image-text .profession {
 #edit-bio-btn {
   width: 90px;
   background-color: #f4a62a;
+  margin-top: -10px; /* Raise button by reducing the margin-top */
 }
 
 #save-bio-btn {
@@ -653,20 +654,37 @@ h5 {
 
 /* Connected Accounts Styling */
 #connected-accounts {
-  grid-column: span 2;
+  max-width: 925px; /* Slightly increase width */
+  margin: 0 auto;
   background-color: white;
   padding: 20px;
   margin-top: 20px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  overflow: hidden;
 }
+
+
 
 #connected-accounts h4 {
   margin-bottom: 20px;
 }
 
 #connected-accounts-display {
-  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Two equal-width columns */
+  gap: 20px; /* Space between grid items */
+  width: 100%;
 }
+
+.account-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  min-height: 50px; /* Temporary minimum height */
+  width: 100%;
+}
+
 
 #connected-accounts-display iframe,
 #connected-accounts-display .social-embed {
@@ -706,11 +724,6 @@ h5 {
   margin-top: 10px;
 }
 
-.account-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
 
 .social-icon {
   width: 40px;
@@ -726,4 +739,14 @@ h5 {
 
 .account-item a:hover {
   text-decoration: underline;
+}
+/* Adjust iframe sizes if necessary */
+.account-item iframe {
+  max-width: 100%;
+}
+
+/* Ensure blockquote elements are styled appropriately */
+.instagram-media,
+.tiktok-embed {
+  margin: 15px 0;
 }
