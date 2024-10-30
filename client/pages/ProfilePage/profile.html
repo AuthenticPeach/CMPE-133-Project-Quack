@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/pages/ProfilePage/profile.css" />
+  </head>
+  <body>
+
+    <nav class="sidebar close">
+      <header>
+        <div class="image-text">
+          <span class="image">
+            <img src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png" alt="Quack Logo" />
+          </span>
+
+          <div class="text logo-text">
+            <span class="name">QUACK.</span>
+          </div>
+        </div>
+
+        <i class="bx bx-chevron-right toggle"></i>
+      </header>
+
+      <div class="menu-bar">
+        <div class="menu">
+          <ul class="menu-links">
+            <li class="nav-link">
+              <a href="/user-dashboard">
+                <i class="bx bx-home-alt icon"></i>
+                <span class="text nav-text">Dashboard</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#">
+                <i class="bx bx-message-rounded icon"></i>
+                <span class="text nav-text">Inbox</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#" class="contact-btn">
+                <i class="bx bxs-contact icon"></i>
+                <span class="text nav-text" id="contactText">Contact</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#" class="favorite-btn">
+                <i class="bx bx-heart icon"></i>
+                <span class="text nav-text" id="favoriteText">Favorites</span>
+              </a>
+            </li>
+
+          </ul>
+        </div>
+
+        <div class="bottom-content">
+          <li class="">
+            <a href="/signin" onclick="localStorage.removeItem('username')">
+              <i class="bx bx-log-out icon"></i>
+              <span class="text nav-text">Logout</span>
+            </a>
+          </li>
+
+          <li class="">
+            <a href="profile">
+              <img
+                src=""
+                alt=""
+                class="profile-pic"
+                style="width: 40px; margin: 10px; height: auto"
+              />
+              <p class="text nav-text full-name"></p>
+            </a>
+          </li>
+        </div>
+      </div>
+    </nav>
+
+    <!-- New Sidebar (Hidden Initially) -->
+    <nav class="sidebar2">
+      <h1 id="title">CONTACT</h1>
+      <ul class="contactList" style="display: none; overflow-y: auto; max-height: calc(100vh - 90px); overflow-x: hidden;"></ul>
+      <ul class="favoriteList" style="display: none; overflow-y: auto; max-height: calc(100vh - 90px); overflow-x: hidden;"></ul>
+    </nav>
+
+    <section class="home">
+      <button type="button" class="normalButton" id="deleteAccountBtn" style="display: none;">
+        Delete Account
+      </button>
+      <div class="grid-container">
+        <div>
+          <img class="profile-pic" src="" alt="Profile Picture" />
+          <h5 class="full-name"></h5>
+
+          <!-- Upload Profile Picture Form (hidden initially) -->
+          <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" name="profilePic" id="profilePic" required />
+            <br /><button type="submit" class="normalButton">Upload</button>
+          </form>
+          <p id="message"></p>
+        </div>
+
+        <div>
+          <h4>Your Profile</h4>
+          <form class="profile-form">
+            <p>
+              <label>First Name:</label>
+              <input type="text" name="firstName" id="firstName" readonly />
+            </p>
+            <p>
+              <label>Last Name:</label>
+              <input type="text" name="lastName" id="lastName" readonly />
+            </p>
+            <p>
+              <label>Username:</label>
+              <input
+                type="text"
+                name="username"
+                id="username"
+                style="display: none"
+                readonly
+              />
+            </p>
+            <p>
+              <label>Email:</label>
+              <input
+                type="text"
+                name="email"
+                id="email"
+                style="display: none"
+                readonly
+              />
+            </p>
+            <p>
+              <label>Phone Number:</label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                style="display: none"
+                id="phoneNumber"
+                readonly
+              />
+            </p>
+            <div class="button-container">
+              <button type="button" class="normalButton" id="showBtn">
+                Show Profile
+              </button>
+              <button type="button" class="normalButton" id="editBtn">
+                Edit Profile
+              </button>
+              <button type="button" class="normalButton" id="cancelBtn">
+                Cancel
+              </button>
+              <button type="submit" class="normalButton" id="updateBtn">
+                Update Profile
+              </button>
+            </div>
+          </form>
+          <form class="profile-form">
+            <button type="button" class="normalButton" id="editPasswordBtn">
+              Edit Password
+            </button>
+            <div id="password-change-section" style="display: none">
+              <p>
+                <label>Current Password:</label>
+                <input
+                  type="password"
+                  name="current-password"
+                  id="current-password"
+                  required
+                />
+              </p>
+              <p>
+                <label>New Password:</label>
+                <input
+                  type="password"
+                  name="new-password"
+                  id="new-password"
+                  required
+                />
+              </p>
+              <p>
+                <label>Confirm Password:</label>
+                <input
+                  type="password"
+                  name="confirm-new-password"
+                  id="confirm-new-password"
+                  required
+                />
+              </p>
+            </div>
+            <p id="password-message"></p>
+            <div class="button-container" style="display: none">
+              <button type="button" class="normalButton" id="cancelPasswordBtn">
+                Cancel
+              </button>
+              <button type="button" class="normalButton" id="changePasswordBtn">
+                Change Password
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div id="Bio">
+          <h4>Your Bio</h4>
+          <p id="bio-display" class="bio-display"></p>
+          <!-- Non-editable bio display -->
+          <textarea
+            id="bio"
+            placeholder="Tell us something about yourself..."
+          ></textarea>
+          <!-- Add Emoji Button for Bio -->
+          <button id="emoji-button" class="hidden">😀</button>
+
+          <button id="edit-bio-btn" class="normalButton">Edit Bio</button>
+          <!-- Changed to 'Edit Profile' -->
+          <button id="save-bio-btn" class="hidden normalButton">
+            Save Bio
+          </button>
+          <!-- Changed to 'Save Profile' -->
+
+          <p id="bio-message"></p>
+        </div>
+      </div>
+
+          <!-- Connected Accounts Section -->
+      <div id="connected-accounts">
+            <h4>Connected Accounts</h4>
+          <!-- Display Connected Accounts -->
+          <div id="connected-accounts-display" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%;">
+          </div>
+
+          <!-- Form to Add/Edit Connected Accounts -->
+          <button id="edit-accounts-btn" class="normalButton">Edit Connected Accounts</button>
+          <form id="connected-accounts-form" class="profile-form" style="display: none;">
+            <p>
+              <label>YouTube:</label>
+              <input type="url" name="youtube" id="youtube" placeholder="https://www.youtube.com/..." />
+            </p>
+            <p>
+              <label>Twitch:</label>
+              <input type="url" name="twitch" id="twitch" placeholder="https://www.twitch.tv/..." />
+            </p>
+            <p>
+              <label>Twitter:</label>
+              <input type="url" name="twitter" id="twitter" placeholder="https://twitter.com/..." />
+            </p>
+            <p>
+              <label>Instagram:</label>
+              <input type="url" name="instagram" id="instagram" placeholder="https://www.instagram.com/..." />
+            </p>
+            <p>
+              <label>TikTok:</label>
+              <input type="url" name="tiktok" id="tiktok" placeholder="https://www.tiktok.com/@" />
+            </p>
+            <p>
+              <label>WhatsApp:</label>
+              <input type="tel" name="whatsapp" id="whatsapp" placeholder="Enter your phone number" />
+            </p>
+            <p>
+              <label>Snapchat:</label>
+              <input type="text" name="snapchat" id="snapchat" placeholder="Your Snapchat username" />
+            </p>
+            <div class="button-container">
+              <button type="button" class="normalButton" id="save-accounts-btn">Save Accounts</button>
+              <button type="button" class="normalButton" id="cancel-accounts-btn">Cancel</button>
+            </div>
+          </form>
+          <p id="accounts-message"></p>
+      </div>
+
+      <div id="deleteAccountModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h3>Deleting Account</h3>
+          <p>Delete your account will remove all of your information from our database. This action cannot be undone.</p>
+          <label for="currentPassword">Please enter your password to confirm:</label>
+          <input type="password" id="currentPassword" required>
+          <button id="confirmDelete" class="normalButton">Delete Account</button>
+          <p id="delete-message"></p>
+        </div>
+      </div>
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/emoji-button@latest"></script>
+    <script src="/pages/ProfilePage/profile.js"></script>
+    
+  </body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/pages/SignupPage/signup.css">
+  <title>Signup Form</title>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      <img src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990834/base/zexyrf91haskpcmwfcpw.png" alt="Duck Icon">
+      <p>QUACK.</p>
+      <p>Already have an account?</p>
+      <a href="/signin" class="signin-link"><button class="signin-button">SIGN IN</button></a>
+    </div>
+    <div class="right-panel">
+      <h2>Create Account</h2>
+      <form id="signup-form">
+        <input type="text" id="firstName" placeholder="First Name" required maxlength="50" pattern="[A-Za-z ]{1,50}">
+        <input type="text" id="lastName" placeholder="Last Name" required maxlength="50" pattern="[A-Za-z ]{1,50}">
+        <input type="text" id="username" placeholder="Username" required maxlength="30" pattern="[A-Za-z0-9]{3,30}">
+        <input type="email" id="email" placeholder="Email" required maxlength="100">
+        <input type="tel" id="phoneNumber" placeholder="Phone Number" required maxlength="15" pattern="[0-9+\(\)\-\s]{7,15}">
+        <input type="password" id="password" placeholder="Password" required minlength="8" maxlength="50">
+        <p id="password-strength"></p>
+        <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="8" maxlength="50">
+        <button type="submit">SIGN UP</button>
+        <p id="error-message" class="error-message"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/pages/SignupPage/signup.js"></script>
+</body>
+</html>

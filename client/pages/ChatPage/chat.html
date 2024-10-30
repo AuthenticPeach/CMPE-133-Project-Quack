@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quack Chat</title>
+  <link rel="stylesheet" href="/pages/ChatPage/chat.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+</head>
+<body>
+  <div id="links"> <!-- Links to profile.html and user-dashboard.html -->
+    <a href="/pages/ProfilePage/profile.html">Profile</a>
+    <a href="/pages/UserDashboard/user-dashboard.html">Dashboard</a>
+  </div>
+
+  <button id="signout">Sign Out</button> <!-- Sign Out button moved to top-right -->
+
+  <div id="chat-section">
+    <h2>Welcome to Quack chat!</h2>
+    <button id="load-more" style="display: none;">Load More</button>
+    <ul id="messages"></ul>
+    <form id="form">
+      <input id="input" autocomplete="off" placeholder="Type a message..." />
+      <input type="file" id="image-input" accept="image/*,.txt,.pdf" />
+      <button id="emoji-button" type="button">😀</button> <!-- Emoji Button -->
+      <button type="submit">Send</button>
+    </form>
+    <p id="typing"></p>
+  </div>
+
+  <div id="users-section">
+    <h3>Users Online:</h3>
+    <ul id="users"></ul> <!-- List of connected users -->
+  </div>
+  <div id="reply-preview" style="display: none;"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/emoji-button@latest"></script>
+  <script src="/pages/ChatPage/chat.js"></script>
+  
+</body>
+</html>
