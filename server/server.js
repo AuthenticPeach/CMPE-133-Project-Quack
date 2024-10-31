@@ -1035,26 +1035,57 @@ io.on('connection', (socket) => {
     socket.emit('error', 'Server error: Database not connected');
     return;
   }
-  socket.on('edit message', async (data) => {
-    console.log('Received edit message event:', data); // Debugging log
-    const { messageId, newContent } = data;
-
+  socket.on('edit message', async ({ messageId, newContent, roomName }) => {
+    console.log('Received edit message event:', { messageId, newContent, roomName });
+  
     try {
       const result = await messagesCollection.updateOne(
         { _id: new ObjectId(messageId) },
         { $set: { message: newContent, edited: true } }
       );
-
-      if (result.modifiedCount > 0) {
-        io.emit('message edited', { messageId, newContent });
-        console.log(`Message with ID ${messageId} was updated successfully.`);
+  
+      if (result.modifiedCount === 1) {
+        // Emit 'message edited' event back to clients in the room
+        io.to(roomName).emit('message edited', { messageId, newContent });
       } else {
-        console.log(`Message with ID ${messageId} not found.`);
+        console.error('Failed to update message in database');
       }
     } catch (error) {
-      console.error('Error updating message:', error);
+      console.error('Error editing message:', error);
     }
   });
+  
+   
+  socket.on('add reaction', async ({ messageId, emoji, roomName }) => {
+    try {
+      // Find the message and update reactions
+      const message = await messagesCollection.findOne({ _id: new ObjectId(messageId) });
+  
+      if (message) {
+        const reactions = message.reactions || [];
+        const reactionIndex = reactions.findIndex((r) => r.emoji === emoji);
+  
+        if (reactionIndex >= 0) {
+          // Increment the count for existing reaction
+          reactions[reactionIndex].count += 1;
+        } else {
+          // Add new reaction
+          reactions.push({ emoji, count: 1 });
+        }
+  
+        // Update the message in the database
+        await messagesCollection.updateOne(
+          { _id: new ObjectId(messageId) },
+          { $set: { reactions: reactions } }
+        );
+  
+        // Emit 'reaction added' event back to clients in the room
+        io.to(roomName).emit('reaction added', { messageId, emoji, count: reactions.find((r) => r.emoji === emoji).count });
+      }
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+    }
+  });  
 
   // Handle when a user joins a group chat room
   socket.on('join room', async (roomName) => {

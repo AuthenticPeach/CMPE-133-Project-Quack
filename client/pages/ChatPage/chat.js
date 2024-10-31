@@ -194,6 +194,13 @@ document.addEventListener('DOMContentLoaded', function() {
       contentDiv.insertBefore(replyDiv, contentDiv.firstChild);
     }
 
+    if (msg.edited) {
+      const editedTag = document.createElement('span');
+      editedTag.classList.add('edited-tag');
+      editedTag.textContent = ' (edited)';
+      messageSpan.appendChild(editedTag);
+    }
+    
     // Append profile image and contentDiv to messageContainer
     messageContainer.appendChild(profileImg);
     messageContainer.appendChild(contentDiv);
@@ -228,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
     picker.showPicker(reactionButton); // Show emoji picker when clicked
     picker.on('emoji', (emoji) => {
       // Emit the reaction to the server without adding it as a new message
-      socket.emit('add reaction', { messageId: msg._id, emoji: emoji });
+      socket.emit('add reaction', { messageId: msg._id, emoji: emoji, roomName });
 
       // Update the UI with the selected emoji right under the message
       let reactionSpan = Array.from(reactionsDiv.children).find(span => span.textContent.startsWith(emoji));
@@ -363,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const newContent = editInput.value;
 
       // Emit the edited message to the server
-      socket.emit('edit message', { messageId: msg._id, newContent });
+      socket.emit('edit message', { messageId: msg._id, newContent, roomName });
 
       // Replace the input field with the updated message content
       contentDiv.innerHTML = '';
@@ -384,16 +391,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const item = document.querySelector(`[data-message-id="${messageId}"]`);
     if (item) {
       const contentDiv = item.querySelector('.content-div');
-      const msgUsername = item.querySelector('strong').textContent;
-
-      // Update the message content and add an "(edited)" tag
-      contentDiv.innerHTML = `[${new Date().toLocaleString()}] ${msgUsername} ${newContent}`;
-      const editedTag = document.createElement('span');
-      editedTag.classList.add('edited-tag');
-      editedTag.textContent = ' (edited)';
-      contentDiv.appendChild(editedTag);
+      const timestampSpan = contentDiv.querySelector('.timestamp');
+      const usernameSpan = contentDiv.querySelector('strong');
+  
+      // Update the message content
+      const messageSpan = contentDiv.querySelector('.message-content');
+      messageSpan.textContent = newContent;
+  
+      // Add '(edited)' tag if not already present
+      if (!contentDiv.querySelector('.edited-tag')) {
+        const editedTag = document.createElement('span');
+        editedTag.classList.add('edited-tag');
+        editedTag.textContent = ' (edited)';
+        contentDiv.appendChild(editedTag);
+      }
     }
   });
+  
 
   socket.on('reaction added', function({ messageId, emoji, count }) {
     const messageItem = document.querySelector(`[data-message-id="${messageId}"]`);
@@ -409,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
         reactionsDiv.appendChild(newReactionSpan);
       }
     }
-  });
+  });  
 
   socket.on('more chat history', function(messages) {
     const messagesList = document.getElementById('messages');
