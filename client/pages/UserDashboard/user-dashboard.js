@@ -21,6 +21,22 @@ if (!username) {
     })
     .catch(error => console.error('Error fetching profile:', error));
 }
+    // At the beginning of user-dashboard.js
+    fetch(`/check-user-status?username=${encodeURIComponent(username)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.isBanned) {
+          alert('Your account has been banned.');
+          window.location.href = '/signin';
+        } else if (data.isMuted) {
+          alert(`You are muted until ${new Date(data.muteUntil).toLocaleString()}. Reason: ${data.muteReason || 'No reason provided.'}`);
+        }
+      })
+      .catch(error => console.error('Error checking user status:', error));
+
+socket.on('mute notification', (data) => {
+  alert(data.message);
+});
 
 // Handle Sign Out
 var signoutButton = document.getElementById('signout');

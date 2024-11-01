@@ -1,0 +1,347 @@
+/* Include the CSS reset and base styles from profile.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+:root {
+  /* Colors */
+  --body-color: white;
+  --sidebar-color: #226c5c;
+  --primary-color: white;
+  --toggle-color: #226c5c;
+  --text-color: white;
+
+  /* Transition */
+  --tran-03: all 0.2s ease;
+  --tran-04: all 0.3s ease;
+  --tran-05: all 0.3s ease;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--body-color);
+  transition: var(--tran-05);
+}
+
+.dashboard-title {
+  background-color: #f8f9fa; /* Light gray to match the layout */
+  padding: 10px 30px; /* Add padding for spacing */
+  margin: 20px auto; /* Center the title box */
+  border-radius: 8px; /* Rounded corners */
+  max-width: 800px; /* Align width with the table */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  text-align: center;
+}
+
+.dashboard-title h1 {
+  color: #4f3e3e; /* Use a dark color for visibility */
+  font-weight: bold; /* Make the text bold for emphasis */
+  font-size: 32px; /* Adjust font size as needed */
+  opacity: 1; /* Ensure full opacity */
+}
+
+/* Sidebar styles */
+.sidebar,
+.sidebar2 {
+  position: fixed;
+  top: 0;
+  height: 100%;
+  width: 250px;
+  padding: 10px 14px;
+  background: var(--sidebar-color);
+  transition: var(--tran-05);
+}
+
+.sidebar {
+  left: 0;
+  z-index: 100;
+}
+
+.sidebar.close {
+  width: 88px;
+}
+
+/* Sidebar common styles */
+.sidebar li {
+  height: 50px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.sidebar .icon {
+  min-width: 60px;
+  border-radius: 6px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+}
+
+.sidebar .text,
+.sidebar .icon {
+  color: var(--text-color);
+  transition: var(--tran-03);
+}
+
+.sidebar .text {
+  font-size: 21px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 1;
+  margin-left: 10px;
+}
+
+.sidebar.close .text {
+  opacity: 0;
+}
+
+.sidebar header {
+  position: relative;
+}
+
+.sidebar header .image-text {
+  display: flex;
+  align-items: center;
+}
+
+.sidebar header .logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+header .image-text .name {
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.sidebar header .image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar header .image img {
+  width: 60px;
+  border-radius: 6px;
+}
+
+.sidebar header .toggle {
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%) rotate(180deg);
+  height: 25px;
+  width: 25px;
+  background-color: var(--sidebar-color);
+  color: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  transition: var(--tran-05);
+}
+
+.sidebar.close .toggle {
+  transform: translateY(-50%) rotate(0deg);
+}
+
+.sidebar .menu {
+  margin-top: 40px;
+}
+
+.sidebar li a {
+  list-style: none;
+  height: 100%;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: var(--tran-03);
+}
+
+.sidebar li a:hover {
+  background-color: var(--primary-color);
+}
+
+.sidebar li a:hover .icon,
+.sidebar li a:hover .text {
+  color: var(--sidebar-color);
+}
+
+.sidebar .menu-bar {
+  height: calc(100% - 55px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: scroll;
+}
+
+.menu-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Main Content Area */
+.home {
+  position: absolute;
+  top: 0;
+  left: 250px;
+  width: calc(100% - 250px);
+  height: 100vh;
+  transition: var(--tran-05);
+  background: linear-gradient(
+      rgba(220, 216, 216, 0.8),
+      rgba(220, 216, 216, 0.5)
+    ),
+    url("https://res.cloudinary.com/dxseoqcpb/image/upload/v1729122093/base/t2laawx0hmk39czdqqgk.png");
+  background-size: cover;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.sidebar.close ~ .home {
+  left: 88px;
+  width: calc(100% - 88px);
+}
+
+/* User Table Styles */
+.grid-container {
+  display: flex;
+  justify-content: center;
+}
+
+.table-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 1200px;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#users-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+#users-table th,
+#users-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+#users-table th {
+  background-color: #f2f2f2;
+}
+
+/* Buttons */
+.ban-button,
+.mute-button,
+.unban-button,
+.unmute-button {
+  background-color: #ff4d4d; /* Red color */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.mute-button {
+  background-color: #f4a62a; /* Orange color */
+}
+
+.unban-button,
+.unmute-button {
+  background-color: #28a745; /* Green color */
+}
+
+/* Modal Styles */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 999; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 5% auto; /* 5% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 400px; /* Could be more or less, depending on screen size */
+  border-radius: 5px;
+}
+
+.modal-footer {
+  text-align: right;
+  margin-top: 20px;
+}
+
+.modal-footer button {
+  margin-left: 10px;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .home {
+    left: 0;
+    width: 100%;
+  }
+
+  .sidebar {
+    left: -250px;
+  }
+
+  .sidebar.close {
+    left: 0;
+  }
+}
+
+.normalButton {
+  background-color: #226c5c;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  font-size: 17px;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 10px;
+  font-weight: bolder;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.normalButton:hover {
+  background-color: #1a5548;
+  transform: scale(1.05);
+}

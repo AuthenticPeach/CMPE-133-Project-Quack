@@ -69,7 +69,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-let usersCollection, messagesCollection, inboxCollection;
+let usersCollection, messagesCollection, inboxCollection, reportsCollection;
 
 // Multer upload middleware
 const upload = multer({ storage: storage, fileFilter: fileFilter });
@@ -350,6 +350,64 @@ app.get('/user-dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/UserDashboard/user-dashboard.html'));
 });
 
+
+// Serve the admin dashboard page
+app.get('/admin-dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/AdminDashboard/admin-dashboard.html'));
+});
+
+
+// Route to get all users for admin dashboard
+app.get('/admin/get-users', async (req, res) => {
+  try {
+    // Fetch users
+    const users = await usersCollection.find({}).toArray();
+
+    // Fetch messages count per user
+    const messagesCounts = await messagesCollection.aggregate([
+      { $group: { _id: '$username', count: { $sum: 1 } } }
+    ]).toArray();
+
+    // Create a map of username to messages count
+    const messagesCountMap = {};
+    messagesCounts.forEach(item => {
+      messagesCountMap[item._id] = item.count;
+    });
+
+    // Fetch reports count per user (Assuming you have a 'reports' collection)
+    const reportsCounts = await reportsCollection.aggregate([
+      { $group: { _id: '$reportedUser', count: { $sum: 1 } } }
+    ]).toArray();
+
+    // Create a map of username to reports count
+    const reportsCountMap = {};
+    reportsCounts.forEach(item => {
+      reportsCountMap[item._id] = item.count;
+    });
+
+    // Sanitize and prepare the user data
+    const sanitizedUsers = users.map(user => ({
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      messagesCount: messagesCountMap[user.username] || 0,
+      reportsCount: reportsCountMap[user.username] || 0,
+      isBanned: user.isBanned || false,
+      muteUntil: user.muteUntil || null,
+      // Exclude or include other fields as needed
+    }));
+
+    res.json({ success: true, users: sanitizedUsers });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while fetching users.' });
+  }
+});
+
+
+
 // Route to handle signup form POST request
 app.post('/signup', async (req, res) => {
   console.log('Received data:', req.body);
@@ -478,8 +536,8 @@ app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/ProfilePage/profile.html'));
 });
 
-// Route to fetch user profile including bio and profile picture
-app.get('/get-user-profile', async (req, res) => {
+// Route to fetch user profile including bio and profile picture w/ middleware
+app.get('/get-user-profile', checkUserStatus, async (req, res) => {
   const username = req.query.username;
 
   try {
@@ -687,7 +745,7 @@ app.post('/add-contact', async (req, res) => {
 // Server-side: Return the user's contact list along with profile pictures
 // server.js
 
-app.get('/get-contacts', async (req, res) => {
+app.get('/get-contacts', checkUserStatus, async (req, res) => {
   const username = req.query.username;
 
   try {
@@ -727,6 +785,31 @@ app.get('/get-contacts', async (req, res) => {
     res.status(500).json({ success: false, message: 'An error occurred' });
   }
 });
+
+app.get('/check-user-status', async (req, res) => {
+  const username = req.query.username;
+
+  if (!username) {
+    return res.status(400).json({ success: false, message: 'Username is required' });
+  }
+
+  try {
+    const user = await usersCollection.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isBanned = user.isBanned || false;
+    const isMuted = user.muteUntil && new Date(user.muteUntil) > new Date();
+
+    res.json({ success: true, isBanned, isMuted, muteUntil: user.muteUntil });
+  } catch (error) {
+    console.error('Error checking user status:', error);
+    res.status(500).json({ success: false, message: 'An error occurred.' });
+  }
+});
+
 
 // Add a contact to favorites
 app.post('/add-favorite', async (req, res) => {
@@ -991,7 +1074,117 @@ app.post('/save-connected-accounts', async (req, res) => {
   }
 });
 
+app.post('/admin/ban-user', async (req, res) => {
+  const { username, reason } = req.body;
 
+  if (!reason || reason.trim() === '') {
+    return res.status(400).json({ success: false, message: 'Reason is required.' });
+  }
+
+  try {
+    const result = await usersCollection.updateOne(
+      { username },
+      { $set: { isBanned: true, banReason: reason } }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, message: 'User not found or already banned.' });
+    }
+  } catch (error) {
+    console.error('Error banning user:', error);
+    res.status(500).json({ success: false, message: 'An error occurred.' });
+  }
+});
+
+
+app.post('/admin/mute-user', async (req, res) => {
+  const { username, days, hours, minutes, reason } = req.body;
+
+  try {
+    // Parse and validate inputs
+    const daysInt = parseInt(days);
+    const hoursInt = parseInt(hours);
+    const minutesInt = parseInt(minutes);
+
+    if (
+      isNaN(daysInt) ||
+      isNaN(hoursInt) ||
+      isNaN(minutesInt) ||
+      (daysInt === 0 && hoursInt === 0 && minutesInt === 0) ||
+      daysInt < 0 ||
+      hoursInt < 0 ||
+      minutesInt < 0
+    ) {
+      return res.status(400).json({ success: false, message: 'Invalid duration values.' });
+    }
+
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({ success: false, message: 'Reason is required.' });
+    }
+
+    // Calculate muteUntil timestamp
+    const muteUntil = new Date();
+    const totalMilliseconds = ((daysInt * 24 + hoursInt) * 60 + minutesInt) * 60 * 1000;
+    muteUntil.setTime(muteUntil.getTime() + totalMilliseconds);
+
+    // Update the user's mute status in the database
+    const result = await usersCollection.updateOne(
+      { username },
+      { $set: { muteUntil, muteReason: reason } }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, message: 'User not found.' });
+    }
+  } catch (error) {
+    console.error('Error muting user:', error);
+    res.status(500).json({ success: false, message: 'An error occurred.' });
+  }
+});
+
+app.post('/admin/unban-user', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const result = await usersCollection.updateOne(
+      { username },
+      { $set: { isBanned: false } }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, message: 'User not found or not banned.' });
+    }
+  } catch (error) {
+    console.error('Error unbanning user:', error);
+    res.status(500).json({ success: false, message: 'An error occurred.' });
+  }
+});
+
+app.post('/admin/unmute-user', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const result = await usersCollection.updateOne(
+      { username },
+      { $set: { muteUntil: null } }
+    );
+
+    if (result.modifiedCount === 1) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false, message: 'User not found or not muted.' });
+    }
+  } catch (error) {
+    console.error('Error unmuting user:', error);
+    res.status(500).json({ success: false, message: 'An error occurred.' });
+  }
+});
 
 const users = {}; // Track users by socket ID
 const rooms = {}; // Track rooms by room name
@@ -1279,8 +1472,6 @@ io.on('connection', (socket) => {
 
   // Server-side: Handle incoming chat messages
   socket.on('chat message', async (data) => {
-  
-    const sanitizedMessage = DOMPurify.sanitize(msg.message); // Sanitize input
 
   // Emit sanitized message to all clients
   io.to(roomName).emit('chat message', {
@@ -1299,6 +1490,17 @@ io.on('connection', (socket) => {
     return;
   }
 
+  // Check if the user is muted
+  if (user.muteUntil && new Date(user.muteUntil) > new Date()) {
+    // User is muted
+    socket.emit('mute notification', {
+      message: `You are muted until ${new Date(user.muteUntil).toLocaleString()}. Reason: ${user.muteReason || 'No reason provided.'}`,
+    });
+    return; // Prevent the message from being sent
+  }
+
+  const sanitizedMessage = DOMPurify.sanitize(msg.message); // Sanitize input  
+
   const profilePic = user.profilePic || '/uploads/default-avatar.png';
 
   // Create message object for the database
@@ -1315,23 +1517,23 @@ io.on('connection', (socket) => {
   await messagesCollection.createIndex({ timestamp: -1 });
   console.log('Storing message in DB:', chatMessage);
 
-  // Emit the message to the room
-  io.to(roomName).emit('chat message', {
-    username: user.username,
-    message: message,
-    image: image,
-    timestamp: new Date().toLocaleTimeString(),
-    profilePic: profilePic
-  });
+    // Emit the message to the room
+    io.to(roomName).emit('chat message', {
+      username: user.username,
+      message: sanitizedMessage,
+      image: image,
+      timestamp: new Date().toLocaleTimeString(),
+      profilePic: user.profilePic || '/uploads/default-avatar.png',
+    });
 
-  console.log(`Emitting message to room ${roomName}:`, {
-    username: user.username,
-    message: message,
-    image: image,
-    timestamp: new Date().toLocaleTimeString(),
-    profilePic: profilePic
+    console.log(`Emitting message to room ${roomName}:`, {
+      username: user.username,
+      message: sanitizedMessage,
+      image: image,
+      timestamp: new Date().toLocaleTimeString(),
+      profilePic: user.profilePic || '/uploads/default-avatar.png',
+    });
   });
-});
   
 // Handle disconnect
   socket.on('disconnect', () => {
@@ -1342,6 +1544,61 @@ io.on('connection', (socket) => {
 });
 
 });
+
+// Route to initialize user statuses
+app.post('/admin/initialize-user-status', async (req, res) => {
+  try {
+    const result = await usersCollection.updateMany(
+      {},
+      {
+        $set: {
+          isBanned: false,
+          muteUntil: null
+        }
+      }
+    );
+    res.json({ success: true, message: 'User statuses initialized.', modifiedCount: result.modifiedCount });
+  } catch (error) {
+    console.error('Error initializing user statuses:', error);
+    res.status(500).json({ success: false, message: 'An error occurred.' });
+  }
+});
+
+
+// Middleware to check if user is banned or muted
+async function checkUserStatus(req, res, next) {
+  const username = req.query.username || req.body.username;
+
+  if (!username) {
+    return res.status(400).json({ success: false, message: 'Username is required' });
+  }
+
+  try {
+    const user = await usersCollection.findOne({ username });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: `Your account has been banned. Reason: ${user.banReason || 'No reason provided'}`,
+      });
+    }
+    
+
+    if (user.muteUntil && new Date(user.muteUntil) > new Date()) {
+      req.isMuted = true; // You can use this flag in routes if needed
+    }
+
+    next();
+  } catch (error) {
+    console.error('Error checking user status:', error);
+    res.status(500).json({ success: false, message: 'An error occurred.' });
+  }
+}
+
 // Connect to MongoDB once when the server starts
 async function connectDB() {
   try {
@@ -1349,19 +1606,20 @@ async function connectDB() {
     const db = client.db('chatApp');
     usersCollection = db.collection('users');
     messagesCollection = db.collection('messages');
-    inboxCollection = db.collection('inbox'); // Initialize the inbox collection
+    inboxCollection = db.collection('inbox');
+    reportsCollection = db.collection('reports'); // Initialize reports collection
     console.log('Connected to MongoDB and collections initialized');
+
+    // Start the server after the database is connected
+    const PORT = process.env.PORT || 3000;
+    server.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+
   } catch (error) {
     console.error('Error connecting to MongoDB:', error);
     process.exit(1);  // Exit if unable to connect to MongoDB
   }
 }
 
-
 connectDB();
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
