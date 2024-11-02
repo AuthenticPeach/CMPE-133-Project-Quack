@@ -166,21 +166,6 @@ if (event.target == createGroupModal) {
 }
 };
 
-// Modal script for Group Creation
-var createGroupBtn = document.getElementById('create-group-chat');
-var createGroupModal = document.getElementById('createGroupModal');
-
-// Open the Group Creation Modal
-createGroupBtn.onclick = function() {
-createGroupModal.style.display = 'block';
-}
-
-// Close the Group Creation modal when clicking x
-var groupClose = document.getElementsByClassName('close')[3]; // Fourth close button 
-groupClose.onclick = function() {
-createGroupModal.style.display = 'none';
-}
-
 // Fetch inbox messages on load
 fetch(`/inbox?username=${encodeURIComponent(username)}`)
 .then(response => response.json())
@@ -803,3 +788,49 @@ function deleteThread(fromUser) {
     })
     .catch(error => console.error('Error deleting thread:', error));
 }
+
+// Modal script for Group Creation
+document.addEventListener('DOMContentLoaded', () => {
+  var createGroupModal = document.getElementById('createGroupModal');
+  var createGroupForm = document.getElementById('create-group-form');
+  var searchInput = document.getElementById('search-users');
+  var searchResults = document.getElementById('search-results');
+  var friendsList = document.getElementById('friends-list');
+  var createGroupBtn = document.getElementById('create-group-chat');
+
+  // Open the Group Creation Modal
+  createGroupBtn.onclick = function() {
+    createGroupModal.style.display = 'block';
+    loadContacts();
+  };
+
+  // Close the Group Creation modal when clicking x
+  var groupClose = document.getElementsByClassName('close')[3]; // Fourth close button 
+  groupClose.onclick = function() {
+  createGroupModal.style.display = 'none';
+  }
+
+  // Load the user's contacts into the modal
+  function loadContacts() {
+    fetch(`/get-contacts?username=${encodeURIComponent(username)}`)
+      .then(response => response.json())
+      .then(data => {
+        friendsList.innerHTML = ''; // Clear existing contacts
+        if (data.success && data.contacts.length > 0) {
+          data.contacts.forEach(contact => {
+            const li = document.createElement('li');
+            li.innerHTML = `<input type="checkbox" value="${contact.username}"> ${contact.username}`;
+            friendsList.appendChild(li);
+          });
+        } else {
+          friendsList.innerHTML = '<li>No contacts found</li>';
+        }
+      })
+      .catch(error => console.error('Error loading contacts:', error));
+  }
+  
+});
+
+
+
+
