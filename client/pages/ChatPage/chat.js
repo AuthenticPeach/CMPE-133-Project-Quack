@@ -220,15 +220,30 @@ document.addEventListener('DOMContentLoaded', function() {
       messageContainer.appendChild(editButton);
     }
 
+    // Add Delete Button if the message belongs to the current user
+    if (msg.username == username){
+      const deleteButton = document.createElement('button');
+      deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+      deleteButton.classList.add('delete-button');
+  
+      // Add event listener for deleting
+      deleteButton.addEventListener('click', () => {
+        deleteMessage(msg._id, item);
+      });
+  
+      // Append deleteButton to messageContainer
+      messageContainer.appendChild(deleteButton);
+    }
+
     // **Add a Reply button**
     const replyButton = document.createElement('button');
     replyButton.innerHTML = '<i class="fas fa-reply"></i>';
     replyButton.classList.add('reply-button');
-
-  // Add Reaction Button
-  const reactionButton = document.createElement('button');
-  reactionButton.innerHTML = '😄'; // This can be a generic emoji to open the picker
-  reactionButton.classList.add('reaction-button');
+    
+    // Add Reaction Button
+    const reactionButton = document.createElement('button');
+    reactionButton.innerHTML = '😄'; // This can be a generic emoji to open the picker
+    reactionButton.classList.add('reaction-button');
 
   // Event listener for adding reactions
   reactionButton.addEventListener('click', () => {
@@ -348,6 +363,32 @@ document.addEventListener('DOMContentLoaded', function() {
       replyToMessage = null;
       replyPreview.style.display = 'none';
     });
+  }
+
+  function deleteMessage(messageId, messageElement) {
+    if (confirm('Are you sure you want to delete this message?')) {
+      fetch(`/delete-message/${messageId}`, {
+        method: 'DELETE'
+      })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(err => Promise.reject(err));
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            // Remove the message element from the DOM
+            messageElement.remove();
+          } else {
+            alert('Failed to delete message: ' + (data.message || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting message:', error);
+          alert('Error: ' + (error.message || 'An error occurred while deleting the message.'));
+        });
+    }
   }
 
   function editMessage(msg) {
