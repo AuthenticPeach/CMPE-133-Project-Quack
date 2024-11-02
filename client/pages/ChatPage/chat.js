@@ -219,19 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Append editButton to messageContainer
       messageContainer.appendChild(editButton);
     }
-    // Add Delete Button if the message belongs to the current user
-    const deleteButton = document.createElement('button');
-    deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-    deleteButton.classList.add('delete-button');
 
-    // Add event listener for deleting
-    deleteButton.addEventListener('click', () => {
-      deleteMessage(msg._id, item);
-    });
-
-    // Append deleteButton to messageContainer
-    messageContainer.appendChild(deleteButton);
-    
     // **Add a Reply button**
     const replyButton = document.createElement('button');
     replyButton.innerHTML = '<i class="fas fa-reply"></i>';
