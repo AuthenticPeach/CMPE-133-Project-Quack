@@ -688,6 +688,23 @@ app.delete("/delete-account", async (req, res) => {
   }
 });
 
+app.delete('/delete-message/:id', async (req, res) => {
+  const messageId = req.params.id;
+
+  try {
+    const result = await messagesCollection.deleteOne({ _id: new ObjectId(messageId) });
+
+    if (result.deletedCount === 1) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ success: false, message: 'Message not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 ///Inbox system
 
 // Search users endpoint
