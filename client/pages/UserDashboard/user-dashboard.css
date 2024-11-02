@@ -256,7 +256,7 @@ button {
   margin-left: 10px;
 }
 
-/* Styling for the modal form */
+/* Styling for the group creation modal form */
 #create-group-form {
   display: flex;
   flex-direction: column; 
@@ -274,3 +274,28 @@ button {
 #invite-users {
   min-width: 300px; 
 }
+
+#friends-list {
+  max-height: 150px;  
+  overflow-y: auto;   
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  gap: 8px;
+}
+
+#friends-list li {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  font-size: 14px; 
+  background-color: #f4f4f4;
+  border-radius: 4px;
+}
+
+#friends-list li input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+

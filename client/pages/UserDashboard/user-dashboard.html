@@ -51,10 +51,10 @@
     </ul>
 
     <!-- Section for Group Creation -->
-     <h3>Create a Group Chat Room</h3>
-     <ul id="group-list">
+    <h3>Create a Group Chat Room</h3>
+    <ul id="group-list">
       <li><button id="create-group-chat">Create Group</button></li>
-     </ul>
+    </ul>
 
     <p id="message"></p>
   </div>
@@ -103,22 +103,20 @@
     <span class="close">&times;</span>
     <h3>Create a New Group Chat</h3>
     <form id="create-group-form">
-      <div>
-        <label for="group-name">Group Name</label>
-        <input type="text" id="group-name" required>
-      </div>
-      <div>
-        <label for="group-description">Group Description (Optional)</label>
-        <textarea id="group-description"></textarea>
-      </div>
-      <div>
-        <label for="invite-users">Invite Users</label>
-        <input type="text" id="invite-users" placeholder="Search by username or select from contacts">
-      </div>
-      <ul id="contacts-list">
+      <label for="group-name">Group Name</label>
+      <input type="text" id="group-name" required>
+      
+      <label for="group-description">Group Description (Optional)</label>
+      <textarea id="group-description"></textarea>
+      
+      <label for="invite-users">Invite Users</label>
+      <input type="text" id="invite-users" placeholder="Search by username">
+      <ul id="search-results"></ul>
+      
+      <label>Invite from Friends</label>
+      <ul id="friends-list">
         <!-- Dynamically populated with contacts -->
       </ul>
-      
       <button type="submit">Create Group</button>
     </form>
   </div>
