@@ -247,6 +247,23 @@ a.download-button:hover {
   cursor: pointer;
 }
 
+.delete-button {
+  border: none;
+  display: none;
+  padding: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 14px;
+}
+
+.delete-button i {
+  font-size: 12px;
+  pointer-events: none;    
+}
+
+.message-container:hover .delete-button {
+  display: inline-block;
+}
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
