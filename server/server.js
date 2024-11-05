@@ -1115,6 +1115,32 @@ app.post('/admin/ban-user', async (req, res) => {
   }
 });
 
+// Route to delete all messages from a specific user
+app.post('/admin/delete-user-messages', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    // TODO: Implement proper admin authentication and authorization checks here
+
+    // Delete messages from the messagesCollection
+    const messagesResult = await messagesCollection.deleteMany({ username });
+
+    // Delete messages from the inboxCollection where fromUser is the username
+    const inboxResult = await inboxCollection.deleteMany({ fromUser: username });
+
+    // Optionally, delete messages sent to the user (if needed)
+    // const inboxReceivedResult = await inboxCollection.deleteMany({ toUser: username });
+
+    res.json({
+      success: true,
+      message: `Deleted ${messagesResult.deletedCount} messages from messagesCollection and ${inboxResult.deletedCount} messages from inboxCollection.`,
+    });
+  } catch (error) {
+    console.error('Error deleting user messages:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while deleting user messages.' });
+  }
+});
+
 
 app.post('/admin/mute-user', async (req, res) => {
   const { username, days, hours, minutes, reason } = req.body;

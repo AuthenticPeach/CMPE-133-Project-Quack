@@ -137,6 +137,17 @@ window.onload = function() {
       messagesCountTd.textContent = user.messagesCount;
       tr.appendChild(messagesCountTd);
   
+      // Delete Messages (In the case of banning)
+      const deleteMessagesTd = document.createElement('td');
+      const deleteMessagesButton = document.createElement('button');
+      deleteMessagesButton.textContent = 'Delete Messages';
+      deleteMessagesButton.classList.add('delete-messages-button'); // Add a class for styling
+      deleteMessagesButton.addEventListener('click', function() {
+        deleteUserMessages(user.username);
+      });
+      deleteMessagesTd.appendChild(deleteMessagesButton);
+      tr.appendChild(deleteMessagesTd);
+
       // Reports
       const reportsTd = document.createElement('td');
       if (user.reportsCount > 0) {
@@ -210,6 +221,30 @@ window.onload = function() {
       tbody.appendChild(tr);
     });
   }
+
+  function deleteUserMessages(username) {
+    if (confirm(`Are you sure you want to delete all messages from user ${username}? This action cannot be undone.`)) {
+      fetch('/admin/delete-user-messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`All messages from user ${username} have been deleted.`);
+          // Optionally, refresh the users table or update the messages count
+          fetchUsers();
+        } else {
+          alert(`Failed to delete messages: ${data.message}`);
+        }
+      })
+      .catch(error => console.error('Error deleting user messages:', error));
+    }
+  }
+  
   
   // Placeholder functions for actions
   function viewUserReports(username) {

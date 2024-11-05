@@ -345,3 +345,16 @@ header .image-text .name {
   background-color: #1a5548;
   transform: scale(1.05);
 }
+
+.delete-messages-button {
+  background-color: #ff4d4d; /* Red color */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-messages-button:hover {
+  background-color: #e60000; /* Darker red on hover */
+}
