@@ -139,19 +139,26 @@ button {
 }
 /* Search Bar Styling */
 #search-container {
-  margin-top: 20px;
+  display: none;
+  margin-top: 15px;
+  margin: 5px auto 50px auto; /* Adjust top margin if needed */
+  width: 50%; /* Adjust width as needed */
+  text-align: center;
+  position:absolute;
+  Right:175px;
 }
 #search-input {
   padding: 10px;
   width: 100%;
+  max-width: 600px; /* Optional: limit the max width */
   border: 1px solid #ccc;
   border-radius: 5px;
-  margin-bottom: 20px;
 }
 #search-results {
   list-style-type: none;
   padding: 0;
   margin: 0;
+  max-width: 600px; /* Match the input's max width */
 }
 #search-results li {
   padding: 10px;

@@ -454,112 +454,123 @@ function addContact(contactUsername) {
   });
 }
 
-// Display the contacts list when clicking "contacts"
+// Display the contacts list and search bar when clicking "Friends"
 var contactsBtn = document.getElementById('contacts-button');
 contactsBtn.addEventListener('click', function() {
-var contactsList = document.getElementById('contacts-list');
-contactsList.style.display = (contactsList.style.display === 'none') ? 'block' : 'none';
+  var contactsList = document.getElementById('contacts-list');
+  var searchContainer = document.getElementById('search-container');
+  var isVisible = (contactsList.style.display === 'none' || contactsList.style.display === '');
 
-// Fetch and display the contacts list
-fetch(`/get-contacts?username=${username}`)
-.then(response => response.json())
-.then(data => {
-  contactsList.innerHTML = ''; // Clear the previous list
+  if (isVisible) {
+    contactsList.style.display = 'block';
+    searchContainer.style.display = 'block';
 
-  if (data.contacts.length === 0) {
-    // Display a message if contacts list is empty
-    var emptyMessage = document.createElement('li');
-    emptyMessage.textContent = 'Your contacts list is empty.';
-    emptyMessage.style.fontStyle = 'italic';
-    contactsList.appendChild(emptyMessage);
-  } else {
-    data.contacts.forEach(function(contact) {
-      // Existing code to create list items
-      var li = document.createElement('li');
+    // Fetch and display the contacts list
+    fetch(`/get-contacts?username=${username}`)
+      .then(response => response.json())
+      .then(data => {
+        contactsList.innerHTML = ''; // Clear the previous list
 
-      // Create the profile picture element
-      var profileImg = document.createElement('img');
-      profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
-      profileImg.style.width = '30px';
-      profileImg.style.height = '30px';
-      profileImg.style.borderRadius = '50%';
-      profileImg.style.marginRight = '10px';
-
-      // Create the contact name element
-      var contactName = document.createElement('span');
-      contactName.textContent = contact.username;
-
-      // Create the "Send Message" button
-      var sendMessageButton = document.createElement('button');
-      sendMessageButton.textContent = 'Send Message';
-      sendMessageButton.style.marginLeft = '10px';
-      sendMessageButton.style.backgroundColor = '#007bff';
-      sendMessageButton.style.color = 'white';
-      sendMessageButton.style.border = 'none';
-      sendMessageButton.style.borderRadius = '5px';
-      sendMessageButton.style.cursor = 'pointer';
-      sendMessageButton.addEventListener('click', function() {
-        openSendMessageModal(contact.username);
-      });
-
-      // Create the remove button
-      var removeButton = document.createElement('button');
-      removeButton.textContent = 'Remove';
-      removeButton.style.marginLeft = '10px';
-      removeButton.style.backgroundColor = '#ff0000';
-      removeButton.style.color = 'white';
-      removeButton.style.border = 'none';
-      removeButton.style.borderRadius = '5px';
-      removeButton.style.cursor = 'pointer';
-      removeButton.addEventListener('click', function() {
-        removeContact(contact.username);
-      });
-
-        // Create the "View Profile" button
-      var viewProfileButton = document.createElement('button');
-      viewProfileButton.textContent = 'View Profile';
-      viewProfileButton.style.marginLeft = '10px';
-      viewProfileButton.style.backgroundColor = '#28a745';
-      viewProfileButton.style.color = 'white';
-      viewProfileButton.style.border = 'none';
-      viewProfileButton.style.borderRadius = '5px';
-      viewProfileButton.style.cursor = 'pointer';
-      viewProfileButton.addEventListener('click', function() {
-        viewUserProfile(contact.username);
-      });
-
-      // Create the favorite/unfavorite button
-      var favoriteButton = document.createElement('button');
-      favoriteButton.style.marginLeft = '10px';
-      favoriteButton.style.border = 'none';
-      favoriteButton.style.borderRadius = '5px';
-      favoriteButton.style.cursor = 'pointer';
-      favoriteButton.textContent = contact.isFavorite ? 'Unfavorite' : 'Favorite';
-      favoriteButton.style.backgroundColor = contact.isFavorite ? '#ffcc00' : '#cccccc';
-
-      // Handle adding/removing from favorites
-      favoriteButton.addEventListener('click', function() {
-        if (contact.isFavorite) {
-          removeFavorite(contact.username);
+        if (data.contacts.length === 0) {
+          // Display a message if contacts list is empty
+          var emptyMessage = document.createElement('li');
+          emptyMessage.textContent = 'Your contacts list is empty.';
+          emptyMessage.style.fontStyle = 'italic';
+          contactsList.appendChild(emptyMessage);
         } else {
-          addFavorite(contact.username);
+          data.contacts.forEach(function(contact) {
+            var li = document.createElement('li');
+
+            // Create the profile picture element
+            var profileImg = document.createElement('img');
+            profileImg.src = contact.profilePic || '/uploads/default-avatar.png';
+            profileImg.style.width = '30px';
+            profileImg.style.height = '30px';
+            profileImg.style.borderRadius = '50%';
+            profileImg.style.marginRight = '10px';
+
+            // Create the contact name element
+            var contactName = document.createElement('span');
+            contactName.textContent = contact.username;
+
+            // Create the "Send Message" button
+            var sendMessageButton = document.createElement('button');
+            sendMessageButton.textContent = 'Send Message';
+            sendMessageButton.style.marginLeft = '10px';
+            sendMessageButton.style.backgroundColor = '#007bff';
+            sendMessageButton.style.color = 'white';
+            sendMessageButton.style.border = 'none';
+            sendMessageButton.style.borderRadius = '5px';
+            sendMessageButton.style.cursor = 'pointer';
+            sendMessageButton.addEventListener('click', function() {
+              openSendMessageModal(contact.username);
+            });
+
+            // Create the remove button
+            var removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.style.marginLeft = '10px';
+            removeButton.style.backgroundColor = '#ff0000';
+            removeButton.style.color = 'white';
+            removeButton.style.border = 'none';
+            removeButton.style.borderRadius = '5px';
+            removeButton.style.cursor = 'pointer';
+            removeButton.addEventListener('click', function() {
+              removeContact(contact.username);
+            });
+
+            // Create the "View Profile" button
+            var viewProfileButton = document.createElement('button');
+            viewProfileButton.textContent = 'View Profile';
+            viewProfileButton.style.marginLeft = '10px';
+            viewProfileButton.style.backgroundColor = '#28a745';
+            viewProfileButton.style.color = 'white';
+            viewProfileButton.style.border = 'none';
+            viewProfileButton.style.borderRadius = '5px';
+            viewProfileButton.style.cursor = 'pointer';
+            viewProfileButton.addEventListener('click', function() {
+              viewUserProfile(contact.username);
+            });
+
+            // Create the favorite/unfavorite button
+            var favoriteButton = document.createElement('button');
+            favoriteButton.style.marginLeft = '10px';
+            favoriteButton.style.border = 'none';
+            favoriteButton.style.borderRadius = '5px';
+            favoriteButton.style.cursor = 'pointer';
+            favoriteButton.textContent = contact.isFavorite ? 'Unfavorite' : 'Favorite';
+            favoriteButton.style.backgroundColor = contact.isFavorite ? '#ffcc00' : '#cccccc';
+
+            // Handle adding/removing from favorites
+            favoriteButton.addEventListener('click', function() {
+              if (contact.isFavorite) {
+                removeFavorite(contact.username);
+              } else {
+                addFavorite(contact.username);
+              }
+            });
+
+            // Append the profile picture, contact name, and buttons to the list item
+            li.appendChild(profileImg);
+            li.appendChild(contactName);
+            li.appendChild(sendMessageButton);
+            li.appendChild(viewProfileButton);
+            li.appendChild(favoriteButton);
+            li.appendChild(removeButton);
+
+            contactsList.appendChild(li);
+          });
         }
-      });
-
-      // Append the profile picture, contact name, and buttons to the list item
-      li.appendChild(profileImg);
-      li.appendChild(contactName);
-      li.appendChild(sendMessageButton);
-      li.appendChild(viewProfileButton);
-      li.appendChild(favoriteButton);
-      li.appendChild(removeButton);
-
-      contactsList.appendChild(li);
-    });
+      })
+      .catch(error => console.error('Error fetching contacts:', error));
+  } else {
+    contactsList.style.display = 'none';
+    searchContainer.style.display = 'none';
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-results').innerHTML = '';
   }
-})
-.catch(error => console.error('Error fetching contacts:', error));
 });
+
 
 // Display the favorite contacts list when clicking "Favorites"
 var favoritesBtn = document.getElementById('favorites-button');
