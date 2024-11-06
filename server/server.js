@@ -104,6 +104,13 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
   let fileType = null;
   let fileName = null;
 
+  if (req.isMuted) {
+    return res.status(403).json({
+      success: false,
+      message: `You are muted until ${new Date(req.muteUntil).toLocaleString()}. Reason: ${req.muteReason}`,
+    });
+  }
+
   if (req.file) {
     try {
       // Sanitize the original file name
@@ -539,7 +546,7 @@ app.get('/profile', (req, res) => {
 // Route to fetch user profile including bio and profile picture w/ middleware
 app.get('/get-user-profile', checkUserStatus, async (req, res) => {
   const username = req.query.username;
-
+  
   try {
     const user = await usersCollection.findOne({ username });
 
@@ -820,12 +827,13 @@ app.get('/check-user-status', async (req, res) => {
     const isBanned = user.isBanned || false;
     const isMuted = user.muteUntil && new Date(user.muteUntil) > new Date();
 
-    res.json({ success: true, isBanned, isMuted, muteUntil: user.muteUntil });
+    res.json({ success: true, isBanned, isMuted, muteUntil: user.muteUntil, muteReason: user.muteReason });
   } catch (error) {
     console.error('Error checking user status:', error);
     res.status(500).json({ success: false, message: 'An error occurred.' });
   }
 });
+
 
 
 // Add a contact to favorites
@@ -1629,18 +1637,24 @@ async function checkUserStatus(req, res, next) {
         message: `Your account has been banned. Reason: ${user.banReason || 'No reason provided'}`,
       });
     }
-    
 
+    // Instead of returning 403 for muted users, set req.isMuted
     if (user.muteUntil && new Date(user.muteUntil) > new Date()) {
-      req.isMuted = true; // You can use this flag in routes if needed
+      req.isMuted = true;
+      req.muteUntil = user.muteUntil;
+      req.muteReason = user.muteReason || 'No reason provided';
+    } else {
+      req.isMuted = false;
     }
 
+    req.user = user; // Store user info for later use
     next();
   } catch (error) {
     console.error('Error checking user status:', error);
     res.status(500).json({ success: false, message: 'An error occurred.' });
   }
 }
+
 
 // Connect to MongoDB once when the server starts
 async function connectDB() {

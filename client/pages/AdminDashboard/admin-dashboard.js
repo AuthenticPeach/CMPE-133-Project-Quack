@@ -51,7 +51,7 @@ window.onload = function() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, days, hours, minutes }),
+        body: JSON.stringify({ username, days, hours, minutes, reason }),
       })
         .then(response => response.json())
         .then(data => {

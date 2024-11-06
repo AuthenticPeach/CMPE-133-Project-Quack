@@ -114,6 +114,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.scrollTo(0, document.body.scrollHeight);
   });
 
+  socket.on('mute notification', function(data) {
+    alert(data.message);
+  });
 
   // Client-side: Display chat history when joining a room
   socket.on('chat history', function(messages) {

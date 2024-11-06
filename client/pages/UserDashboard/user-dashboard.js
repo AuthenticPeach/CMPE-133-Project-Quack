@@ -23,7 +23,21 @@ if (!username) {
 }
     // At the beginning of user-dashboard.js
     fetch(`/check-user-status?username=${encodeURIComponent(username)}`)
-      .then(response => response.json())
+    .then(response => {
+      if (response.status === 403) {
+        return response.json().then(data => {
+          alert(data.message);
+          window.location.href = '/signin'; // Redirect the user
+        });
+      } else if (!response.ok) {
+        // Handle other non-OK responses
+        return response.json().then(data => {
+          console.error('Error checking user status:', data.message);
+        });
+      } else {
+        return response.json();
+      }
+    })
       .then(data => {
         if (data.isBanned) {
           alert('Your account has been banned.');
@@ -92,24 +106,31 @@ document.getElementById('userModal').style.display = 'block';
 }
 
 function viewUserProfile(contactUsername) {
-// Fetch the user's profile data
-fetch(`/get-user-profile?username=${encodeURIComponent(contactUsername)}`)
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      // Populate the modal with the user's data
-      document.getElementById('profile-modal-username').textContent = `${data.firstName} ${data.lastName}`;
-      document.getElementById('profile-modal-pic').src = data.profilePic || '/uploads/default-avatar.png';
-      document.getElementById('profile-modal-bio').textContent = data.bio || 'No bio available.';
-      // Display the modal
-      document.getElementById('profileModal').style.display = 'block';
+// Fetch the profile data including profile picture
+fetch(`/get-user-profile?username=${encodeURIComponent(username)}`)
+  .then(response => {
+    if (response.status === 403) {
+      return response.json().then(data => {
+        alert(data.message);
+        window.location.href = '/signin'; // Redirect the user
+      });
+    } else if (!response.ok) {
+      // Handle other non-OK responses
+      return response.json().then(data => {
+        console.error('Error fetching profile:', data.message);
+      });
     } else {
-      alert('Failed to load profile.');
+      return response.json();
+    }
+  })
+  .then(data => {
+    if (data && data.success) {
+      document.getElementById('profile-pic').src = data.profilePic;
     }
   })
   .catch(error => console.error('Error fetching profile:', error));
-}
 
+}
 
 // Modal script for Inbox and User Interaction
 var inboxModal = document.getElementById('inboxModal');
