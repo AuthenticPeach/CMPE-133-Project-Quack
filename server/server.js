@@ -147,18 +147,23 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
   };
 
   try {
+    const user = await usersCollection.findOne({ username });
+    chatMessage.firstName = user.firstName;
+    chatMessage.lastName = user.lastName;
+
     // Store the message in the database
     const result = await messagesCollection.insertOne(chatMessage);
     console.log('Storing message in DB:', chatMessage);
 
     // Fetch user profile from MongoDB
-    const user = await usersCollection.findOne({ username });
     const profilePic = user ? user.profilePic || defaultProfilePicUrl : defaultProfilePicUrl;
 
     // Prepare the message to be sent to clients
     const messageToSend = {
       _id: result.insertedId, // Include the ID of the new message
       username: username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       message: message,
       fileUrl: fileUrl,
       fileType: fileType,
@@ -174,6 +179,8 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
       if (originalMessage) {
         messageToSend.replyToMessage = {
           username: originalMessage.username,
+          firstName: originalMessage.firstName,
+          lastName: originalMessage.lastName,
           message: originalMessage.message || originalMessage.fileName || '[File]',
           fileType: originalMessage.fileType
         };
@@ -182,7 +189,7 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
 
     // Emit the message to the room
     io.to(roomName).emit('chat message', messageToSend);
-    console.log(`Emitting message to room ${roomName}:`, messageToSend);
+    console.log(`Emitting message to000 room ${roomName}:`, messageToSend);
 
     res.json({ success: true });
   } catch (error) {
@@ -319,7 +326,7 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
 
     // Emit the message to the room
     io.to(roomName).emit('chat message', messageToSend);
-    console.log(`Emitting message to room ${roomName}:`, messageToSend);
+    console.log(`Emitting message tooo room ${roomName}:`, messageToSend);
 
     res.json({ success: true });
   } catch (error) {
@@ -627,6 +634,23 @@ app.delete("/delete-account", async (req, res) => {
   } catch (error) {
     console.error("Error deleting account:", error);
     res.status(500).json({ success: false, message: "An error occurred" });
+  }
+});
+
+app.delete('/delete-message/:id', async (req, res) => {
+  const messageId = req.params.id;
+
+  try {
+    const result = await messagesCollection.deleteOne({ _id: new ObjectId(messageId) });
+
+    if (result.deletedCount === 1) {
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ success: false, message: 'Message not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
@@ -1088,10 +1112,9 @@ io.on('connection', (socket) => {
   });  
 
   // Handle when a user joins a group chat room
-  socket.on('join room', async (roomName) => {
+  socket.on('join room', async (roomName, username) => {
     // Log when a user joins a room
     console.log(`${users[socket.id]?.username || 'Unknown User'} is joining room ${roomName}`);
-  
     socket.join(roomName);
   
     // Fetch the most recent 25 messages from the database
@@ -1145,6 +1168,7 @@ io.on('connection', (socket) => {
 
     // Notify the room that a user has joined
     io.to(roomName).emit('room message', `${users[socket.id]?.username || 'Unknown User'} has joined the room.`);
+
   });
 
   // Handle 'load more messages' event
@@ -1177,9 +1201,12 @@ io.on('connection', (socket) => {
     messages.forEach(msg => {
       msg.profilePic = userProfilePicMap[msg.username] || defaultProfilePicUrl;
     });
-  
-    // Send the messages to the client
-    socket.emit('more chat history', messages);
+
+    if (messages.length === 0) {
+      socket.emit("no more history");  // Signal that no more messages are available
+    } else {
+      socket.emit("more chat history", messages); // Send the messages to the client
+    }
   });
   
 
@@ -1234,6 +1261,8 @@ io.on('connection', (socket) => {
     // Store full user object with profile pic
     users[socket.id] = {
       username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       profilePic: user.profilePic || defaultProfilePicUrl,
       socketId: socket.id // Store socket ID for real-time notifications     
     };
@@ -1288,7 +1317,7 @@ io.on('connection', (socket) => {
     message: sanitizedMessage
   });
     
-  const { username, message, roomName, image } = data;
+  const { username, firstName, lastName, message, roomName, image } = data;
 
   console.log(`Message from ${username} to room ${roomName}: ${message}`);
 

@@ -616,7 +616,7 @@ function adjustSidebar2() {
       sidebar2.classList.contains("open") ? "550px" : "250px";
     if (sidebar2.classList.contains("open")) {
       document.querySelector(".home").style.width = "calc(100% - 550px)";
-      document.querySelector(".home").style.overflow = "hidden";
+      document.querySelector(".home").style.overflowX = "hidden";
     } else {
       document.querySelector(".home").style.width = "calc(100% - 250px)";
     }
