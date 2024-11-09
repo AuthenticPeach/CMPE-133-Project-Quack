@@ -879,12 +879,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  friendsList.addEventListener('change', (event) => {
+    const checkbox = event.target;
+    const username = checkbox.value;
+  
+    if (checkbox.checked) {
+      addUser(username);
+    } else {
+      removeUser(username);
+    }
+  });
+
   // Load the user's contacts into the modal
   function loadContacts() {
     fetch(`/get-contacts?username=${encodeURIComponent(username)}`)
       .then(response => response.json())
       .then(data => {
-        friendsList.innerHTML = ''; // Clear existing contacts
+        friendsList.innerHTML = '';
         if (data.success && data.contacts.length > 0) {
           data.contacts.forEach(contact => {
             const li = document.createElement('li');
@@ -906,16 +917,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.length > 0) {
           data.forEach(function(user) {
             const li = document.createElement('li');
-            li.innerHTML = `<input type="checkbox" value="${user.username}"> ${user.username}`;
+            li.innerHTML = `<span>${user.username}</span>`;
 
-            /* Testing add button for searching users
+            // Testing add button for searching users
             var addButton = document.createElement('button');
             addButton.textContent = 'Add';
             addButton.onclick = function() {
+              event.preventDefault();
+              event.stopPropagation();
               addUser(user.username);
+              searchResults.innerHTML = '';
+              searchUsers.value = '';
             };
             li.appendChild(addButton);
-            */
 
             searchResults.appendChild(li);
           });
@@ -925,30 +939,33 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(error => console.error('Error in searchUser:', error));
   }
-
-  // EVERYTHING BELOW HERE IS TESTING!
   
-  /* Function to add a user to the selected users list
+  // Function to add a user to the selected users list
   function addUser(username) {
     if (!selectedUsers.includes(username)) {
       selectedUsers.push(username);
       updateSelectedUsersDisplay();
+
+      const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
+      if (friendCheckbox) {
+        friendCheckbox.checked = true;
+      }
     }
   }
-  */
-
-  /* Update the display of selected users in the form
+  
+  // Update the display of selected users in the form
   function updateSelectedUsersDisplay() {
     const selectedUsersContainer = document.querySelector('.selected-users');
-    selectedUsersContainer.innerHTML = ''; // Clear previous list
+    selectedUsersContainer.innerHTML = '';
     selectedUsers.forEach(username => {
       const userTag = document.createElement('span');
       userTag.className = 'user-tag';
       userTag.textContent = username;
 
-      // Optionally add a remove button for each selected user
+      // Remove button for each selected user
       const removeButton = document.createElement('button');
       removeButton.textContent = 'Remove';
+      removeButton.className = 'remove-btn';
       removeButton.onclick = function() {
         removeUser(username);
       };
@@ -957,14 +974,17 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedUsersContainer.appendChild(userTag);
     });
   }
-  */
-
-  /* Remove a user from the selected users list
+  
+  // Remove a user from the selected users list
   function removeUser(username) {
     selectedUsers = selectedUsers.filter(user => user !== username);
     updateSelectedUsersDisplay();
+
+    const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
+    if (friendCheckbox) {
+      friendCheckbox.checked = false;
+    }
   }
-  */
 
 });
 
