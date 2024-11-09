@@ -293,17 +293,32 @@ fetch(`/inbox?username=${encodeURIComponent(username)}`)
         // Visually distinguish read/unread
         li.style.fontWeight = message.isRead ? 'normal' : 'bold';
 
-        // Mark as Read button
-        const markAsReadBtn = document.createElement('button');
-        markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
-        markAsReadBtn.addEventListener('click', function() {
-          toggleReadStatus(message._id, !message.isRead);
-          message.isRead = !message.isRead;
-          li.style.fontWeight = message.isRead ? 'normal' : 'bold';
-          markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
-        });
+        if (message.isFriendRequest) {
+          // Friend request: add Accept and Decline buttons
+          const acceptBtn = document.createElement('button');
+          acceptBtn.textContent = 'Accept';
+          acceptBtn.onclick = function() { handleFriendRequest(message.fromUser, username, true); };
 
-        li.appendChild(markAsReadBtn);
+          const declineBtn = document.createElement('button');
+          declineBtn.textContent = 'Decline';
+          declineBtn.onclick = function() { handleFriendRequest(message.fromUser, username, false); };
+
+          li.appendChild(acceptBtn);
+          li.appendChild(declineBtn);
+        } else {
+          // Regular message: add Mark as Read/Unread button
+          const markAsReadBtn = document.createElement('button');
+          markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
+          markAsReadBtn.addEventListener('click', function() {
+            toggleReadStatus(message._id, !message.isRead);
+            message.isRead = !message.isRead;
+            li.style.fontWeight = message.isRead ? 'normal' : 'bold';
+            markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
+          });
+
+          li.appendChild(markAsReadBtn);
+        }
+
         messagesList.appendChild(li);
       });
 
@@ -412,7 +427,23 @@ function sendMessage(toUser, message) {
   })
   .catch(error => console.error('Error sending message:', error));
 }
-
+function handleFriendRequest(fromUser, toUser, accepted) {
+  fetch('/respond-to-friend-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fromUser, toUser, accepted })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+      // Optionally, refresh or update UI to show the new friend in contacts list
+    } else {
+      console.error('Failed to respond to friend request');
+    }
+  })
+  .catch(error => console.error('Error responding to friend request:', error));
+}
 
 function searchUsers(query, type) {
   fetch(`/search-users?query=${encodeURIComponent(query)}&type=${type}`)
@@ -433,7 +464,7 @@ function searchUsers(query, type) {
 
           modalUsername.textContent = user.username;
           addFriendBtn.onclick = function() { addContact(user.username); };
-          startChatBtn.onclick = function() { startPrivateChat(user.username); };
+          startChatBtn.onclick = function() { startPrivateChat(toUsername); };
 
           // Set up the send message button
           var sendMessageBtn = document.getElementById('send-message-btn');
@@ -454,25 +485,21 @@ function searchUsers(query, type) {
     });
 }
 
-function addContact(contactUsername) {
-  fetch(`/add-contact`, {
+function addContact(toUsername) {
+  fetch('/send-friend-request', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      username: username,
-      contact: contactUsername
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fromUser: username, toUser: toUsername })
   })
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert(`Added ${contactUsername} to your contacts!`);
+      alert('Friend request sent!');
     } else {
-      alert('Failed to add contact.');
+      alert('Failed to send friend request.');
     }
-  });
+  })
+  .catch(error => console.error('Error sending friend request:', error));
 }
 
 // Display the contacts list and search bar when clicking "Friends"
