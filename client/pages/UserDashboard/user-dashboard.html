@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/pages/UserDashboard/user-dashboard.css">
 </head>
 <body>
-
+  <section class="home">
   <!-- Profile Picture at the top-left corner -->
   <img id="profile-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
 
@@ -25,16 +25,18 @@
     <a href="#" id="favorites-button">Favorites</a>
   </div>
 
-  <button id="signout">Sign Out</button>
-
-  <div id="container">
-    <h2>Welcome to Quack Chat!</h2>
+    <button id="signout">Sign Out</button>
 
     <!-- Section for Searching Users -->
     <div id="search-container">
+      <label for="search-input" class="visually-hidden">Search Users</label>
       <input type="text" id="search-input" placeholder="Search users by username or phone number...">
       <ul id="search-results"></ul>
     </div>
+    
+
+  <div id="container">
+    <h2>Welcome to Quack Chat!</h2>
 
   <!-- Favorite Contacts List -->
   <ul id="favorites-list" style="display: none;"></ul>
@@ -51,10 +53,10 @@
     </ul>
 
     <!-- Section for Group Creation -->
-     <h3>Create a Group Chat Room</h3>
-     <ul id="group-list">
+    <h3>Create a Group Chat Room</h3>
+    <ul id="group-list">
       <li><button id="create-group-chat">Create Group</button></li>
-     </ul>
+    </ul>
 
     <p id="message"></p>
   </div>
@@ -64,66 +66,64 @@
     <div class="modal-content">
       <span class="close">&times;</span>
       <h3>Your Inbox</h3>
-<!----     <p id="inbox-message">Your inbox is looking pretty empty!</p> -->  
+  <!----     <p id="inbox-message">Your inbox is looking pretty empty!</p> -->  
     <ul id="inbox-messages-list"></ul>
     </div>
   </div>
 
-<!-- User Interaction Modal -->
-<div id="userModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h3 id="modal-username">Username</h3>
-    <button id="add-friend-btn">Add Friend</button>
-    <button id="start-chat-btn">Start Chat</button>
-    <!-- New message form -->
-    <h4>Send a Message</h4>
-    <textarea id="message-text" placeholder="Type your message..."></textarea>
-    <button id="send-message-btn">Send Message</button>
+  <!-- User Interaction Modal -->
+  <div id="userModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="modal-username">Username</h3>
+      <button id="add-friend-btn">Add Friend</button>
+      <button id="start-chat-btn">Start Chat</button>
+      <!-- New message form -->
+      <h4>Send a Message</h4>
+      <textarea id="message-text" placeholder="Type your message..."></textarea>
+      <button id="send-message-btn">Send Message</button>
+    </div>
   </div>
-</div>
 
-<!-- Profile Modal -->
-<div id="profileModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h3 id="profile-modal-username">Username</h3>
-    <img id="profile-modal-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
-    <p id="profile-modal-bio">Bio</p>
-    <!-- Add other profile fields as needed -->
+  <!-- Profile Modal -->
+  <div id="profileModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3 id="profile-modal-username">Username</h3>
+      <img id="profile-modal-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
+      <p id="profile-modal-bio">Bio</p>
+      <!-- Add other profile fields as needed -->
+    </div>
   </div>
-</div>
 
   <!-- Contacts List -->
   <ul id="contacts-list" style="display: none;"></ul>
 
-<!-- Group Creation Modal -->
-<div id="createGroupModal" class="modal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h3>Create a New Group Chat</h3>
-    <form id="create-group-form">
-      <div>
+  <!-- Group Creation Modal -->
+  <div id="createGroupModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h3>Create a New Group Chat</h3>
+      <form id="create-group-form">
         <label for="group-name">Group Name</label>
         <input type="text" id="group-name" required>
-      </div>
-      <div>
+        
         <label for="group-description">Group Description (Optional)</label>
         <textarea id="group-description"></textarea>
-      </div>
-      <div>
+        
         <label for="invite-users">Invite Users</label>
-        <input type="text" id="invite-users" placeholder="Search by username or select from contacts">
-      </div>
-      <ul id="contacts-list">
-        <!-- Dynamically populated with contacts -->
-      </ul>
-      
-      <button type="submit">Create Group</button>
-    </form>
+        <input type="text" id="invite-users" placeholder="Search by username">
+        <ul id="search-results"></ul>
+        
+        <label>Invite from Friends</label>
+        <ul id="friends-list">
+          <!-- Dynamically populated with contacts -->
+        </ul>
+        <button type="submit">Create Group</button>
+      </form>
+    </div>
   </div>
-</div>
-
+</section>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/pages/UserDashboard/user-dashboard.js"></script>
 

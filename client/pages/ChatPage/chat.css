@@ -737,7 +737,7 @@ a.download-button:hover {
   border: 0.5px solid #ccc;
   border-radius: 50px;
 }
-
+    
 .delete-button i {
   font-size: 20px;
   pointer-events: none;    
@@ -819,6 +819,19 @@ a.download-button:hover {
   margin: 5px auto;
   border-radius: 5px;
   font-weight: 600;
+  padding: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+  font-size: 14px;
+}
+
+.delete-button i {
+  font-size: 12px;
+  pointer-events: none;    
+}
+
+.message-container:hover .delete-button {
+  display: inline-block;
 }
 
 .bxs-file {

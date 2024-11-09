@@ -472,6 +472,10 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("message_container").scrollHeight;
   });
 
+  socket.on('mute notification', function(data) {
+    alert(data.message);
+  });
+  
   // Client-side: Display chat history when joining a room
   socket.on("chat history", function (messages) {
     const messagesList = document.getElementById("messages");
@@ -637,9 +641,25 @@ document.addEventListener("DOMContentLoaded", function () {
       div1.appendChild(deleteButton);
     }
 
+    // Add Delete Button if the message belongs to the current user
+    if (msg.username == username){
+      const deleteButton = document.createElement('button');
+      deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+      deleteButton.classList.add('delete-button');
+  
+      // Add event listener for deleting
+      deleteButton.addEventListener('click', () => {
+        deleteMessage(msg._id, item);
+      });
+  
+      // Append deleteButton to messageContainer
+      messageContainer.appendChild(deleteButton);
+    }
+
     // **Add a Reply button**
     const replyButton = document.createElement("button");
     replyButton.innerHTML = '<i class="fas fa-reply"></i>';
+
     replyButton.classList.add("reply-button");
 
     // Add Reaction Button
@@ -676,6 +696,35 @@ document.addEventListener("DOMContentLoaded", function () {
           reactionsDiv.appendChild(newReactionSpan);
         }
       });
+
+    replyButton.classList.add('reply-button');
+    
+    // Add Reaction Button
+    const reactionButton = document.createElement('button');
+    reactionButton.innerHTML = '😄'; // This can be a generic emoji to open the picker
+    reactionButton.classList.add('reaction-button');
+
+  // Event listener for adding reactions
+  reactionButton.addEventListener('click', () => {
+    picker.showPicker(reactionButton); // Show emoji picker when clicked
+    picker.on('emoji', (emoji) => {
+      // Emit the reaction to the server without adding it as a new message
+      socket.emit('add reaction', { messageId: msg._id, emoji: emoji, roomName });
+
+      // Update the UI with the selected emoji right under the message
+      let reactionSpan = Array.from(reactionsDiv.children).find(span => span.textContent.startsWith(emoji));
+      
+      if (reactionSpan) {
+        const currentCount = parseInt(reactionSpan.getAttribute('data-count')) || 0;
+        reactionSpan.setAttribute('data-count', currentCount + 1);
+        reactionSpan.textContent = `${emoji} (${currentCount + 1})`;
+      } else {
+        const newReactionSpan = document.createElement('span');
+        newReactionSpan.textContent = `${emoji} (1)`;
+        newReactionSpan.setAttribute('data-count', 1);
+        reactionsDiv.appendChild(newReactionSpan);
+      }
+
     });
 
     // Append reaction button to message and button (div1)

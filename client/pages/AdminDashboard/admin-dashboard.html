@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <!-- Include Boxicons CSS for icons -->
+  <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet">
+  <!-- Include the CSS files -->
+  <link rel="stylesheet" href="/pages/AdminDashboard/admin-dashboard.css">
+</head>
+<body>
+
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar close">
+    <header>
+      <div class="image-text">
+        <span class="image">
+          <img src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png" alt="Quack Logo" />
+        </span>
+
+        <div class="text logo-text">
+          <span class="name">QUACK.</span>
+        </div>
+      </div>
+
+      <i class="bx bx-chevron-right toggle"></i>
+    </header>
+
+    <div class="menu-bar">
+      <div class="menu">
+        <ul class="menu-links">
+          <li class="nav-link">
+            <a href="/user-dashboard">
+              <i class="bx bx-home-alt icon"></i>
+              <span class="text nav-text">Dashboard</span>
+            </a>
+          </li>
+
+          <li class="nav-link">
+            <a href="#" class="contact-btn">
+              <i class="bx bxs-contact icon"></i>
+              <span class="text nav-text" id="contactText">Contact</span>
+            </a>
+          </li>
+
+          <li class="nav-link">
+            <a href="#" class="favorite-btn">
+              <i class="bx bx-heart icon"></i>
+              <span class="text nav-text" id="favoriteText">Favorites</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bottom-content">
+        <li class="">
+          <a href="/signin" onclick="localStorage.removeItem('username')">
+            <i class="bx bx-log-out icon"></i>
+            <span class="text nav-text">Logout</span>
+          </a>
+        </li>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <section class="home">
+    <div class="dashboard-title">
+      <h1>Admin Dashboard</h1>
+    </div>
+
+    <!-- Table to display users -->
+    <div class="grid-container">
+      <div class="table-container">
+        <table id="users-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Phone Number</th>
+              <th>Messages Count</th>
+              <th>Delete Messages</th>
+              <th>Reports</th>       
+              <th>Actions</th>       
+              <th>Status</th>  
+            </tr>
+          </thead>
+          <tbody>
+            <!-- User data will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Complaints Modal -->
+    <div id="complaintsModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Complaints against <span id="complaints-username"></span></h3>
+        <ul id="complaints-list">
+          <!-- Complaints will be loaded here -->
+        </ul>
+      </div>
+    </div>
+
+    <!-- Mute Modal Structure -->
+    <div id="muteModal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <h4>Mute User</h4>
+        <p>Enter mute duration and reason:</p>
+        <!-- Existing duration inputs -->
+        <label for="mute-days">Days:</label>
+        <input type="number" id="mute-days" min="0" value="0"><br>
+        <label for="mute-hours">Hours:</label>
+        <input type="number" id="mute-hours" min="0" value="0"><br>
+        <label for="mute-minutes">Minutes:</label>
+        <input type="number" id="mute-minutes" min="0" value="0"><br>
+        <!-- Reason input -->
+        <label for="mute-reason">Reason:</label><br>
+        <textarea id="mute-reason" rows="4" cols="50" placeholder="Enter reason for mute"></textarea>
+        <!-- Buttons -->
+        <div class="modal-footer">
+          <button id="mute-confirm-btn" class="normalButton">Confirm</button>
+          <button id="mute-cancel-btn" class="normalButton">Cancel</button>      
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Include Socket.io and Boxicons JS if needed -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/pages/AdminDashboard/admin-dashboard.js"></script>
+
+  <!-- Sidebar Toggle Script -->
+  <script>
+    const body = document.querySelector('body'),
+      sidebar = body.querySelector('nav.sidebar'),
+      toggle = body.querySelector('.toggle');
+
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('close');
+    });
+  </script>
+
+</body>
+</html>
