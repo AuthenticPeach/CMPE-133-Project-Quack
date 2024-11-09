@@ -773,6 +773,59 @@ app.post('/add-contact', async (req, res) => {
   }
 });
 
+// Route to send a friend request
+app.post('/send-friend-request', async (req, res) => {
+  const { fromUser, toUser } = req.body;
+
+  try {
+    // Insert friend request message into the inbox collection
+    await inboxCollection.insertOne({
+      fromUser: fromUser,
+      toUser: toUser,
+      message: `${fromUser} sent you a friend request.`,
+      isFriendRequest: true,
+      isRead: false,
+      timestamp: new Date(),
+    });
+
+    res.json({ success: true, message: 'Friend request sent!' });
+  } catch (error) {
+    console.error('Error sending friend request:', error);
+    res.status(500).json({ success: false, message: 'Failed to send friend request.' });
+  }
+});
+
+// Route to handle friend request response
+app.post('/respond-to-friend-request', async (req, res) => {
+  const { fromUser, toUser, accepted } = req.body;
+
+  try {
+    if (accepted) {
+      // Add `fromUser` to `toUser`'s contact list
+      await usersCollection.updateOne(
+        { username: toUser },
+        { $addToSet: { contacts: { username: fromUser, isFavorite: false } } }
+      );
+
+      // Add `toUser` to `fromUser`'s contact list
+      await usersCollection.updateOne(
+        { username: fromUser },
+        { $addToSet: { contacts: { username: toUser, isFavorite: false } } }
+      );
+    }
+
+    // Remove the friend request from inbox
+    await inboxCollection.deleteOne({ fromUser, toUser, isFriendRequest: true });
+
+    res.json({ success: true, message: accepted ? 'Friend added!' : 'Friend request declined.' });
+  } catch (error) {
+    console.error('Error responding to friend request:', error);
+    res.status(500).json({ success: false, message: 'Error responding to friend request.' });
+  }
+});
+
+
+
 // Server-side: Return the user's contact list along with profile pictures
 // server.js
 
