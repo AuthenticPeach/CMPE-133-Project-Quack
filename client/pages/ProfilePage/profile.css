@@ -341,9 +341,10 @@ header .image-text .profession {
   width: 180px;
 }
 .contact_list div:first-of-type img {
-  width: 45x;
   height: 45px;
   border-radius: 50%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
 }
 .contact_list div:first-of-type p {
   font-size: 22px;
@@ -380,6 +381,7 @@ header .image-text .profession {
   height: 45px;
   width: 45px;
   border-radius: 50%;
+  object-fit: cover;
 }
 .favorite_list div p {
   font-size: 22px;
