@@ -852,10 +852,11 @@ function deleteThread(fromUser) {
 document.addEventListener('DOMContentLoaded', () => {
   var createGroupModal = document.getElementById('createGroupModal');
   var createGroupForm = document.getElementById('create-group-form');
-  var searchInput = document.getElementById('search-users');
-  var searchResults = document.getElementById('search-results');
+  var searchUsers = document.getElementById('invite-users');
+  var searchResults = document.getElementById('invite-results');
   var friendsList = document.getElementById('friends-list');
   var createGroupBtn = document.getElementById('create-group-chat');
+  var selectedUsers = [];
 
   // Open the Group Creation Modal
   createGroupBtn.onclick = function() {
@@ -869,12 +870,32 @@ document.addEventListener('DOMContentLoaded', () => {
   createGroupModal.style.display = 'none';
   }
 
+  searchUsers.addEventListener('input', function() {
+    var query = searchUsers.value.trim();
+    if (query.length > 0) {
+      searchUser(query, 'username');
+    } else {
+      searchResults.innerHTML = '';
+    }
+  });
+
+  friendsList.addEventListener('change', (event) => {
+    const checkbox = event.target;
+    const username = checkbox.value;
+  
+    if (checkbox.checked) {
+      addUser(username);
+    } else {
+      removeUser(username);
+    }
+  });
+
   // Load the user's contacts into the modal
   function loadContacts() {
     fetch(`/get-contacts?username=${encodeURIComponent(username)}`)
       .then(response => response.json())
       .then(data => {
-        friendsList.innerHTML = ''; // Clear existing contacts
+        friendsList.innerHTML = '';
         if (data.success && data.contacts.length > 0) {
           data.contacts.forEach(contact => {
             const li = document.createElement('li');
@@ -887,7 +908,84 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(error => console.error('Error loading contacts:', error));
   }
+
+  function searchUser(query, type) {
+    fetch(`/search-users?query=${encodeURIComponent(query)}&type=${type}`)
+      .then(response => response.json())
+      .then(data => {
+        searchResults.innerHTML = '';
+        if (data.length > 0) {
+          data.forEach(function(user) {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${user.username}</span>`;
+
+            // Testing add button for searching users
+            var addButton = document.createElement('button');
+            addButton.textContent = 'Add';
+            addButton.onclick = function() {
+              event.preventDefault();
+              event.stopPropagation();
+              addUser(user.username);
+              searchResults.innerHTML = '';
+              searchUsers.value = '';
+            };
+            li.appendChild(addButton);
+
+            searchResults.appendChild(li);
+          });
+        } else {
+          searchResults.innerHTML = '<li>No users found</li>';
+        }
+      })
+      .catch(error => console.error('Error in searchUser:', error));
+  }
   
+  // Function to add a user to the selected users list
+  function addUser(username) {
+    if (!selectedUsers.includes(username)) {
+      selectedUsers.push(username);
+      updateSelectedUsersDisplay();
+
+      const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
+      if (friendCheckbox) {
+        friendCheckbox.checked = true;
+      }
+    }
+  }
+  
+  // Update the display of selected users in the form
+  function updateSelectedUsersDisplay() {
+    const selectedUsersContainer = document.querySelector('.selected-users');
+    selectedUsersContainer.innerHTML = '';
+    selectedUsers.forEach(username => {
+      const userTag = document.createElement('span');
+      userTag.className = 'user-tag';
+      userTag.textContent = username;
+
+      // Remove button for each selected user
+      const removeButton = document.createElement('button');
+      removeButton.textContent = 'Remove';
+      removeButton.className = 'remove-btn';
+      removeButton.onclick = function() {
+        removeUser(username);
+      };
+
+      userTag.appendChild(removeButton);
+      selectedUsersContainer.appendChild(userTag);
+    });
+  }
+  
+  // Remove a user from the selected users list
+  function removeUser(username) {
+    selectedUsers = selectedUsers.filter(user => user !== username);
+    updateSelectedUsersDisplay();
+
+    const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
+    if (friendCheckbox) {
+      friendCheckbox.checked = false;
+    }
+  }
+
 });
 
 

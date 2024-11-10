@@ -113,7 +113,8 @@
         
         <label for="invite-users">Invite Users</label>
         <input type="text" id="invite-users" placeholder="Search by username">
-        <ul id="search-results"></ul>
+        <ul id="invite-results" ></ul>
+        <div class="selected-users"></div>
         
         <label>Invite from Friends</label>
         <ul id="friends-list">
@@ -123,6 +124,7 @@
       </form>
     </div>
   </div>
+  
 </section>
   <script src="/socket.io/socket.io.js"></script>
   <script src="/pages/UserDashboard/user-dashboard.js"></script>
