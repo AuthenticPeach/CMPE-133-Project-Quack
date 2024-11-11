@@ -659,8 +659,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // **Add a Reply button**
     const replyButton = document.createElement("button");
     replyButton.innerHTML = '<i class="fas fa-reply"></i>';
-
-    replyButton.classList.add("reply-button");
+    replyButton.classList.add('reply-button');
 
     // Add Reaction Button
     const reactionButton = document.createElement("button");
@@ -696,36 +695,7 @@ document.addEventListener("DOMContentLoaded", function () {
           reactionsDiv.appendChild(newReactionSpan);
         }
       });
-
-    replyButton.classList.add('reply-button');
-    
-    // Add Reaction Button
-    const reactionButton = document.createElement('button');
-    reactionButton.innerHTML = '😄'; // This can be a generic emoji to open the picker
-    reactionButton.classList.add('reaction-button');
-
-  // Event listener for adding reactions
-  reactionButton.addEventListener('click', () => {
-    picker.showPicker(reactionButton); // Show emoji picker when clicked
-    picker.on('emoji', (emoji) => {
-      // Emit the reaction to the server without adding it as a new message
-      socket.emit('add reaction', { messageId: msg._id, emoji: emoji, roomName });
-
-      // Update the UI with the selected emoji right under the message
-      let reactionSpan = Array.from(reactionsDiv.children).find(span => span.textContent.startsWith(emoji));
-      
-      if (reactionSpan) {
-        const currentCount = parseInt(reactionSpan.getAttribute('data-count')) || 0;
-        reactionSpan.setAttribute('data-count', currentCount + 1);
-        reactionSpan.textContent = `${emoji} (${currentCount + 1})`;
-      } else {
-        const newReactionSpan = document.createElement('span');
-        newReactionSpan.textContent = `${emoji} (1)`;
-        newReactionSpan.setAttribute('data-count', 1);
-        reactionsDiv.appendChild(newReactionSpan);
-      }
-
-    });
+  });
 
     // Append reaction button to message and button (div1)
     div1.appendChild(reactionButton);
@@ -815,7 +785,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function setReplyToMessage(msg) {
     isReply = true;
-    replyToMessage = msg;
+    replyToMessage = msg; 
 
     // Update the reply message to reflect the latest edited content
     const updatedMessageContent = msg.message;
