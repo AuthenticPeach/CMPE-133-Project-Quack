@@ -463,15 +463,35 @@ app.get('/get-conversations', (req, res) => {
       }
     },
     {
+      $lookup: {
+        from: 'users', // The name of the users collection
+        localField: '_id', // Field from the previous stage (participant)
+        foreignField: 'username', // Field in users collection
+        as: 'participantInfo'
+      }
+    },
+    {
+      $unwind: "$participantInfo"
+    },
+    {
       $sort: { lastTimestamp: -1 }
+    },
+    {
+      $project: {
+        participant: "$_id",
+        lastMessage: 1,
+        lastTimestamp: 1,
+        profilePic: { $ifNull: ["$participantInfo.profilePic", "/uploads/default-avatar.png"] }
+      }
     }
   ])
     .toArray()
     .then(results => {
       const conversations = results.map(result => ({
-        participant: result._id,
+        participant: result.participant,
         lastMessage: result.lastMessage,
-        lastTimestamp: result.lastTimestamp
+        lastTimestamp: result.lastTimestamp,
+        profilePic: result.profilePic
       }));
       res.json({ success: true, conversations });
     })
@@ -483,28 +503,46 @@ app.get('/get-conversations', (req, res) => {
 
 
 // server.js
-app.get('/get-messages', (req, res) => {
-  const username = req.query.username;
-  const participant = req.query.participant;
+// server.js
 
-  inboxCollection.find({
-    $or: [
-      { fromUser: username, toUser: participant },
-      { fromUser: participant, toUser: username }
-    ]
-  })
-    .sort({ timestamp: 1 })
-    .toArray()
-    .then(messages => {
-      res.json({ success: true, messages });
-    })
-    .catch(error => {
-      console.error('Error fetching messages:', error);
-      res.status(500).json({ success: false, message: 'Error fetching messages' });
+app.get('/get-messages', async (req, res) => {
+  const { username, participant } = req.query;
+
+  try {
+    // Fetch messages between the two users
+    const messages = await inboxCollection.find({
+      $or: [
+        { fromUser: username, toUser: participant },
+        { fromUser: participant, toUser: username }
+      ]
+    }).sort({ timestamp: 1 }).toArray();
+
+    // Extract unique usernames from the messages
+    const usernames = Array.from(new Set(messages.map(msg => msg.fromUser)));
+
+    // Fetch profile pictures for these users
+    const users = await usersCollection.find({
+      username: { $in: usernames }
+    }, { projection: { username: 1, profilePic: 1 } }).toArray();
+
+    // Create a mapping of username to profilePic
+    const userProfilePics = {};
+    users.forEach(user => {
+      userProfilePics[user.username] = user.profilePic || '/uploads/default-avatar.png';
     });
+
+    // Attach profilePic to each message
+    const messagesWithProfilePics = messages.map(message => ({
+      ...message,
+      profilePic: userProfilePics[message.fromUser] || '/uploads/default-avatar.png'
+    }));
+
+    res.json({ success: true, messages: messagesWithProfilePics });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ success: false, message: 'Error fetching messages' });
+  }
 });
-
-
 
 function getMessages(username, participant) {
   return Message.find({
@@ -1087,25 +1125,36 @@ app.get('/inbox', async (req, res) => {
   }
 });
 
-app.post('/send-message', (req, res) => {
+app.post('/send-message', async (req, res) => {
   const { fromUser, toUser, message } = req.body;
 
-  // Save the message to the database
-  saveMessage(fromUser, toUser, message)
-    .then(savedMessage => {
-      // Emit a Socket.io event to the recipient
-      io.to(toUser).emit('new inbox message', {
-        fromUser,
-        toUser,
-        message,
-      });
+  try {
+    // Save the message to the database
+    const newMessage = {
+      fromUser,
+      toUser,
+      message,
+      timestamp: new Date()
+    };
+    const result = await inboxCollection.insertOne(newMessage);
+    newMessage._id = result.insertedId;
 
-      res.json({ success: true });
-    })
-    .catch(error => {
-      console.error('Error sending message:', error);
-      res.status(500).json({ success: false, message: 'Error sending message' });
-    });
+    // Fetch the sender's profile picture
+    const user = await usersCollection.findOne(
+      { username: fromUser },
+      { projection: { profilePic: 1 } }
+    );
+    newMessage.profilePic = user?.profilePic || '/uploads/default-avatar.png';
+
+    // Emit the new message to the recipient via Socket.io
+    io.to(users[fromUser]).emit('new inbox message', newMessage);
+    io.to(users[toUser]).emit('new inbox message', newMessage);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ success: false, message: 'Error sending message' });
+  }
 });
 
 function saveMessage(fromUser, toUser, message) {

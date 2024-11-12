@@ -41,3 +41,31 @@ if (profilePicElements.length > 0 && fullNameElements.length > 0) {
   } else {
     console.warn("Sidebar profile elements not found.");
   } 
+
+// sidebar.js
+
+function updateSidebarProfilePic(newProfilePicUrl) {
+  // Update profile pictures
+  for (let i = 0; i < profilePicElements.length; i++) {
+    profilePicElements[i].src = newProfilePicUrl || "/uploads/default-avatar.png";
+  }
+}
+if (data.success) {
+  profilePicElement[0].src = data.profilePic;
+  profilePicElement[1].src = data.profilePic;
+  messageElement.style.display = "none";
+
+  // Dispatch an event to update the sidebar profile picture
+  const event = new CustomEvent('profilePicUpdated', { detail: { profilePic: data.profilePic } });
+  document.dispatchEvent(event);
+}
+// sidebar.js
+
+document.addEventListener('profilePicUpdated', (event) => {
+  const newProfilePicUrl = event.detail.profilePic;
+  // Update profile pictures
+  for (let i = 0; i < profilePicElements.length; i++) {
+    profilePicElements[i].src = newProfilePicUrl || "/uploads/default-avatar.png";
+  }
+});
+

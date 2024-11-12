@@ -1,8 +1,6 @@
 // messages.js
 
 const socket = io();
-
-// Get the username from localStorage
 const username = localStorage.getItem('username');
 
 if (!username) {
@@ -10,6 +8,43 @@ if (!username) {
 } else {
   socket.emit('set username', username);
 }
+
+const replyPreview = document.getElementById('reply-preview');
+let replyToMessage = null;
+let isReply = false;
+let isFile = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadConversations();
+  loadContacts();
+
+  // Emoji Picker Setup
+  const picker = new EmojiButton();
+  const emojiButton = document.getElementById('emoji-button');
+  emojiButton.addEventListener('click', () => {
+    picker.showPicker(emojiButton);
+  });
+
+  picker.on('emoji', emoji => {
+    document.getElementById('chat-input').value += emoji;
+  });
+
+  // File Upload
+  const imageInput = document.getElementById('image-input');
+  const fileUploadButton = document.getElementById('uploadFileBtn');
+  fileUploadButton.addEventListener('click', () => {
+    imageInput.click();
+  });
+
+  imageInput.addEventListener('change', function () {
+    if (this.files.length > 0) {
+      isFile = true;
+      const fileName = this.files[0].name;
+      document.getElementById('file-name').textContent = fileName;
+      document.getElementById('display-file').style.display = 'inline-flex';
+    }
+  });
+});
 
 // Function to load conversations
 function loadConversations() {
@@ -23,11 +58,25 @@ function loadConversations() {
         data.conversations.forEach(conversation => {
           const li = document.createElement('li');
           li.classList.add('conversation-item');
-          li.textContent = conversation.participant; // Assuming 'participant' is the other user's username
+
+          // Profile Picture
+          const profilePic = conversation.profilePic || '/uploads/default-avatar.png';
+          const img = document.createElement('img');
+          img.src = profilePic;
+          img.alt = `${conversation.participant}'s profile picture`;
+          img.classList.add('profile-pic');
+
+          // Participant Name
+          const name = document.createElement('span');
+          name.textContent = conversation.participant;
+
+          li.appendChild(img);
+          li.appendChild(name);
 
           li.addEventListener('click', () => {
             loadChat(conversation.participant);
           });
+
           conversationsList.appendChild(li);
         });
       } else {
@@ -39,10 +88,8 @@ function loadConversations() {
 
 // Function to load chat messages
 function loadChat(participant) {
-  // Update the chat header
   document.getElementById('chat-with').textContent = `Chat with ${participant}`;
 
-  // Fetch messages for this conversation
   fetch(`/get-messages?username=${encodeURIComponent(username)}&participant=${encodeURIComponent(participant)}`)
     .then(response => response.json())
     .then(data => {
@@ -51,20 +98,10 @@ function loadChat(participant) {
         chatMessages.innerHTML = '';
 
         data.messages.forEach(message => {
-          const messageDiv = document.createElement('div');
-          messageDiv.classList.add('message');
-
-          if (message.fromUser === username) {
-            messageDiv.classList.add('sent');
-          } else {
-            messageDiv.classList.add('received');
-          }
-
-          messageDiv.textContent = message.message;
+          const messageDiv = createMessageElement(message);
           chatMessages.appendChild(messageDiv);
         });
 
-        // Scroll to the bottom
         chatMessages.scrollTop = chatMessages.scrollHeight;
       } else {
         console.error('Failed to load messages:', data.message);
@@ -80,6 +117,53 @@ function loadChat(participant) {
   };
 }
 
+function createMessageElement(message) {
+  const messageDiv = document.createElement('div');
+  messageDiv.classList.add('message');
+
+  // Determine if the message is sent or received
+  if (message.fromUser === username) {
+    messageDiv.classList.add('sent');
+  } else {
+    messageDiv.classList.add('received');
+  }
+
+  // Profile picture
+  const profileImg = document.createElement('img');
+  profileImg.src = message.profilePic || '/uploads/default-avatar.png';
+  profileImg.classList.add('profile-image');
+  profileImg.alt = `${message.fromUser}'s profile picture`;
+
+  // Message content
+  const messageContent = document.createElement('div');
+  messageContent.classList.add('message-content');
+  messageContent.textContent = message.message;
+
+  // Combine profile image and message content
+  const contentWrapper = document.createElement('div');
+  contentWrapper.classList.add('content-wrapper');
+  contentWrapper.appendChild(profileImg);
+  contentWrapper.appendChild(messageContent);
+
+  // Add the content wrapper to the messageDiv
+  messageDiv.appendChild(contentWrapper);
+
+  // Add reactions (if any)
+  if (message.reactions && message.reactions.length > 0) {
+    const reactionsDiv = document.createElement('div');
+    reactionsDiv.classList.add('reactions');
+    message.reactions.forEach((reaction) => {
+      const reactionSpan = document.createElement('span');
+      reactionSpan.textContent = `${reaction.emoji} (${reaction.count})`;
+      reactionsDiv.appendChild(reactionSpan);
+    });
+    messageDiv.appendChild(reactionsDiv);
+  }
+
+  return messageDiv;
+}
+
+
 function loadContacts() {
   fetch(`/get-contacts?username=${encodeURIComponent(username)}`)
     .then(response => response.json())
@@ -91,7 +175,18 @@ function loadContacts() {
         data.contacts.forEach(contact => {
           const li = document.createElement('li');
           li.classList.add('contact-item');
-          li.textContent = contact.username;
+
+          const profilePic = contact.profilePic || '/uploads/default-avatar.png';
+          const img = document.createElement('img');
+          img.src = profilePic;
+          img.alt = `${contact.username}'s profile picture`;
+          img.classList.add('profile-pic');
+
+          const name = document.createElement('span');
+          name.textContent = contact.username;
+
+          li.appendChild(img);
+          li.appendChild(name);
 
           li.addEventListener('click', () => {
             loadChat(contact.username);
@@ -120,44 +215,55 @@ function sendMessage(toUser) {
         message: message
       })
     })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        chatInput.value = '';
-        // Append the message to the chat window
-        const chatMessages = document.getElementById('chat-messages');
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', 'sent');
-        messageDiv.textContent = message;
-        chatMessages.appendChild(messageDiv);
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          chatInput.value = '';
+          // Append the message to the chat window
+          const chatMessages = document.getElementById('chat-messages');
+          const messageDiv = createMessageElement({
+            fromUser: username,
+            message: message,
+            profilePic: '/uploads/default-avatar.png'
+          });
+          chatMessages.appendChild(messageDiv);
 
-        // Scroll to the bottom
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      } else {
-        alert('Failed to send message');
-      }
-    })
-    .catch(error => console.error('Error sending message:', error));
+          // Scroll to the bottom
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        } else {
+          alert('Failed to send message');
+        }
+      })
+      .catch(error => console.error('Error sending message:', error));
   }
+}
+
+function setReplyToMessage(message) {
+  isReply = true;
+  replyToMessage = message;
+  replyPreview.innerHTML = `Replying to: ${message.message}`;
+  replyPreview.style.display = 'block';
+
+  document.getElementById('cancel-reply').addEventListener('click', () => {
+    replyToMessage = null;
+    isReply = false;
+    replyPreview.style.display = 'none';
+  });
 }
 
 // Handle real-time messages with Socket.io
 socket.on('new inbox message', (data) => {
-  // Check if the message is from or to the current conversation
-  const currentChatWith = document.getElementById('chat-with').textContent.replace('Chat with ', '');
-  if (data.fromUser === currentChatWith || data.toUser === currentChatWith) {
-    // Append the new message to the chat window
+  const currentChatWith = document
+    .getElementById('chat-with')
+    .textContent.replace('Chat with ', '');
+
+  // Check if the message is part of the current conversation
+  if (
+    (data.fromUser === currentChatWith && data.toUser === username) ||
+    (data.fromUser === username && data.toUser === currentChatWith)
+  ) {
     const chatMessages = document.getElementById('chat-messages');
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message');
-
-    if (data.fromUser === username) {
-      messageDiv.classList.add('sent');
-    } else {
-      messageDiv.classList.add('received');
-    }
-
-    messageDiv.textContent = data.message;
+    const messageDiv = createMessageElement(data);
     chatMessages.appendChild(messageDiv);
 
     // Scroll to the bottom
@@ -166,12 +272,6 @@ socket.on('new inbox message', (data) => {
     // Optionally, update the conversations list to indicate a new message
     loadConversations();
   }
-});
-
-// Load conversations when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-  loadConversations();
-  loadContacts();
 });
 
 // Sidebar toggle functionality (if not included in profile.js)
