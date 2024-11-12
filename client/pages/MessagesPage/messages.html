@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Messages</title>
+  <!-- Include external stylesheets -->
+  <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet" />
+  <!-- Include profile.css for sidebar styles -->
+  <link rel="stylesheet" href="/pages/ProfilePage/profile.css">
+  <!-- Include your own messages CSS -->
+  <link rel="stylesheet" href="/pages/MessagesPage/messages.css">
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar close">
+    <header>
+      <div class="image-text">
+        <span class="image">
+          <img src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png" alt="Quack Logo" />
+        </span>
+        <div class="text logo-text">
+          <span class="name">QUACK.</span>
+        </div>
+      </div>
+      <i class="bx bx-chevron-right toggle"></i>
+    </header>
+
+    <div class="menu-bar">
+      <div class="menu">
+        <ul class="menu-links">
+          <!-- Sidebar links -->
+          <li class="nav-link">
+            <a href="/pages/UserDashboard/user-dashboard.html">
+              <i class="bx bx-home-alt icon"></i>
+              <span class="text nav-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-link">
+            <a href="/pages/MessagesPage/messages.html">
+              <i class="bx bx-message icon"></i>
+              <span class="text nav-text">Messages</span>
+            </a>
+          </li>
+          <li class="nav-link">
+            <a href="#" class="contact-btn">
+              <i class="bx bxs-contact icon"></i>
+              <span class="text nav-text" id="contactText">Contact</span>
+            </a>
+          </li>
+
+          <li class="nav-link">
+            <a href="#" class="favorite-btn">
+              <i class="bx bx-heart icon"></i>
+              <span class="text nav-text" id="favoriteText">Favorites</span>
+            </a>
+          </li>
+
+        </ul>
+      </div>
+
+      <div class="bottom-content">
+        <li class="">
+          <a href="/signin" onclick="localStorage.removeItem('username')">
+            <i class="bx bx-log-out icon"></i>
+            <span class="text nav-text">Logout</span>
+          </a>
+        </li>
+    
+        <li>
+          <a href="/profile">
+            <img src="" alt="" class="profile-pic" style="width: 40px; margin: 10px; height: auto" />
+            <p class="text nav-text full-name"></p>
+          </a>
+        </li>
+      </div>
+  </nav>
+
+  <!-- Main Content Section -->
+  <section class="home">
+    <!-- messages.html -->
+
+    <div class="messages-container">
+      <div class="conversations-list">
+        <h2>Your Conversations</h2>
+        <ul id="conversations">
+          <!-- Conversations will be populated here -->
+        </ul>
+      </div>
+      <div class="chat-window">
+        <!-- The chat window will display messages from a selected conversation -->
+        <div id="chat-header">
+          <h2 id="chat-with">Select a conversation</h2>
+        </div>
+        <div id="chat-messages">
+          <!-- Messages will be populated here -->
+        </div>
+        <form id="chat-form">
+          <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Include Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/pages/MessagesPage/messages.js"></script>
+  <!-- Include profile.js for sidebar functionality -->
+  <script src="/pages/ProfilePage/profile.js"></script>
+  <script src="/client/sidebar.js"></script> 
+</body>
+</html>

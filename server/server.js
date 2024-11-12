@@ -84,6 +84,9 @@ app.use(express.static('client', {
 // Serve the /uploads folder to make images publicly accessible
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+app.use(express.static(path.join(__dirname, '../client')));
+
+
 // Error handling middleware for Multer
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError || err.message.startsWith('Invalid file type')) {
@@ -359,6 +362,11 @@ app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/ChatPage/chat.html'));
 });
 
+app.get('/messages', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/MessagesPage/messages.html'));
+});
+
+
 // Serve the user view page
 app.get('/user-dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/UserDashboard/user-dashboard.html'));
@@ -420,7 +428,93 @@ app.get('/admin/get-users', async (req, res) => {
   }
 });
 
+app.get('/get-conversations', (req, res) => {
+  const username = req.query.username;
 
+  inboxCollection.aggregate([
+    {
+      $match: {
+        $or: [
+          { fromUser: username },
+          { toUser: username }
+        ]
+      }
+    },
+    {
+      $project: {
+        fromUser: 1,
+        toUser: 1,
+        message: 1,
+        timestamp: 1,
+        participant: {
+          $cond: [
+            { $eq: ["$fromUser", username] },
+            "$toUser",
+            "$fromUser"
+          ]
+        }
+      }
+    },
+    {
+      $group: {
+        _id: "$participant",
+        lastMessage: { $last: "$message" },
+        lastTimestamp: { $last: "$timestamp" }
+      }
+    },
+    {
+      $sort: { lastTimestamp: -1 }
+    }
+  ])
+    .toArray()
+    .then(results => {
+      const conversations = results.map(result => ({
+        participant: result._id,
+        lastMessage: result.lastMessage,
+        lastTimestamp: result.lastTimestamp
+      }));
+      res.json({ success: true, conversations });
+    })
+    .catch(error => {
+      console.error('Error fetching conversations:', error);
+      res.status(500).json({ success: false, message: 'Error fetching conversations' });
+    });
+});
+
+
+// server.js
+app.get('/get-messages', (req, res) => {
+  const username = req.query.username;
+  const participant = req.query.participant;
+
+  inboxCollection.find({
+    $or: [
+      { fromUser: username, toUser: participant },
+      { fromUser: participant, toUser: username }
+    ]
+  })
+    .sort({ timestamp: 1 })
+    .toArray()
+    .then(messages => {
+      res.json({ success: true, messages });
+    })
+    .catch(error => {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ success: false, message: 'Error fetching messages' });
+    });
+});
+
+
+
+function getMessages(username, participant) {
+  return Message.find({
+    $or: [
+      { fromUser: username, toUser: participant },
+      { fromUser: participant, toUser: username }
+    ]
+  })
+  .sort({ timestamp: 1 }); // Sort messages by timestamp
+}
 
 // Route to handle signup form POST request
 app.post('/signup', async (req, res) => {
@@ -719,8 +813,6 @@ app.delete('/delete-message/:id', async (req, res) => {
   }
 });
 
-///Inbox system
-
 // Search users endpoint
 app.get('/search-users', async (req, res) => {
   const query = req.query.query;
@@ -894,8 +986,6 @@ app.get('/check-user-status', async (req, res) => {
   }
 });
 
-
-
 // Add a contact to favorites
 app.post('/add-favorite', async (req, res) => {
   const { username, contactUsername } = req.body;
@@ -912,7 +1002,6 @@ app.post('/add-favorite', async (req, res) => {
     res.status(500).json({ success: false, message: 'An error occurred' });
   }
 });
-
 
 // Remove a contact from favorites
 app.post('/remove-favorite', async (req, res) => {
@@ -998,30 +1087,38 @@ app.get('/inbox', async (req, res) => {
   }
 });
 
-app.post('/send-message', async (req, res) => {
+app.post('/send-message', (req, res) => {
   const { fromUser, toUser, message } = req.body;
 
-  try {
-    await inboxCollection.insertOne({
-      fromUser: fromUser,
-      toUser: toUser,
-      message: message,
-      timestamp: new Date(),
-      isRead: false
+  // Save the message to the database
+  saveMessage(fromUser, toUser, message)
+    .then(savedMessage => {
+      // Emit a Socket.io event to the recipient
+      io.to(toUser).emit('new inbox message', {
+        fromUser,
+        toUser,
+        message,
+      });
+
+      res.json({ success: true });
+    })
+    .catch(error => {
+      console.error('Error sending message:', error);
+      res.status(500).json({ success: false, message: 'Error sending message' });
     });
-
-    // Notify the recipient if they are online
-    const recipientSocket = Object.values(users).find(user => user.username === toUser);
-    if (recipientSocket) {
-      io.to(recipientSocket.socketId).emit('new inbox message', { fromUser, message });
-    }
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ success: false, message: 'Error sending message.' });
-  }
 });
+
+function saveMessage(fromUser, toUser, message) {
+  const newMessage = {
+    fromUser,
+    toUser,
+    message,
+    timestamp: new Date(),
+  };
+  return messagesCollection.insertOne(newMessage);
+}
+
+
 
 app.post('/mark-as-read', async (req, res) => {
   const { messageId } = req.body;
@@ -1733,7 +1830,7 @@ async function connectDB() {
     console.log('Connected to MongoDB and collections initialized');
 
     // Start the server after the database is connected
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT || 4000;
     server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

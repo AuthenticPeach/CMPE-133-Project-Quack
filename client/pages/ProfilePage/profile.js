@@ -51,15 +51,16 @@ const passwordMessage = document.getElementById("password-message");
 const deleteMessage = document.getElementById("delete-message");
 const deleteAccountBtn = document.getElementById('deleteAccountBtn');
 const deleteAccountModal = document.getElementById('deleteAccountModal');
-const confirmDeleteBtn = document.getElementById('confirmDelete');
-
-// Retrieve the username from localStorage
-const username = localStorage.getItem("username");      
+const confirmDeleteBtn = document.getElementById('confirmDelete');  
 
 // Event Listeners for Connected Accounts
 editAccountsBtn.addEventListener('click', showConnectedAccountsForm);
 saveAccountsBtn.addEventListener('click', saveConnectedAccounts);
 cancelAccountsBtn.addEventListener('click', cancelConnectedAccountsEdit);
+
+// profile.js
+
+const username = localStorage.getItem('username');
 
 
 toggle.addEventListener("click", () => {

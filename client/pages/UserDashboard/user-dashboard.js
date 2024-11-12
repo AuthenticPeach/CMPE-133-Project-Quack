@@ -132,23 +132,6 @@ fetch(`/get-user-profile?username=${encodeURIComponent(username)}`)
 
 }
 
-// Modal script for Inbox and User Interaction
-var inboxModal = document.getElementById('inboxModal');
-var userModal = document.getElementById('userModal');
-var inboxBtn = document.getElementById('inbox-button');
-
-// Close the inbox modal when clicking x
-var inboxClose = document.getElementsByClassName('close')[0]; // First close button
-inboxClose.onclick = function() {
-inboxModal.style.display = 'none';
-};
-
-// Close the user modal when clicking x
-var userClose = document.getElementsByClassName('close')[1]; // Second close button
-userClose.onclick = function() {
-userModal.style.display = 'none';
-};  
-
 // Close the profile modal when clicking x
 var profileModal = document.getElementById('profileModal');
 var profileClose = document.getElementsByClassName('close')[2]; // Third close button
@@ -186,200 +169,6 @@ if (event.target == createGroupModal) {
   createGroupModal.style.display = 'none';
 }
 };
-
-// Fetch inbox messages on load
-fetch(`/inbox?username=${encodeURIComponent(username)}`)
-.then(response => response.json())
-.then(data => {
-  if (data.success && data.threads) {
-    let unreadCount = 0;
-    // Iterate over each thread
-    for (const fromUser in data.threads) {
-      const messages = data.threads[fromUser];
-      // Count unread messages in this thread
-      messages.forEach(message => {
-        if (!message.isRead) {
-          unreadCount++;
-        }
-      });
-    }
-
-    if (unreadCount > 0) {
-      // Update the inbox notification
-      var inboxButton = document.getElementById('inbox-button');
-      inboxButton.textContent = `Inbox (${unreadCount})`;
-    } else {
-      // Optionally reset the inbox text if no unread messages
-      var inboxButton = document.getElementById('inbox-button');
-      inboxButton.textContent = 'Inbox';
-    }
-  }
-})
-.catch(error => console.error('Error fetching inbox:', error));
-
-// Listen for real-time inbox notifications
-socket.on('new inbox message', (data) => {
-alert(`You have a new message from ${data.fromUser}: "${data.message}"`);
-// Optionally, update the inbox button
-var inboxButton = document.getElementById('inbox-button');
-var currentCount = parseInt(inboxButton.textContent.match(/\d+/)) || 0;
-inboxButton.textContent = `Inbox (${currentCount + 1})`;
-});
-
-// Open the inbox modal
-inboxBtn.onclick = function() {
-inboxModal.style.display = 'block';
-
-// Fetch inbox messages
-fetch(`/inbox?username=${encodeURIComponent(username)}`)
-.then(response => response.json())
-.then(async data => {
-  var inboxMessagesList = document.getElementById('inbox-messages-list');
-  inboxMessagesList.innerHTML = ''; // Clear existing messages
-
-  if (data.success && Object.keys(data.threads).length > 0) {
-    // For each thread (sender)
-    for (const fromUser in data.threads) {
-      const messages = data.threads[fromUser];
-
-      // Fetch sender's profile picture
-      const userData = await fetch(`/get-user-profile?username=${encodeURIComponent(fromUser)}`)
-        .then(res => res.json());
-
-      const profilePic = userData.success ? userData.profilePic : '/uploads/default-avatar.png';
-
-      // Create a container for the thread
-      const threadDiv = document.createElement('div');
-      threadDiv.classList.add('thread');
-
-      // Header for the thread
-      const threadHeader = document.createElement('div');
-      threadHeader.classList.add('thread-header');
-
-      const profileImg = document.createElement('img');
-      profileImg.src = profilePic;
-      profileImg.classList.add('thread-profile-pic');
-
-      const senderName = document.createElement('span');
-      senderName.textContent = fromUser;
-      senderName.classList.add('thread-sender-name');
-
-      // "Delete Thread" button
-      const deleteThreadBtn = document.createElement('button');
-      deleteThreadBtn.textContent = 'Delete Thread';
-      deleteThreadBtn.classList.add('delete-thread-btn');
-      deleteThreadBtn.addEventListener('click', function() {
-        deleteThread(fromUser);
-        threadDiv.remove();
-      });
-
-      // Append header elements
-      threadHeader.appendChild(profileImg);
-      threadHeader.appendChild(senderName);
-      threadHeader.appendChild(deleteThreadBtn);
-
-      // Messages container
-      const messagesList = document.createElement('ul');
-      messagesList.classList.add('messages-list');
-
-      // Sort messages by timestamp (optional)
-      messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-      // For each message in the thread
-      messages.forEach(function(message) {
-        const li = document.createElement('li');
-        li.textContent = message.message;
-
-        // Visually distinguish read/unread
-        li.style.fontWeight = message.isRead ? 'normal' : 'bold';
-
-        if (message.isFriendRequest) {
-          // Friend request: add Accept and Decline buttons
-          const acceptBtn = document.createElement('button');
-          acceptBtn.textContent = 'Accept';
-          acceptBtn.onclick = function() { handleFriendRequest(message.fromUser, username, true); };
-
-          const declineBtn = document.createElement('button');
-          declineBtn.textContent = 'Decline';
-          declineBtn.onclick = function() { handleFriendRequest(message.fromUser, username, false); };
-
-          li.appendChild(acceptBtn);
-          li.appendChild(declineBtn);
-        } else {
-          // Regular message: add Mark as Read/Unread button
-          const markAsReadBtn = document.createElement('button');
-          markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
-          markAsReadBtn.addEventListener('click', function() {
-            toggleReadStatus(message._id, !message.isRead);
-            message.isRead = !message.isRead;
-            li.style.fontWeight = message.isRead ? 'normal' : 'bold';
-            markAsReadBtn.textContent = message.isRead ? 'Mark as Unread' : 'Mark as Read';
-          });
-
-          li.appendChild(markAsReadBtn);
-        }
-
-        messagesList.appendChild(li);
-      });
-
-      threadDiv.appendChild(threadHeader);
-      threadDiv.appendChild(messagesList);
-      inboxMessagesList.appendChild(threadDiv);
-    }
-  } else {
-    inboxMessagesList.innerHTML = '<li>Your inbox is looking pretty empty!</li>';
-  }
-})
-.catch(error => console.error('Error fetching inbox messages:', error));
-};
-
-
-// Fetch inbox messages
-fetch(`/inbox?username=${encodeURIComponent(username)}`)
-.then(response => response.json())
-.then(data => {
-  var inboxMessagesList = document.getElementById('inbox-messages-list');
-  inboxMessagesList.innerHTML = ''; // Clear existing messages
-
-  if (data.success && data.messages.length > 0) {
-    data.messages.forEach(function(message) {
-      var li = document.createElement('li');
-      li.textContent = `${message.fromUser}: ${message.message}`;
-
-      // Mark message as read when clicked
-      li.addEventListener('click', function() {
-        markMessageAsRead(message._id);
-        li.style.fontWeight = 'normal'; // Visually indicate it's read
-      });
-
-      inboxMessagesList.appendChild(li);
-    });
-  } else {
-    inboxMessagesList.innerHTML = '<li>Your inbox is looking pretty empty!</li>';
-  }
-})
-.catch(error => console.error('Error fetching inbox messages:', error));
-
-
-function markMessageAsRead(messageId) {
-fetch('/mark-as-read', {
-method: 'POST',
-headers: {
-  'Content-Type': 'application/json'
-},
-body: JSON.stringify({ messageId: messageId })
-})
-.then(response => response.json())
-.then(data => {
-if (data.success) {
-  console.log('Message marked as read');
-  // Optionally update the inbox count
-} else {
-  console.error('Failed to mark message as read');
-}
-})
-.catch(error => console.error('Error marking message as read:', error));
-}
 
 
 // Search functionality for finding users
@@ -457,24 +246,8 @@ function searchUsers(query, type) {
           var li = document.createElement('li');
           li.textContent = user.username;
           li.addEventListener('click', function() {
-          // Set the username for modal
-          var modalUsername = document.getElementById('modal-username');
-          var addFriendBtn = document.getElementById('add-friend-btn');
-          var startChatBtn = document.getElementById('start-chat-btn');
+            window.location.href = `/messages.html?participant=${encodeURIComponent(user.username)}`;
 
-          modalUsername.textContent = user.username;
-          addFriendBtn.onclick = function() { addContact(user.username); };
-          startChatBtn.onclick = function() { startPrivateChat(toUsername); };
-
-          // Set up the send message button
-          var sendMessageBtn = document.getElementById('send-message-btn');
-          sendMessageBtn.onclick = function() {
-            var messageText = document.getElementById('message-text').value;
-            sendMessage(user.username, messageText);
-          };
-
-          // Display the modal
-          document.getElementById('userModal').style.display = 'block';
         });
 
           searchResults.appendChild(li);
@@ -787,66 +560,9 @@ function removeContact(contactUsername) {
 }
 
 function openSendMessageModal(toUsername) {
-  // Set the username for modal
-  var modalUsername = document.getElementById('modal-username');
-  var addFriendBtn = document.getElementById('add-friend-btn');
-  var startChatBtn = document.getElementById('start-chat-btn');
-
-  modalUsername.textContent = toUsername;
-  addFriendBtn.onclick = function() { addContact(toUsername); };
-  startChatBtn.onclick = function() { startPrivateChat(toUsername); };
-
-  // Set up the send message button
-  var sendMessageBtn = document.getElementById('send-message-btn');
-  sendMessageBtn.onclick = function() {
-    var messageText = document.getElementById('message-text').value;
-    sendMessage(toUsername, messageText);
-  };
-
-  // Display the modal
-  document.getElementById('userModal').style.display = 'block';
+  window.location.href = `/messages.html?participant=${encodeURIComponent(toUsername)}`;
 }
 
-
-function toggleReadStatus(messageId, isRead) {
-fetch('/toggle-read-status', {
-method: 'POST',
-headers: {
-  'Content-Type': 'application/json'
-},
-body: JSON.stringify({ messageId: messageId, isRead: isRead })
-})
-.then(response => response.json())
-.then(data => {
-  if (data.success) {
-    console.log('Message read status updated');
-    // Optionally update the inbox count
-  } else {
-    console.error('Failed to update message read status');
-  }
-})
-.catch(error => console.error('Error updating message read status:', error));
-}
-
-function deleteThread(fromUser) {
-  fetch('/delete-thread', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ username: username, fromUser: fromUser })
-  })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        alert(`Thread with ${fromUser} has been deleted.`);
-        // Optionally refresh the inbox
-      } else {
-        alert('Failed to delete thread.');
-      }
-    })
-    .catch(error => console.error('Error deleting thread:', error));
-}
 
 // Modal script for Group Creation
 document.addEventListener('DOMContentLoaded', () => {
