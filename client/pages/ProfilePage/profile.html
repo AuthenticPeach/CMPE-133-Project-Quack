@@ -98,15 +98,13 @@
       </button>
       <div class="grid-container">
         <div>
-          <img class="profile-pic" src="" alt="Profile Picture" />
+          <div class="profile-container" id="profile-button">
+            <img class="profile-pic" src="" alt="Profile Picture" />
+            <span class="pencil-icon"><i class='bx bxs-pencil'></i></span>
+          </div>
           <h5 class="full-name"></h5>
-
-          <!-- Upload Profile Picture Form (hidden initially) -->
-          <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" name="profilePic" id="profilePic" required />
-            <br /><button type="submit" class="normalButton">Upload</button>
-          </form>
-          <p id="message"></p>
+          <div id="connected-accounts-display" style="margin-bottom: 10px;"></div> <!-- Display Connected Accounts -->
+          <button id="edit-accounts-btn" class="normalButton">Edit Connected Accounts</button>
         </div>
 
         <div>
@@ -216,7 +214,8 @@
           <!-- Non-editable bio display -->
           <textarea
             id="bio"
-            placeholder="Tell us something about yourself..."
+            maxlength="1500" 
+            placeholder="Tell us something about yourself... (Max 1500 characters)"
           ></textarea>
           <!-- Add Emoji Button for Bio -->
           <button id="emoji-button" class="hidden">😀</button>
@@ -230,18 +229,44 @@
 
           <p id="bio-message"></p>
         </div>
+      </div>      
+
+      <div id="deleteAccountModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h3>Deleting Account</h3>
+          <p>Delete your account will remove all of your information from our database. This action cannot be undone.</p>
+          <label for="currentPassword">Please enter your password to confirm:</label>
+          <input type="password" id="currentPassword" required>
+          <button id="confirmDelete" class="normalButton">Delete Account</button>
+          <p id="delete-message"></p>
+        </div>
       </div>
 
-          <!-- Connected Accounts Section -->
-      <div id="connected-accounts">
-            <h4>Connected Accounts</h4>
-          <!-- Display Connected Accounts -->
-          <div id="connected-accounts-display" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%;">
-          </div>
+      <!-- Upload Profile Picture Form (hidden initially) -->
+      <div id="profilePictureModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h3>Select Avatar</h3>
+          <form id="upload-form" enctype="multipart/form-data" style="text-align: center;">
+            <label for="profilePic" style="margin-right: 0;">
+              <img src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png" id="imagePreview">
+            </label>
+            <input type="file" name="profilePic" id="profilePic" required accept="image/*" style="display: none; visibility: none;"/>
+            <br /><button type="submit" class="normalButton" id="uploadBtn">Upload Image</button>
+          </form>
+          <p id="message"></p>
+        </div>
+      </div>
 
+      <!-- Connected Accounts Section -->
+       <div id="connectedAccountModal" class="modal">
+        <div class="modal-content">
+            <span class="closeBtn">&times;</span>
+            <h3>Connected Account</h3>
+    
           <!-- Form to Add/Edit Connected Accounts -->
-          <button id="edit-accounts-btn" class="normalButton">Edit Connected Accounts</button>
-          <form id="connected-accounts-form" class="profile-form" style="display: none;">
+          <form id="connected-accounts-form" class="profile-form">
             <p>
               <label>YouTube:</label>
               <input type="url" name="youtube" id="youtube" placeholder="https://www.youtube.com/..." />
@@ -271,24 +296,13 @@
               <input type="text" name="snapchat" id="snapchat" placeholder="Your Snapchat username" />
             </p>
             <div class="button-container">
-              <button type="button" class="normalButton" id="save-accounts-btn">Save Accounts</button>
               <button type="button" class="normalButton" id="cancel-accounts-btn">Cancel</button>
+              <button type="button" class="normalButton" id="save-accounts-btn">Save Accounts</button>
             </div>
           </form>
           <p id="accounts-message"></p>
-      </div>
-
-      <div id="deleteAccountModal" class="modal">
-        <div class="modal-content">
-          <span class="closeBtn">&times;</span>
-          <h3>Deleting Account</h3>
-          <p>Delete your account will remove all of your information from our database. This action cannot be undone.</p>
-          <label for="currentPassword">Please enter your password to confirm:</label>
-          <input type="password" id="currentPassword" required>
-          <button id="confirmDelete" class="normalButton">Delete Account</button>
-          <p id="delete-message"></p>
         </div>
-      </div>
+       </div>
     </section>
 
     <script src="/socket.io/socket.io.js"></script>

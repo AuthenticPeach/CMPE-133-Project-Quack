@@ -21,10 +21,16 @@ const connectedAccountsForm = document.getElementById('connected-accounts-form')
 const saveAccountsBtn = document.getElementById('save-accounts-btn');
 const cancelAccountsBtn = document.getElementById('cancel-accounts-btn');
 const accountsMessage = document.getElementById('accounts-message');
+const connectedAccountModal = document.getElementById('connectedAccountModal');
 
 // Elements for profile and bio
 const uploadForm = document.getElementById("upload-form");
 const profilePicElement = document.getElementsByClassName("profile-pic");
+const profilePictureBtn = document.getElementById("profile-button");
+const profilePictureModal = document.getElementById("profilePictureModal");
+const imagePreview = document.getElementById('imagePreview');
+const profilePic = document.getElementById('profilePic');
+const uploadBtn = document.getElementById('uploadBtn');
 const messageElement = document.getElementById("message");
 const bioElement = document.getElementById("bio");
 const bioDisplayElement = document.getElementById("bio-display"); // Bio display element
@@ -166,12 +172,16 @@ contactsBtn.addEventListener("click", () => {
     .catch((error) => console.error("Error fetching contacts:", error));
 });
 
+// Close the Connected Accounts form modal when clicking x
+var connectedAccountClose = document.getElementsByClassName('closeBtn')[2]; 
+connectedAccountClose.onclick = function() {
+  connectedAccountModal.style.display = 'none';
+  accountsMessage.textContent = '';
+};
+
 // Function to show the Connected Accounts form
 function showConnectedAccountsForm() {
-  connectedAccountsForm.style.display = 'block';
-  editAccountsBtn.style.display = 'none';
-  connectedAccountsDisplay.style.display = 'none';
-
+  connectedAccountModal.style.display = 'block';
   // Load existing accounts into the form
   const accounts = userData.connectedAccounts || {};
   document.getElementById('youtube').value = accounts.youtube || '';
@@ -185,9 +195,7 @@ function showConnectedAccountsForm() {
 
 // Function to cancel editing Connected Accounts
 function cancelConnectedAccountsEdit() {
-  connectedAccountsForm.style.display = 'none';
-  editAccountsBtn.style.display = 'block';
-  connectedAccountsDisplay.style.display = 'block';
+  connectedAccountModal.style.display = 'none';
   accountsMessage.textContent = '';
 }
 
@@ -215,10 +223,8 @@ fetch('/save-connected-accounts', {
 .then(response => response.json())
   .then(data => {
     if (data.success) {
-      accountsMessage.style.color = 'green';
-      accountsMessage.textContent = 'Connected accounts updated successfully.';
-      connectedAccountsForm.style.display = 'none';
-      editAccountsBtn.style.display = 'block';
+      alert('Connected accounts updated successfully.');
+      connectedAccountModal.style.display = 'none';
       // Update the display
       userData.connectedAccounts = connectedAccounts;
       displayConnectedAccounts();
@@ -239,201 +245,131 @@ function displayConnectedAccounts() {
   connectedAccountsDisplay.innerHTML = ''; // Clear existing content
   const accounts = userData.connectedAccounts || {};
 
-  const platforms = [
-    {
-      name: 'YouTube',
-      key: 'youtube',
-      icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/lpuwky4wf5o5wbcf2wxn.webp',
-    },
-    {
-      name: 'Twitch',
-      key: 'twitch',
-      icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/xcrwvzrjrj4dw1yya56r.jpg',
-    },
-    {
-      name: 'Twitter/X',
-      key: 'twitter',
-      icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/tgfgmgjurtazvy9scjdb.jpg',
-    },
-    {
-      name: 'Instagram',
-      key: 'instagram',
-      icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223970/base/peoeigfk0yy9jbvpgrt3.png',
-    },
-    {
-      name: 'TikTok',
-      key: 'tiktok',
-      icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/m3evlfqli9pt3h4k61za.webp',
-    },
-    {
-      name: 'WhatsApp',
-      key: 'whatsapp',
-      icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730224314/base/tzghijqdnn7kofrqtghf.png',
-    },
-    {
-      name: 'Snapchat',
-      key: 'snapchat',
-      icon: 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/k04o0c2jesojaxfxkedq.jpg',
-    },
-  ];
+  if (accounts.youtube) {
+    // Create a link element
+    const youtubeLink = document.createElement('a');
+    youtubeLink.href = accounts.youtube; // Set the YouTube link
+    youtubeLink.target = "_blank"; // Open the link in a new tab
 
-  platforms.forEach(platform => {
-    const url = accounts[platform.key];
-    if (url) {
-      const accountDiv = document.createElement('div');
-      accountDiv.className = 'account-item';
+    // Create the image element
+    const iconImg = document.createElement('img');
+    iconImg.classList.add("iconImg");
+    iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMGMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnptNC40NDEgMTYuODkyYy0yLjEwMi4xNDQtNi43ODQuMTQ0LTguODgzIDAtMi4yNzYtLjE1Ni0yLjU0MS0xLjI3LTIuNTU4LTQuODkyLjAxNy0zLjYyOS4yODUtNC43MzYgMi41NTgtNC44OTIgMi4wOTktLjE0NCA2Ljc4Mi0uMTQ0IDguODgzIDAgMi4yNzcuMTU2IDIuNTQxIDEuMjcgMi41NTkgNC44OTItLjAxOCAzLjYyOS0uMjg1IDQuNzM2LTIuNTU5IDQuODkyem0tNi40NDEtNy4yMzRsNC45MTcgMi4zMzgtNC45MTcgMi4zNDZ2LTQuNjg0eiIvPjwvc3ZnPg==';
 
-      const iconImg = document.createElement('img');
-      iconImg.src = platform.icon;
-      iconImg.alt = platform.name;
-      iconImg.className = 'social-icon';
+    // Append the image inside the link element
+    youtubeLink.appendChild(iconImg);
 
-      const accountLink = document.createElement('a');
-      accountLink.href = url;
-      accountLink.target = '_blank';
-      accountLink.textContent = `My ${platform.name} Account`;
-
-      accountDiv.appendChild(iconImg);
-      accountDiv.appendChild(accountLink);
-
-      connectedAccountsDisplay.appendChild(accountDiv);
-    }
-  });
-
-
-  // Twitter Embed
-  if (accounts.twitter) {
-    const twitterEmbed = document.createElement('a');
-    twitterEmbed.className = 'twitter-timeline';
-    twitterEmbed.href = accounts.twitter;
-    twitterEmbed.dataset.width = '400';
-    twitterEmbed.dataset.height = '600';
-    twitterEmbed.textContent = `Tweets by ${accounts.twitter.split('/').pop()}`;
-
-    const accountDiv = document.createElement('div');
-    accountDiv.className = 'account-item';
-
-    accountDiv.appendChild(twitterEmbed);          
-    connectedAccountsDisplay.appendChild(twitterEmbed);
-
-    // Load Twitter widgets script
-    const script = document.createElement('script');
-    script.setAttribute('async', '');
-    script.src = 'https://platform.twitter.com/widgets.js';
-    script.charset = 'utf-8';
-    document.head.appendChild(script);
-  }
-
-  // Twitch Embed
+    // Append the link to the social media container
+    connectedAccountsDisplay.appendChild(youtubeLink);
+  } 
+  
   if (accounts.twitch) {
-    const twitchUrl = new URL(accounts.twitch);
-    const pathname = twitchUrl.pathname.split('/').filter(Boolean);
-    let twitchChannel = null;
+    // Create a link element
+    const twitchLink = document.createElement('a');
+    twitchLink.href = accounts.twitch;
+    twitchLink.target = "_blank";
 
-    if (pathname[0]) {
-      twitchChannel = pathname[0];
-    }
+    // Create the image elemment
+    const iconImg = document.createElement('img');
+    iconImg.classList.add("iconImg");
+    iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTAuMjI0IDE3LjgwNmwxLjc3Ni0xLjc3NmgzLjM0M2wyLjA5LTIuMDl2LTYuNjg2aC0xMC4wM3Y4Ljc3NmgyLjgyMXYxLjc3NnptMy44NjYtOC4xNDloMS4yNTR2My42NTNoLTEuMjU0di0zLjY1M3ptLTMuMzQ0IDBoMS4yNTR2My42NTNoLTEuMjU0di0zLjY1M3ptMS4yNTQtOS42NTdjLTYuNjI3IDAtMTIgNS4zNzMtMTIgMTJzNS4zNzMgMTIgMTIgMTIgMTItNS4zNzMgMTItMTItNS4zNzMtMTItMTItMTJ6bTYuNjg3IDE0LjU2N2wtMy42NTcgMy42NTdoLTIuNzE2bC0xLjc3NyAxLjc3NmgtMS44OHYtMS43NzZoLTMuMzQ0di05LjgyMWwuOTQxLTIuNDAzaDEyLjQzM3Y4LjU2N3oiLz48L3N2Zz4=';
 
-    if (twitchChannel) {
-      const iframe = document.createElement('iframe');
-      iframe.src = `https://player.twitch.tv/?channel=${twitchChannel}&parent=${window.location.hostname}`;
-      iframe.frameBorder = '0';
-      iframe.allowFullscreen = true;
-      iframe.scrolling = 'no';
-      iframe.width = '560';
-      iframe.height = '315';
-      connectedAccountsDisplay.appendChild(iframe);
-    } else {
-      const twitchLink = document.createElement('a');
-      twitchLink.href = accounts.twitch;
-      twitchLink.target = '_blank';
-      twitchLink.textContent = 'My Twitch Channel';
-      connectedAccountsDisplay.appendChild(twitchLink);
-    }
+    // Append the image inside the link element
+    twitchLink.appendChild(iconImg);
+
+    // Append the link to the social media container
+    connectedAccountsDisplay.appendChild(twitchLink);
   }
 
-  // Instagram Embed
+  if (accounts.twitter) {
+    // Create a link element
+    const twitterLink = document.createElement('a');
+    twitterLink.href = accounts.twitch;
+    twitterLink.target = "_blank";
+
+    // Create the image elemment
+    const iconImg = document.createElement('img');
+    iconImg.classList.add("iconImg");
+    iconImg.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730918882/twitter_1_wiijlx.png';
+
+    // Append the image inside the link element
+    twitterLink.appendChild(iconImg);
+
+    // Append the link to the social media container
+    connectedAccountsDisplay.appendChild(twitterLink);
+  }
+
   if (accounts.instagram) {
-    const instagramEmbed = document.createElement('blockquote');
-    instagramEmbed.className = 'instagram-media';
-    instagramEmbed.setAttribute('data-instgrm-permalink', accounts.instagram);
-    instagramEmbed.style.width = '100%';
-    connectedAccountsDisplay.appendChild(instagramEmbed);
+    // Create a link element
+    const instagramLink = document.createElement('a');
+    instagramLink.href = accounts.twitch;
+    instagramLink.target = "_blank";
 
-    // Load Instagram Embed Script
-    const script = document.createElement('script');
-    script.src = 'https://www.instagram.com/embed.js';
-    script.async = true;
-    document.head.appendChild(script);
+    // Create the image elemment
+    const iconImg = document.createElement('img');
+    iconImg.classList.add("iconImg");
+    iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTQuODI5IDYuMzAyYy0uNzM4LS4wMzQtLjk2LS4wNC0yLjgyOS0uMDRzLTIuMDkuMDA3LTIuODI4LjA0Yy0xLjg5OS4wODctMi43ODMuOTg2LTIuODcgMi44Ny0uMDMzLjczOC0uMDQxLjk1OS0uMDQxIDIuODI4cy4wMDggMi4wOS4wNDEgMi44MjljLjA4NyAxLjg3OS45NjcgMi43ODMgMi44NyAyLjg3LjczNy4wMzMuOTU5LjA0MSAyLjgyOC4wNDEgMS44NyAwIDIuMDkxLS4wMDcgMi44MjktLjA0MSAxLjg5OS0uMDg2IDIuNzgyLS45ODggMi44Ny0yLjg3LjAzMy0uNzM4LjA0LS45Ni4wNC0yLjgyOXMtLjAwNy0yLjA5LS4wNC0yLjgyOGMtLjA4OC0xLjg4My0uOTczLTIuNzgzLTIuODctMi44N3ptLTIuODI5IDkuMjkzYy0xLjk4NSAwLTMuNTk1LTEuNjA5LTMuNTk1LTMuNTk1IDAtMS45ODUgMS42MS0zLjU5NCAzLjU5NS0zLjU5NHMzLjU5NSAxLjYwOSAzLjU5NSAzLjU5NGMwIDEuOTg1LTEuNjEgMy41OTUtMy41OTUgMy41OTV6bTMuNzM3LTYuNDkxYy0uNDY0IDAtLjg0LS4zNzYtLjg0LS44NCAwLS40NjQuMzc2LS44NC44NC0uODQuNDY0IDAgLjg0LjM3Ni44NC44NCAwIC40NjMtLjM3Ni44NC0uODQuODR6bS0xLjQwNCAyLjg5NmMwIDEuMjg5LTEuMDQ1IDIuMzMzLTIuMzMzIDIuMzMzcy0yLjMzMy0xLjA0NC0yLjMzMy0yLjMzM2MwLTEuMjg5IDEuMDQ1LTIuMzMzIDIuMzMzLTIuMzMzczIuMzMzIDEuMDQ0IDIuMzMzIDIuMzMzem0tMi4zMzMtMTJjLTYuNjI3IDAtMTIgNS4zNzMtMTIgMTJzNS4zNzMgMTIgMTIgMTIgMTItNS4zNzMgMTItMTItNS4zNzMtMTItMTItMTJ6bTYuOTU4IDE0Ljg4NmMtLjExNSAyLjU0NS0xLjUzMiAzLjk1NS00LjA3MSA0LjA3Mi0uNzQ3LjAzNC0uOTg2LjA0Mi0yLjg4Ny4wNDJzLTIuMTM5LS4wMDgtMi44ODYtLjA0MmMtMi41NDQtLjExNy0zLjk1NS0xLjUyOS00LjA3Mi00LjA3Mi0uMDM0LS43NDYtLjA0Mi0uOTg1LS4wNDItMi44ODYgMC0xLjkwMS4wMDgtMi4xMzkuMDQyLTIuODg2LjExNy0yLjU0NCAxLjUyOS0zLjk1NSA0LjA3Mi00LjA3MS43NDctLjAzNS45ODUtLjA0MyAyLjg4Ni0uMDQzczIuMTQuMDA4IDIuODg3LjA0M2MyLjU0NS4xMTcgMy45NTcgMS41MzIgNC4wNzEgNC4wNzEuMDM0Ljc0Ny4wNDIuOTg1LjA0MiAyLjg4NiAwIDEuOTAxLS4wMDggMi4xNC0uMDQyIDIuODg2eiIvPjwvc3ZnPg==';
+
+    // Append the image inside the link element
+    instagramLink.appendChild(iconImg);
+
+    // Append the link to the social media container
+    connectedAccountsDisplay.appendChild(instagramLink);
   }
 
-
-  // TikTok Embed with Sandbox
   if (accounts.tiktok) {
-    const tiktokUrl = accounts.tiktok;
-    
-    const tiktokDiv = document.createElement('div');
-    tiktokDiv.className = 'account-item';
-    
-    const iconImg = document.createElement('img');
-    iconImg.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730223969/base/m3evlfqli9pt3h4k61za.webp';
-    iconImg.alt = 'TikTok';
-    iconImg.style.width = '40px'; // Adjust size as needed
-
+    // Create a link element
     const tiktokLink = document.createElement('a');
-    tiktokLink.href = tiktokUrl;
-    tiktokLink.target = '_blank';
-    tiktokLink.textContent = 'View my TikTok';
-    
-    tiktokDiv.appendChild(iconImg);
-    tiktokDiv.appendChild(tiktokLink);
-    connectedAccountsDisplay.appendChild(tiktokDiv);
+    tiktokLink.href = accounts.twitch;
+    tiktokLink.target = "_blank";
+
+    // Create the image elemment
+    const iconImg = document.createElement('img');
+    iconImg.classList.add("iconImg");
+    iconImg.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730918291/tiktok_qipjuq.png';
+
+    // Append the image inside the link element
+    tiktokLink.appendChild(iconImg);
+
+    // Append the link to the social media container
+    connectedAccountsDisplay.appendChild(tiktokLink);
   }
 
-  // For WhatsApp, display a clickable phone number
   if (accounts.whatsapp) {
+    // Create a link element
     const whatsappLink = document.createElement('a');
-    whatsappLink.href = `https://wa.me/${accounts.whatsapp.replace(/\D/g, '')}`;
-    whatsappLink.target = '_blank';
-    whatsappLink.textContent = `Chat with me on WhatsApp`;
+    whatsappLink.href = accounts.twitch;
+    whatsappLink.target = "_blank";
 
-    const accountDiv = document.createElement('div');
-    accountDiv.className = 'account-item';
-
+    // Create the image elemment
     const iconImg = document.createElement('img');
-    iconImg.src = platforms.find(p => p.key === 'whatsapp').icon;
-    iconImg.alt = 'WhatsApp';
-    iconImg.className = 'social-icon';
+    iconImg.classList.add("iconImg");
+    iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIuMDMxIDYuMTcyYy0zLjE4MSAwLTUuNzY3IDIuNTg2LTUuNzY4IDUuNzY2LS4wMDEgMS4yOTguMzggMi4yNyAxLjAxOSAzLjI4N2wtLjU4MiAyLjEyOCAyLjE4Mi0uNTczYy45NzguNTggMS45MTEuOTI4IDMuMTQ1LjkyOSAzLjE3OCAwIDUuNzY3LTIuNTg3IDUuNzY4LTUuNzY2LjAwMS0zLjE4Ny0yLjU3NS01Ljc3LTUuNzY0LTUuNzcxem0zLjM5MiA4LjI0NGMtLjE0NC40MDUtLjgzNy43NzQtMS4xNy44MjQtLjI5OS4wNDUtLjY3Ny4wNjMtMS4wOTItLjA2OS0uMjUyLS4wOC0uNTc1LS4xODctLjk4OC0uMzY1LTEuNzM5LS43NTEtMi44NzQtMi41MDItMi45NjEtMi42MTctLjA4Ny0uMTE2LS43MDgtLjk0LS43MDgtMS43OTNzLjQ0OC0xLjI3My42MDctMS40NDZjLjE1OS0uMTczLjM0Ni0uMjE3LjQ2Mi0uMjE3bC4zMzIuMDA2Yy4xMDYuMDA1LjI0OS0uMDQuMzkuMjk4LjE0NC4zNDcuNDkxIDEuMi41MzQgMS4yODcuMDQzLjA4Ny4wNzIuMTg4LjAxNC4zMDQtLjA1OC4xMTYtLjA4Ny4xODgtLjE3My4yODlsLS4yNi4zMDRjLS4wODcuMDg2LS4xNzcuMTgtLjA3Ni4zNTQuMTAxLjE3NC40NDkuNzQxLjk2NCAxLjIwMS42NjIuNTkxIDEuMjIxLjc3NCAxLjM5NC44NnMuMjc0LjA3Mi4zNzYtLjA0M2MuMTAxLS4xMTYuNDMzLS41MDYuNTQ5LS42OC4xMTYtLjE3My4yMzEtLjE0NS4zOS0uMDg3czEuMDExLjQ3NyAxLjE4NC41NjQuMjg5LjEzLjMzMi4yMDJjLjA0NS4wNzIuMDQ1LjQxOS0uMS44MjR6bS0zLjQyMy0xNC40MTZjLTYuNjI3IDAtMTIgNS4zNzMtMTIgMTJzNS4zNzMgMTIgMTIgMTIgMTItNS4zNzMgMTItMTItNS4zNzMtMTItMTItMTJ6bS4wMjkgMTguODhjLTEuMTYxIDAtMi4zMDUtLjI5Mi0zLjMxOC0uODQ0bC0zLjY3Ny45NjQuOTg0LTMuNTk1Yy0uNjA3LTEuMDUyLS45MjctMi4yNDYtLjkyNi0zLjQ2OC4wMDEtMy44MjUgMy4xMTMtNi45MzcgNi45MzctNi45MzcgMS44NTYuMDAxIDMuNTk4LjcyMyA0LjkwNyAyLjAzNCAxLjMxIDEuMzExIDIuMDMxIDMuMDU0IDIuMDMgNC45MDgtLjAwMSAzLjgyNS0zLjExMyA2LjkzOC02LjkzNyA2LjkzOHoiLz48L3N2Zz4=';
 
-    accountDiv.appendChild(iconImg);
-    accountDiv.appendChild(whatsappLink);
-    connectedAccountsDisplay.appendChild(accountDiv);
+    // Append the image inside the link element
+    whatsappLink.appendChild(iconImg);
+
+    // Append the link to the social media container
+    connectedAccountsDisplay.appendChild(whatsappLink);
   }
 
-  // For Snapchat, provide a link to the Snapchat profile
   if (accounts.snapchat) {
+    // Create a link element
     const snapchatLink = document.createElement('a');
-    snapchatLink.href = `https://www.snapchat.com/add/${accounts.snapchat}`;
-    snapchatLink.target = '_blank';
-    snapchatLink.textContent = `Add me on Snapchat`;
+    snapchatLink.href = accounts.twitch;
+    snapchatLink.target = "_blank";
 
-    const accountDiv = document.createElement('div');
-    accountDiv.className = 'account-item';
-
+    // Create the image elemment
     const iconImg = document.createElement('img');
-    iconImg.src = platforms.find(p => p.key === 'snapchat').icon;
-    iconImg.alt = 'Snapchat';
-    iconImg.className = 'social-icon';
+    iconImg.classList.add("iconImg");
+    iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMGMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnptNS4xMjYgMTYuNDc1Yy0uMDU3LjA3Ny0uMTAzLjQtLjE3OC42NTUtLjA4Ni4yOTUtLjM1Ni4yNjItLjY1Ni4yMDMtLjQzNy0uMDg1LS44MjctLjEwOS0xLjI4MS0uMDM0LS43ODUuMTMxLTEuNjAxIDEuMjkyLTIuOTY5IDEuMjkyLTEuNDcyIDAtMi4yMzgtMS4xNTYtMy4wNTQtMS4yOTItLjgzMi0uMTM4LTEuMzEuMDg0LTEuNTk3LjA4NC0uMjIxIDAtLjMwNy0uMTM1LS4zNC0uMjQ3LS4wNzQtLjI1MS0uMTItLjU4MS0uMTc4LS42Ni0uNTY1LS4wODctMS44NC0uMzA5LTEuODczLS44NzgtLjAwOC0uMTQ4LjA5Ni0uMjc5LjI0My0uMzAzIDEuODcyLS4zMDggMy4wNjMtMi40MTkgMi44NjktMi44NzctLjEzOC0uMzI1LS43MzUtLjQ0Mi0uOTg2LS41NDEtLjY0OC0uMjU2LS43MzktLjU1LS43LS43NTIuMDUzLS4yOC4zOTUtLjQ2OC42OC0uNDY4LjI3NSAwIC43Ni4zNjcgMS4xMzguMTU4LS4wNTUtLjk4Mi0uMTk0LTIuMzg3LjE1Ni0zLjE3MS42NjctMS40OTYgMi4xMjktMi4yMzYgMy41OTItMi4yMzYgMS40NzMgMCAyLjk0Ni43NSAzLjYwOCAyLjIzNS4zNDkuNzgzLjIxMiAyLjE4MS4xNTYgMy4xNzIuMzU3LjE5Ny43OTktLjE2NyAxLjEwNy0uMTY3LjMwMiAwIC43MTIuMjA0LjcxOS41NDUuMDA1LjI2Ny0uMjMzLjQ5Ny0uNzA4LjY4NC0uMjU1LjEwMS0uODQ4LjIxNy0uOTg2LjU0MS0uMTk4LjQ2OCAxLjAzIDIuNTczIDIuODY5IDIuODc2LjE0Ni4wMjQuMjUxLjE1NC4yNDMuMzAzLS4wMzMuNTY5LTEuMzE0Ljc5MS0xLjg3NC44Nzh6Ii8+PC9zdmc+';
 
-    accountDiv.appendChild(iconImg);
-    accountDiv.appendChild(snapchatLink);
-    connectedAccountsDisplay.appendChild(accountDiv);
+    // Append the image inside the link element
+    snapchatLink.appendChild(iconImg);
+
+    // Append the link to the social media container
+    connectedAccountsDisplay.appendChild(snapchatLink);
   }
-
-  // Repeat similar blocks for other platforms (Twitch, Twitter, etc.)
-
-  // Re-display the connected accounts section
-  connectedAccountsDisplay.style.display = 'block';
 }    
 
 function addFavorite(contactUsername) {
@@ -708,6 +644,38 @@ fetch(`/get-user-profile?username=${username}`)
     console.error('Error fetching profile:', error);
 });
 
+//Show the profile picture edit window
+profilePictureBtn.addEventListener("click", function() {
+  profilePictureModal.style.display = "block";
+});
+
+// Close the profile picture edit window modal when clicking x
+var profilePictureClose = document.getElementsByClassName('closeBtn')[1]; 
+profilePictureClose.onclick = function() {
+  profilePictureModal.style.display = 'none';
+  uploadBtn.style.display = 'none';
+  imagePreview.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png';
+  profilePic.value = "";
+};
+
+// Event listener for file selection
+profilePic.addEventListener('change', function() {
+  const file = profilePic.files[0];
+  if (file) {
+    uploadBtn.style.display = 'inline';
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      imagePreview.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    imagePreview.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png';
+    profilePic.value = "";
+    uploadBtn.style.display = 'none';
+  }
+});
+
 // Event listener for profile picture upload
 uploadForm.addEventListener("submit", function (event) {
   event.preventDefault();
@@ -725,6 +693,10 @@ uploadForm.addEventListener("submit", function (event) {
         profilePicElement[0].src = data.profilePic;
         profilePicElement[1].src = data.profilePic;
         messageElement.style.display = "none";
+        profilePictureModal.style.display = 'none';
+        imagePreview.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png';
+        profilePic.value = "";
+        uploadBtn.style.display = 'none';
       } else {
         messageElement.textContent = "Failed to upload profile picture.";
       }
@@ -1011,6 +983,14 @@ window.onclick = function(event) {
     const passwordInput = document.getElementById('currentPassword');
     passwordInput.value = '';
     deleteMessage.textContent = "";
+  } else if (event.target == profilePictureModal) {
+    profilePictureModal.style.display = 'none';
+    imagePreview.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png';
+    profilePic.value = "";
+    uploadBtn.style.display = 'none';
+  } else if (event.target == connectedAccountModal) {
+    connectedAccountModal.style.display = 'none';
+    accountsMessage.textContent = '';
   }
 };
 
