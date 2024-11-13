@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // File Upload
+  const input = document.getElementById("input");
   const imageInput = document.getElementById('image-input');
   const fileUploadButton = document.getElementById('uploadFileBtn');
   fileUploadButton.addEventListener('click', () => {

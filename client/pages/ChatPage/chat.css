@@ -559,11 +559,6 @@ button {
   color: gray;
 }
 
-/* Adjust message text styling */
-.content-div strong {
-  /* Ensure username and message are on the same line */
-}
-
 .content-div .message-text {
   display: inline; /* Keep message text inline with username */
 }

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Messages</title>
   <!-- Include external stylesheets -->
   <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet" />
@@ -76,8 +77,8 @@
   </nav>
 
   <!-- Main Content Section -->
-  <section class="home">
-    <!-- messages.html -->
+  <section class="home" style="overflow-y: hidden;">
+    <div id="" class="col1" style="overflow: hidden;">
 
     <div class="messages-container">
       <div class="conversations-list">
@@ -86,6 +87,7 @@
           <!-- Conversations will be populated here -->
         </ul>
       </div>
+
       <div class="chat-window">
         <!-- The chat window will display messages from a selected conversation -->
         <div id="chat-header">
@@ -95,8 +97,37 @@
           <!-- Messages will be populated here -->
         </div>
         <form id="chat-form">
-          <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
-          <button type="submit">Send</button>
+          <div style="display: flex; align-items: center;">
+            <label for="image-input" style="margin: auto 10px auto 0"
+            ><i class="bx bxs-plus-circle" id="uploadFileBtn"></i
+          ></label>
+          <input
+            type="file"
+            id="image-input"
+            accept="image/*,.txt,.pdf"
+            style="display: none; visibility: none"
+            onchange="getFile(this.value)"
+          />
+          <div style="display: grid; grid-template-columns: 1fr; width: 100%">
+            <div id="display-file" style="display: none">
+              <p id="file-name" style="margin: auto"></p>
+              <button
+                type="button"
+                id="cancel-upload"
+                onclick="cancelFileUpload()"
+              >
+                <i class="bx bxs-x-circle"></i>
+              </button>
+            </div>
+            <div id="reply-preview" style="display: none;"></div>
+            <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+            <button id="emoji-button" type="button">😀</button>
+          </div>
+            
+            <button type="submit" id="sendBtn">
+              <i class="bx bxs-send"></i>
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -104,6 +135,8 @@
 
   <!-- Include Scripts -->
   <script src="/socket.io/socket.io.js"></script>
+  <!-- Include EmojiButton library -->
+  <script src="https://unpkg.com/emoji-button@latest"></script>
   <script src="/pages/MessagesPage/messages.js"></script>
   <!-- Include profile.js for sidebar functionality -->
   <script src="/pages/ProfilePage/profile.js"></script>

@@ -104,6 +104,18 @@
     background-color: #0056b3;
   }
   
+  #emoji-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: 10px;
+    padding: 0 10px;
+    grid-column: 2 / 2;
+    grid-row: 1 / -1;
+    text-align: right;
+  }
+
   .message {
     padding: 10px;
     margin-bottom: 5px;
@@ -154,6 +166,22 @@
   align-items: flex-end;
 }
 
+::-webkit-file-upload-button {
+  color: white;
+  padding: 4px;
+  background-color: #0502e0;
+  border: none;
+  outline: none;
+  font-weight: bold;
+}
+::-webkit-file-upload-button:hover {
+  background-color: #0704b9;
+}
+#cancel-upload {
+  background-color: unset;
+  padding: 0;
+}
+
 /* Profile image styling */
 .profile-image {
   width: 40px;
@@ -162,241 +190,3 @@
   margin: 0 10px;
 }  
 
-
-
-Thought for 16 seconds
-
-I'm sorry to hear you're still encountering issues. Let's focus on resolving the two specific problems you've mentioned:
-
-Profile pictures only show up in loaded messages, but new messages break and don't show an image.
-Loaded messages are not displayed in their small bubble-size form but are instead large and unstyled.
-I'll address each issue step by step, providing code snippets and explanations to help you implement the fixes.
-
-Issue 1: Profile Pictures Not Showing in New Messages
-Problem Analysis
-Cause: When new messages are sent or received in real-time via Socket.io, the profilePic field is missing from the message data. Therefore, when the client attempts to display the new message, it doesn't have the profilePic information, causing the image to break.
-Solution
-Update the Server-Side Socket.io Emission: Ensure that when the server emits a new message via Socket.io, it includes the profilePic field in the message data.
-Update the Client-Side Socket.io Listener: Make sure the client uses the createMessageElement() function to render new messages, which correctly handles the profilePic.
-Implementation
-1. Update the Server-Side Code
-Modify the server code where you handle message sending and Socket.io emissions. Here's how you can adjust your send-message endpoint and Socket.io logic to include profilePic:
-
-javascript
-Copy code
-// server.js
-
-// Assuming you're using Express and have set up Socket.io
-
-app.post('/send-message', async (req, res) => {
-  const { fromUser, toUser, message } = req.body;
-
-  try {
-    // Save the message to the database
-    const newMessage = {
-      fromUser,
-      toUser,
-      message,
-      timestamp: new Date()
-    };
-    const result = await inboxCollection.insertOne(newMessage);
-    newMessage._id = result.insertedId;
-
-    // Fetch the sender's profile picture
-    const user = await usersCollection.findOne(
-      { username: fromUser },
-      { projection: { profilePic: 1 } }
-    );
-    newMessage.profilePic = user?.profilePic || '/uploads/default-avatar.png';
-
-    // Emit the new message to the recipient via Socket.io
-    io.to(users[fromUser]).emit('new inbox message', newMessage);
-    io.to(users[toUser]).emit('new inbox message', newMessage);
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error sending message:', error);
-    res.status(500).json({ success: false, message: 'Error sending message' });
-  }
-});
-
-// Socket.io setup
-const users = {}; // Map to keep track of connected users and their socket IDs
-
-io.on('connection', (socket) => {
-  socket.on('set username', (username) => {
-    users[username] = socket.id;
-  });
-
-  // Handle other socket events...
-});
-Explanation:
-
-Fetch profilePic: After saving the new message to the database, fetch the sender's profilePic from the usersCollection.
-Include profilePic in newMessage: Attach the profilePic to the newMessage object before emitting it.
-Emit to Both Users: Use io.to() to emit the message to both the sender and recipient.
-Maintain User Socket IDs: Use a users object to map usernames to their socket IDs.
-2. Update the Client-Side Socket.io Listener
-Ensure that your client-side code properly handles the new message with profilePic.
-
-javascript
-Copy code
-// messages.js
-
-socket.on('new inbox message', (data) => {
-  const currentChatWith = document
-    .getElementById('chat-with')
-    .textContent.replace('Chat with ', '');
-
-  // Check if the message is part of the current conversation
-  if (
-    (data.fromUser === currentChatWith && data.toUser === username) ||
-    (data.fromUser === username && data.toUser === currentChatWith)
-  ) {
-    const chatMessages = document.getElementById('chat-messages');
-    const messageDiv = createMessageElement(data);
-    chatMessages.appendChild(messageDiv);
-
-    // Scroll to the bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  } else {
-    // Optionally, update the conversations list to indicate a new message
-    loadConversations();
-  }
-});
-Note: Use the createMessageElement() function to ensure consistency in rendering messages.
-
-Issue 2: Messages Are Not Displayed in Bubble-Size Form
-Problem Analysis
-Cause: The message elements may not have the correct HTML structure or CSS classes, causing them to render incorrectly.
-CSS Not Applied: If the messages lack necessary classes or are structured differently, the CSS styles for message bubbles won't apply.
-Solution
-Verify HTML Structure and Classes: Ensure that the message elements created in createMessageElement() have the correct structure and classes.
-Check CSS Styles: Ensure that the CSS classes used in your HTML elements match those defined in your CSS files.
-Implementation
-1. Correct the createMessageElement Function
-Here's an updated version of the createMessageElement() function with proper HTML structure and class assignments:
-
-javascript
-Copy code
-function createMessageElement(message) {
-  const messageDiv = document.createElement('div');
-  messageDiv.classList.add('message');
-
-  // Determine if the message is sent or received
-  if (message.fromUser === username) {
-    messageDiv.classList.add('sent');
-  } else {
-    messageDiv.classList.add('received');
-  }
-
-  // Profile picture
-  const profileImg = document.createElement('img');
-  profileImg.src = message.profilePic || '/uploads/default-avatar.png';
-  profileImg.classList.add('profile-image');
-  profileImg.alt = `${message.fromUser}'s profile picture`;
-
-  // Message content
-  const messageContent = document.createElement('div');
-  messageContent.classList.add('message-content');
-  messageContent.textContent = message.message;
-
-  // Combine profile image and message content
-  const contentWrapper = document.createElement('div');
-  contentWrapper.classList.add('content-wrapper');
-  contentWrapper.appendChild(profileImg);
-  contentWrapper.appendChild(messageContent);
-
-  // Add the content wrapper to the messageDiv
-  messageDiv.appendChild(contentWrapper);
-
-  // Add reactions (if any)
-  if (message.reactions && message.reactions.length > 0) {
-    const reactionsDiv = document.createElement('div');
-    reactionsDiv.classList.add('reactions');
-    message.reactions.forEach((reaction) => {
-      const reactionSpan = document.createElement('span');
-      reactionSpan.textContent = `${reaction.emoji} (${reaction.count})`;
-      reactionsDiv.appendChild(reactionSpan);
-    });
-    messageDiv.appendChild(reactionsDiv);
-  }
-
-  return messageDiv;
-}
-Explanation:
-
-Structure:
-messageDiv: The container for the entire message.
-contentWrapper: Wraps the profile image and message content.
-profileImg: The sender's profile picture.
-messageContent: The text of the message.
-Classes:
-message, sent or received: Applied to messageDiv for styling sent and received messages differently.
-profile-image: Applied to profileImg for consistent styling.
-message-content: Applied to messageContent for message bubble styling.
-content-wrapper: A new wrapper to group the profile image and message content together.
-Reactions:
-Added below the message content if any reactions exist.
-2. Update CSS Styles
-Ensure your CSS file includes styles for the classes used:
-
-css
-Copy code
-/* messages.css */
-
-/* Container for the entire message */
-.message {
-  display: flex;
-  margin: 5px 0;
-}
-
-/* Sent messages alignment */
-.message.sent {
-  flex-direction: row-reverse;
-  text-align: right;
-}
-
-/* Received messages alignment */
-.message.received {
-  flex-direction: row;
-  text-align: left;
-}
-
-/* Wrapper for profile image and message content */
-.content-wrapper {
-  display: flex;
-  align-items: flex-end;
-}
-
-/* Profile image styling */
-.profile-image {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin: 0 10px;
-}
-
-/* Message bubble styling */
-.message-content {
-  max-width: 60%;
-  padding: 10px;
-  border-radius: 15px;
-  background-color: #f1f0f0;
-  word-wrap: break-word;
-}
-
-/* Sent message bubble color */
-.message.sent .message-content {
-  background-color: #dcf8c6;
-}
-
-/* Reactions styling */
-.reactions {
-  display: flex;
-  margin-top: 5px;
-}
-
-.reactions span {
-  margin-right: 5px;
-}
