@@ -62,7 +62,17 @@
           </ul>
         </div>
 
+        
         <div class="bottom-content">
+
+          <!-- Settings option -->
+          <li class="nav-link">
+            <a href="#" class="settings-btn">
+              <i class="bx bx-cog icon"></i>
+              <span class="text nav-text">Settings</span>
+            </a>
+          </li>
+
           <li class="">
             <a href="/signin" onclick="localStorage.removeItem('username')">
               <i class="bx bx-log-out icon"></i>
@@ -225,7 +235,7 @@
           <button id="save-bio-btn" class="hidden normalButton">
             Save Bio
           </button>
-          <!-- Changed to 'Save Profile' -->
+          
 
           <p id="bio-message"></p>
         </div>
@@ -242,6 +252,19 @@
           <p id="delete-message"></p>
         </div>
       </div>
+
+    <!-- Settings Modal -->
+<div id="settingsModal" class="modal">
+  <div class="modal-content">
+    <span class="closeBtn" id="closeSettingsModal">&times;</span>
+    <h3>Settings</h3>
+    <label for="background-selector">Choose Background:</label>
+    <input type="file" id="background-selector" accept="image/*">
+    <button id="saveSettingsBtn">Save Changes</button>
+    <button id="resetBackgroundBtn">Reset to Default</button>
+  </div>
+</div>
+
 
       <!-- Upload Profile Picture Form (hidden initially) -->
       <div id="profilePictureModal" class="modal">

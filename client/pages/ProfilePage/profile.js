@@ -64,9 +64,58 @@ editAccountsBtn.addEventListener('click', showConnectedAccountsForm);
 saveAccountsBtn.addEventListener('click', saveConnectedAccounts);
 cancelAccountsBtn.addEventListener('click', cancelConnectedAccountsEdit);
 
-// profile.js
 
 const username = localStorage.getItem('username');
+
+const settingsBtn = document.querySelector(".settings-btn");
+
+// Event listener to open settings
+settingsBtn.addEventListener("click", () => {
+  // Placeholder action for settings - here, it could open a modal or display settings
+  openSettingsModal(); // Function to handle opening settings
+});
+
+// Function to open the settings modal (you’ll define the modal later)
+function openSettingsModal() {
+  // Code to open or display the settings modal goes here
+  console.log("Settings modal opened");
+}
+const settingsModal = document.getElementById("settingsModal");
+const closeSettingsModal = document.getElementById("closeSettingsModal");
+const backgroundSelector = document.getElementById("background-selector");
+const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+// Open settings modal
+// Open the modal when settings button is clicked
+settingsBtn.addEventListener("click", () => {
+  settingsModal.style.display = "block";
+});
+
+// Close the modal when the close button (×) is clicked
+closeSettingsModal.onclick = function () {
+  settingsModal.style.display = "none";
+};
+
+// Close the modal when clicking outside of the modal content
+window.onclick = function (event) {
+  if (event.target == settingsModal) {
+    settingsModal.style.display = "none";
+  }
+};
+
+// Save Changes: Apply selected background and close the modal
+saveSettingsBtn.addEventListener("click", () => {
+  const file = backgroundSelector.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      document.body.style.backgroundImage = `url(${e.target.result})`;
+    };
+    reader.readAsDataURL(file);
+  }
+  // Close the modal after saving
+  settingsModal.style.display = "none";
+});
+
 
 
 toggle.addEventListener("click", () => {
