@@ -264,7 +264,7 @@ function searchUsers(query, type) {
           var li = document.createElement('li');
           li.textContent = user.username;
           li.addEventListener('click', function() {
-            window.location.href = `/messages.html?participant=${encodeURIComponent(user.username)}`;
+            window.location.href = `/messages?participant=${encodeURIComponent(user.username)}`;
 
         });
 
@@ -578,7 +578,7 @@ function removeContact(contactUsername) {
 }
 
 function openSendMessageModal(toUsername) {
-  window.location.href = `/messages.html?participant=${encodeURIComponent(toUsername)}`;
+  window.location.href = `/messages?participant=${encodeURIComponent(toUsername)}`;
 }
 
 
