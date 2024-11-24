@@ -375,12 +375,6 @@ header .image-text .profession {
   top: 0;
   height: 100vh;
   transition: var(--tran-05);
-  background: linear-gradient(
-      rgba(220, 216, 216, 0.5),
-      rgba(220, 216, 216, 0.5)
-    ),
-    url("https://res.cloudinary.com/dxseoqcpb/image/upload/v1729122093/base/t2laawx0hmk39czdqqgk.png");
-  background-size: cover;
   overflow-y: auto;
 }
 
@@ -888,9 +882,19 @@ h5 {
   object-fit: cover;
   margin: 10px;
   cursor: pointer;
+
+}
+#backgroundPreview {
+  height: 170px;
+  width: 300px;
+  border-radius: 12px;
+  border: 0.5px solid #ccc;
+  object-fit: cover;
+  margin: 10px;
+  cursor: pointer;
 }
 
-#imagePreview:hover {
+#imagePreview:hover, #backgroundPreview:hover {
   transform: scale(1.05);
 }
 
@@ -923,6 +927,28 @@ h5 {
 /* Show pencil icon on hover */
 .profile-container:hover .pencil-icon {
   opacity: 1;
+}
+
+/* Setting Modal */
+#saveSettingsBtn {
+  display: none;
+  background-color: var(--sidebar-color);
+  width: fit-content;
+}
+
+#background-message {
+  color: red;
+  text-align: center;
+  margin-top: 10px;
+}
+
+#settingsModal .modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  width: 400px;
 }
 
 @media screen and (max-width: 1000px) {
@@ -998,6 +1024,24 @@ h5 {
   .favoriteList {
     padding-bottom: 70px;
   }
+
+  #settingsModal .modal-content {
+    width: 330px;
+  }
+
+  #settingsModal .modal-content h3{
+    font-size: 20px;
+  }
+
+  #settingsModal .modal-content button {
+    font-size: 16px;
+  }
+
+  #backgroundPreview {
+    width: 240px;
+    height: 150px;
+  }
+
 }
 
 @media screen and (max-width: 400px) {
