@@ -241,6 +241,62 @@ app.post('/upload-profile-pic', upload.single('profilePic'), async (req, res) =>
   }
 });
 
+// Uploading a background image
+app.post('/upload-background', upload.single('backgroundImg'), async (req, res) => {
+  const username = req.body.username;
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded.' });
+  }
+
+  try {
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: 'image',
+      folder: 'backgroundImg' // Optional: organize files
+    });
+
+    const backgroundImgUrl = result.secure_url;
+
+    // Delete the temporary file
+    fs.unlinkSync(req.file.path);
+
+    // Update the user's profile picture in MongoDB
+    await usersCollection.updateOne(
+      { username: username },
+      { $set: { backgroundImg: backgroundImgUrl } }
+    );
+
+    res.json({ success: true, backgroundImg: backgroundImgUrl });
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload profile picture.' });
+  }
+});
+
+// Reset background image
+app.post('/reset-background', async (req, res) => {
+  const { username, backgroundImg } = req.body;
+
+  try {
+    const result = await usersCollection.updateOne(
+      { username },
+      { $set: { backgroundImg: backgroundImg } }
+    );
+
+    if (result.modifiedCount === 1 || result.upsertedCount === 1) {
+      console.log(`Background image has been reset: ${username}`);
+      res.json({ success: true });
+    } else {
+      console.error(`Failed to reset background image for user: ${username}`);
+      res.json({ success: false, message: 'Failed to reset background image.' });
+    }
+  } catch (error) {
+    console.error('Error reseting background image:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while reseting background image.' });
+  }
+});
+
 app.post('/upload-chat', upload.single('image'), async (req, res) => {
   const message = req.body.message || '';
   const username = req.body.username || 'Unknown User';
@@ -701,7 +757,8 @@ app.get('/get-user-profile', checkUserStatus, async (req, res) => {
       phoneNumber: user.phoneNumber,
       bio: user.bio,
       profilePic: user.profilePic || '/uploads/default-avatar.png',
-      connectedAccounts: user.connectedAccounts || {}
+      connectedAccounts: user.connectedAccounts || {},
+      backgroundImg: user.backgroundImg || 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1729122093/base/t2laawx0hmk39czdqqgk.png'
     });
   } catch (error) {
     console.error('Error fetching user profile:', error);

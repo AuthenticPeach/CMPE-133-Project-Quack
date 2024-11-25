@@ -365,12 +365,32 @@
       <!-- Settings Modal -->
       <div id="settingsModal" class="modal">
         <div class="modal-content">
-          <span class="closeBtn" id="closeSettingsModal">&times;</span>
-          <h3>Settings</h3>
-          <label for="background-selector">Choose Background:</label>
-          <input type="file" id="background-selector" accept="image/*" />
-          <button id="saveSettingsBtn">Save Changes</button>
-          <button id="resetBackgroundBtn">Reset to Default</button>
+          <span class="closeBtn">&times;</span>
+          <h3>Select Background Image</h3>
+          <form
+            id="upload-background-form"
+            enctype="multipart/form-data"
+            style="text-align: center"
+          >
+            <label for="backgroundImg" style="margin-right: 0">
+              <img
+                src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png"
+                id="backgroundPreview"
+              />
+            </label>
+            <input
+              type="file"
+              name="backgroundImg"
+              id="backgroundImg"
+              required
+              accept="image/*"
+              style="display: none; visibility: none"
+            />
+            <br />
+            <button type="button" class="normalButton" id="resetBackgroundBtn" style="width: 75px;">Reset</button>
+            <button type="submit" class="normalButton" id="saveSettingsBtn">Save Changes</button>
+          </form>
+          <p id="background-message"></p>
         </div>
       </div>
 

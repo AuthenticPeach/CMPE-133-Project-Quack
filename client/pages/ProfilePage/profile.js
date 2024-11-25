@@ -70,53 +70,132 @@ cancelAccountsBtn.addEventListener("click", cancelConnectedAccountsEdit);
 
 const username = localStorage.getItem("username");
 
-const settingsBtn = document.querySelector(".settings-btn");
-
-// Event listener to open settings
-settingsBtn.addEventListener("click", () => {
-  // Placeholder action for settings - here, it could open a modal or display settings
-  openSettingsModal(); // Function to handle opening settings
-});
-
-// Function to open the settings modal (you’ll define the modal later)
-function openSettingsModal() {
-  // Code to open or display the settings modal goes here
-  console.log("Settings modal opened");
-}
+const settingsBtn = document.querySelectorAll(".settings-btn");
 const settingsModal = document.getElementById("settingsModal");
-const closeSettingsModal = document.getElementById("closeSettingsModal");
-const backgroundSelector = document.getElementById("background-selector");
+const backgroundImg = document.getElementById("backgroundImg");
 const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+resetBackgroundBtn.addEventListener("click", resetBackground);
+const backgroundPreview = document.getElementById("backgroundPreview");
+const uploadBackgroundForm = document.getElementById("upload-background-form");
+const backgroundMessage = document.getElementById("background-message");
+const homeElement = document.getElementsByClassName('home')[0];
+
 // Open settings modal
 // Open the modal when settings button is clicked
-settingsBtn.addEventListener("click", () => {
-  settingsModal.style.display = "block";
+settingsBtn.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById("menu_bar").checked = false;
+    settingsModal.style.display = "block";
+  });
+});
+  
+// Close the modal when the close button (×) is clicked
+const closeSettingsModal = document.getElementsByClassName("closeBtn")[1];
+closeSettingsModal.onclick = function () {
+  backgroundMessage.textContent = "";
+  settingsModal.style.display = "none";
+  backgroundPreview.src =
+      "https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png";
+  backgroundImg.value = "";
+  saveSettingsBtn.style.display = "none";
+};
+
+function resetBackground() {
+  const confirmation = confirm("Are you sure you want to reset the background to the default image?");
+  
+  if (!confirmation) {
+    return; // Exit the function if the user cancels
+  }
+
+  const backgroundImg = "https://res.cloudinary.com/dxseoqcpb/image/upload/v1729122093/base/t2laawx0hmk39czdqqgk.png"
+
+  // Send data to the server
+  fetch("/reset-background", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, backgroundImg }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        homeElement.style.background = `linear-gradient(
+          rgba(220, 216, 216, 0.5),
+          rgba(220, 216, 216, 0.5)
+        ), url("https://res.cloudinary.com/dxseoqcpb/image/upload/v1729122093/base/t2laawx0hmk39czdqqgk.png")`;
+        homeElement.style.backgroundSize = "cover";
+        backgroundImg.value = "";
+        saveSettingsBtn.style.display = "none";
+        backgroundMessage.textContent = "";
+        settingsModal.style.display = "none";
+        backgroundPreview.src =
+          "https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png";
+      } else {
+        backgroundMessage.textContent =
+          data.message || "Failed to update connected accounts.";
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading background image:", error);
+      backgroundMessage.textContent =
+        "An error occurred while uploading the background image.";
+    });
+}
+
+// Event listener for profile picture upload
+uploadBackgroundForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  const formData = new FormData(uploadBackgroundForm);
+  formData.append("username", username);
+
+  fetch("/upload-background", {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        homeElement.style.background = `linear-gradient(
+          rgba(220, 216, 216, 0.5),
+          rgba(220, 216, 216, 0.5)
+        ), url(${data.backgroundImg})`;
+        homeElement.style.backgroundSize = "cover";
+        backgroundImg.value = "";
+        saveSettingsBtn.style.display = "none";
+        backgroundMessage.style.display = "none";
+        settingsModal.style.display = "none";
+        backgroundPreview.src =
+          "https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png";
+      } else {
+        backgroundMessage.textContent = "Failed to upload background image.";
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading background image:", error);
+      backgroundMessage.textContent =
+        "An error occurred while uploading the background image.";
+    });
 });
 
-// Close the modal when the close button (×) is clicked
-closeSettingsModal.onclick = function () {
-  settingsModal.style.display = "none";
-};
-
-// Close the modal when clicking outside of the modal content
-window.onclick = function (event) {
-  if (event.target == settingsModal) {
-    settingsModal.style.display = "none";
-  }
-};
-
-// Save Changes: Apply selected background and close the modal
-saveSettingsBtn.addEventListener("click", () => {
-  const file = backgroundSelector.files[0];
+// Event listener for file selection
+backgroundImg.addEventListener("change", function () {
+  backgroundMessage.textContent = "";
+  const file = backgroundImg.files[0];
   if (file) {
     const reader = new FileReader();
+    saveSettingsBtn.style.display = "inline-block";
     reader.onload = function (e) {
-      document.body.style.backgroundImage = `url(${e.target.result})`;
+      backgroundPreview.src = e.target.result;
     };
     reader.readAsDataURL(file);
+  } else {
+    backgroundPreview.src =
+      "https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png";
+      backgroundImg.value = "";
+      saveSettingsBtn.style.display = "none";
   }
-  // Close the modal after saving
-  settingsModal.style.display = "none";
 });
 
 toggle.addEventListener("click", () => {
@@ -717,7 +796,7 @@ allowfullscreen></iframe>`;
   return bioText;
 }
 
-// Load the existing profile picture and bio
+// Load the existing profile picture, bio, and background image
 fetch(`/get-user-profile?username=${username}`)
   .then((response) => response.json())
   .then((data) => {
@@ -725,10 +804,20 @@ fetch(`/get-user-profile?username=${username}`)
       profilePicElement[0].src = data.profilePic;
       profilePicElement[1].src = data.profilePic;
       profilePicElement[2].src = data.profilePic;
+      homeElement.style.background = `linear-gradient(
+        rgba(220, 216, 216, 0.5),
+        rgba(220, 216, 216, 0.5)
+      ), url(${data.backgroundImg})`;
+      homeElement.style.backgroundSize = 'cover';
     } else {
       profilePicElement[0].src = "/uploads/default-avatar.png";
       profilePicElement[1].src = "/uploads/default-avatar.png";
       profilePicElement[2].src = "/uploads/default-avatar.png";
+      homeElement.style.background = `linear-gradient(
+        rgba(220, 216, 216, 0.5),
+        rgba(220, 216, 216, 0.5)
+      ), url("https://res.cloudinary.com/dxseoqcpb/image/upload/v1729122093/base/t2laawx0hmk39czdqqgk.png")`;
+      homeElement.style.backgroundSize = 'cover';
     }
     if (data.bio) {
       bioDisplayElement.innerHTML = autoEmbedBio(data.bio);
@@ -771,7 +860,7 @@ profilePictureBtn.addEventListener("click", function () {
 });
 
 // Close the profile picture edit window modal when clicking x
-var profilePictureClose = document.getElementsByClassName("closeBtn")[1];
+var profilePictureClose = document.getElementsByClassName("closeBtn")[2];
 profilePictureClose.onclick = function () {
   profilePictureModal.style.display = "none";
   uploadBtn.style.display = "none";
@@ -1123,6 +1212,13 @@ window.onclick = function (event) {
   } else if (event.target == connectedAccountModal) {
     connectedAccountModal.style.display = "none";
     accountsMessage.textContent = "";
+  } else if (event.target == settingsModal) {
+    settingsModal.style.display = "none";
+    backgroundPreview.src =
+      "https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png";
+    backgroundImg.value = "";
+    saveSettingsBtn.style.display = "none";
+    backgroundMessage.textContent = "";
   }
 };
 
