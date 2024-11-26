@@ -139,37 +139,52 @@ profileClose.onclick = function() {
 profileModal.style.display = 'none';
 };
 
-// Open the inbox modal
-inboxBtn.onclick = function() {
-inboxModal.style.display = 'block';
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const inboxBtn = document.getElementById('inbox-button');
+  const inboxModal = document.getElementById('inboxModal');
+  const userModal = document.getElementById('userModal');
+  const profileModal = document.getElementById('profileModal');
+  const createGroupModal = document.getElementById('createGroupModal');
 
-// Close the inbox modal when clicking x
-inboxClose.onclick = function() {
-inboxModal.style.display = 'none';
-}
+  // Open the inbox modal
+  if (inboxBtn) {
+    inboxBtn.onclick = function () {
+      if (inboxModal) {
+        inboxModal.style.display = 'block';
+      } else {
+        console.error('Inbox modal element not found');
+      }
+    };
+  }
 
-// Close the user modal when clicking x
-userClose.onclick = function() {
-userModal.style.display = 'none';
-}
+  // Close the inbox modal
+  const inboxClose = document.querySelector('.close'); // Adjust selector if needed
+  if (inboxClose) {
+    inboxClose.onclick = function () {
+      if (inboxModal) {
+        inboxModal.style.display = 'none';
+      }
+    };
+  }
 
-// When the user clicks anywhere outside of any modal, close it
-window.onclick = function(event) {
-if (event.target == inboxModal) {
-  inboxModal.style.display = 'none';
-}
-if (event.target == userModal) {
-  userModal.style.display = 'none';
-}
-if (event.target == profileModal) {
-  profileModal.style.display = 'none';
-}
-if (event.target == createGroupModal) {
-  createGroupModal.style.display = 'none';
-}
-};
+  // Close the user modal
+  const userClose = document.querySelector('.close'); // Adjust selector if needed
+  if (userClose) {
+    userClose.onclick = function () {
+      if (userModal) {
+        userModal.style.display = 'none';
+      }
+    };
+  }
 
+  // Close modals when clicking outside
+  window.onclick = function (event) {
+    if (event.target == inboxModal) inboxModal.style.display = 'none';
+    if (event.target == userModal) userModal.style.display = 'none';
+    if (event.target == profileModal) profileModal.style.display = 'none';
+    if (event.target == createGroupModal) createGroupModal.style.display = 'none';
+  };
+});
 
 // Search functionality for finding users
 var searchInput = document.getElementById('search-input');
@@ -246,7 +261,7 @@ function searchUsers(query, type) {
           var li = document.createElement('li');
           li.textContent = user.username;
           li.addEventListener('click', function() {
-            window.location.href = `/messages.html?participant=${encodeURIComponent(user.username)}`;
+            window.location.href = `/messages?participant=${encodeURIComponent(user.username)}`;
 
         });
 
@@ -560,7 +575,7 @@ function removeContact(contactUsername) {
 }
 
 function openSendMessageModal(toUsername) {
-  window.location.href = `/messages.html?participant=${encodeURIComponent(toUsername)}`;
+  window.location.href = `/messages?participant=${encodeURIComponent(toUsername)}`;
 }
 
 
@@ -703,7 +718,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
-
-
-
-
