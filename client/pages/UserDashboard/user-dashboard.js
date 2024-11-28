@@ -261,8 +261,7 @@ function searchUsers(query, type) {
           var li = document.createElement('li');
           li.textContent = user.username;
           li.addEventListener('click', function() {
-            window.location.href = `/messages?participant=${encodeURIComponent(user.username)}`;
-
+            addContact(user.username);
         });
 
           searchResults.appendChild(li);
