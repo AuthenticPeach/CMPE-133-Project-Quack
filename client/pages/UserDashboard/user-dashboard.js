@@ -260,16 +260,19 @@ function searchUsers(query, type) {
         data.forEach(function(user) {
           var li = document.createElement('li');
           li.textContent = user.username;
+          
+          // Add event listener to openSendMessageModal on click
           li.addEventListener('click', function() {
-            addContact(user.username);
-        });
+            openSendMessageModal(user.username);
+          });
 
           searchResults.appendChild(li);
         });
       } else {
         searchResults.innerHTML = '<li>No users found</li>';
       }
-    });
+    })
+    .catch(error => console.error('Error searching users:', error));
 }
 
 function addContact(toUsername) {
@@ -573,9 +576,6 @@ function removeContact(contactUsername) {
   .catch(error => console.error('Error removing contact:', error));
 }
 
-function openSendMessageModal(toUsername) {
-  window.location.href = `/messages?participant=${encodeURIComponent(toUsername)}`;
-}
 
 
 // Modal script for Group Creation
