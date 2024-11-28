@@ -85,24 +85,40 @@ function joinRoom(roomName) {
 }
 
 function openSendMessageModal(toUsername) {
-// Set the username for modal
-var modalUsername = document.getElementById('modal-username');
-var addFriendBtn = document.getElementById('add-friend-btn');
-var startChatBtn = document.getElementById('start-chat-btn');
+  // Set the username for modal
+  var modalUsername = document.getElementById('modal-username');
+  var addFriendBtn = document.getElementById('add-friend-btn');
+  var startChatBtn = document.getElementById('start-chat-btn');
+  var userModal = document.getElementById('userModal');
+  var closeModalButton = document.querySelector('#userModal .close'); // Assuming the close button has a class 'close'
 
-modalUsername.textContent = toUsername;
-addFriendBtn.onclick = function() { addContact(toUsername); };
-startChatBtn.onclick = function() { startPrivateChat(toUsername); };
+  modalUsername.textContent = toUsername;
+  addFriendBtn.onclick = function() { addContact(toUsername); };
+  startChatBtn.onclick = function() { startPrivateChat(toUsername); };
 
-// Set up the send message button
-var sendMessageBtn = document.getElementById('send-message-btn');
-sendMessageBtn.onclick = function() {
-var messageText = document.getElementById('message-text').value;
-sendMessage(toUsername, messageText);
-};
+  // Set up the send message button
+  var sendMessageBtn = document.getElementById('send-message-btn');
+  sendMessageBtn.onclick = function() {
+    var messageText = document.getElementById('message-text').value;
+    sendMessage(toUsername, messageText);
+  };
 
-// Display the modal
-document.getElementById('userModal').style.display = 'block';
+  // Display the modal
+  userModal.style.display = 'block';
+
+  // Close the modal when the close button is clicked
+  if (closeModalButton) {
+    closeModalButton.onclick = function() {
+      userModal.style.display = 'none';
+    };
+  }
+
+  // Close the modal when clicking outside of it
+  window.onclick = function(event) {
+    if (event.target === userModal) {
+      userModal.style.display = 'none';
+    }
+  };
 }
 
 function viewUserProfile(contactUsername) {
