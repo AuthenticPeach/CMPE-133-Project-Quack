@@ -501,6 +501,8 @@ app.get('/get-conversations', (req, res) => {
         fromUser: 1,
         toUser: 1,
         message: 1,
+        isFriendRequest: 1,
+        isResolved: 1, // Include the resolved state
         timestamp: 1,
         participant: {
           $cond: [
@@ -515,6 +517,8 @@ app.get('/get-conversations', (req, res) => {
       $group: {
         _id: "$participant",
         lastMessage: { $last: "$message" },
+        isFriendRequest: { $last: "$isFriendRequest" },
+        isResolved: { $last: "$isResolved" }, // Include the latest resolved state
         lastTimestamp: { $last: "$timestamp" }
       }
     },
@@ -536,6 +540,8 @@ app.get('/get-conversations', (req, res) => {
       $project: {
         participant: "$_id",
         lastMessage: 1,
+        isFriendRequest: 1,
+        isResolved: 1, // Include resolved status in response
         lastTimestamp: 1,
         profilePic: { $ifNull: ["$participantInfo.profilePic", "/uploads/default-avatar.png"] }
       }
@@ -546,6 +552,8 @@ app.get('/get-conversations', (req, res) => {
       const conversations = results.map(result => ({
         participant: result.participant,
         lastMessage: result.lastMessage,
+        isFriendRequest: result.isFriendRequest || false,
+        isResolved: result.isResolved || false, // Default to false if not present
         lastTimestamp: result.lastTimestamp,
         profilePic: result.profilePic
       }));
@@ -557,8 +565,6 @@ app.get('/get-conversations', (req, res) => {
     });
 });
 
-
-// server.js
 // server.js
 
 app.get('/get-messages', async (req, res) => {
@@ -987,29 +993,37 @@ app.post('/respond-to-friend-request', async (req, res) => {
   const { fromUser, toUser, accepted } = req.body;
 
   try {
+    // Mark the friend request as resolved
+    await inboxCollection.updateOne(
+      { fromUser, toUser, isFriendRequest: true },
+      { $set: { isResolved: true } }
+    );
+
     if (accepted) {
-      // Add `fromUser` to `toUser`'s contact list
+      // Add each user to the other's contact list
       await usersCollection.updateOne(
         { username: toUser },
         { $addToSet: { contacts: { username: fromUser, isFavorite: false } } }
       );
-
-      // Add `toUser` to `fromUser`'s contact list
       await usersCollection.updateOne(
         { username: fromUser },
         { $addToSet: { contacts: { username: toUser, isFavorite: false } } }
       );
+    } else {
+      // Remove the friend request from the inbox
+      await inboxCollection.deleteOne({ fromUser, toUser, isFriendRequest: true });
     }
 
-    // Remove the friend request from inbox
-    await inboxCollection.deleteOne({ fromUser, toUser, isFriendRequest: true });
-
-    res.json({ success: true, message: accepted ? 'Friend added!' : 'Friend request declined.' });
+    res.json({
+      success: true,
+      message: accepted ? 'Friend request accepted!' : 'Friend request declined.',
+    });
   } catch (error) {
     console.error('Error responding to friend request:', error);
     res.status(500).json({ success: false, message: 'Error responding to friend request.' });
   }
 });
+
 
 
 
@@ -1151,12 +1165,31 @@ app.post('/remove-contact', async (req, res) => {
       { $pull: { contacts: { username: contactUsername } } } // Pull removes the matching contact
     );
 
-    res.json({ success: true, message: `Removed ${contactUsername} from your contacts.` });
+    // Delete conversations between the two users
+    const deleteMessagesResult = await inboxCollection.deleteMany({
+      $or: [
+        { fromUser: username, toUser: contactUsername },
+        { fromUser: contactUsername, toUser: username }
+      ]
+    });
+
+    const deleteChatMessagesResult = await messagesCollection.deleteMany({
+      $or: [
+        { fromUser: username, toUser: contactUsername },
+        { fromUser: contactUsername, toUser: username }
+      ]
+    });
+
+    res.json({
+      success: true,
+      message: `Removed ${contactUsername} from your contacts and deleted ${deleteMessagesResult.deletedCount + deleteChatMessagesResult.deletedCount} messages.`,
+    });
   } catch (error) {
     console.error('Error removing contact:', error);
     res.status(500).json({ success: false, message: 'An error occurred while removing the contact.' });
   }
 });
+
 
 // Modify the /inbox route to return all messages grouped by sender
 app.get('/inbox', async (req, res) => {

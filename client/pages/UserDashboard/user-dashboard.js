@@ -139,36 +139,72 @@ profileClose.onclick = function() {
 profileModal.style.display = 'none';
 };
 
-// Open the inbox modal
-inboxBtn.onclick = function() {
-inboxModal.style.display = 'block';
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const inboxBtn = document.getElementById('inbox-button');
+  const inboxModal = document.getElementById('inboxModal');
+  const userModal = document.getElementById('userModal');
+  const profileModal = document.getElementById('profileModal');
+  const createGroupModal = document.getElementById('createGroupModal');
 
-// Close the inbox modal when clicking x
-inboxClose.onclick = function() {
-inboxModal.style.display = 'none';
-}
+  // Open the inbox modal
+  if (inboxBtn) {
+    inboxBtn.onclick = function () {
+      if (inboxModal) {
+        inboxModal.style.display = 'block';
+      } else {
+        console.error('Inbox modal element not found');
+      }
+    };
+  }
 
-// Close the user modal when clicking x
-userClose.onclick = function() {
-userModal.style.display = 'none';
-}
+  // Close the inbox modal
+  if (inboxModal) {
+    const inboxClose = inboxModal.querySelector('.close'); // Scoped to the inbox modal
+    if (inboxClose) {
+      inboxClose.onclick = function () {
+        inboxModal.style.display = 'none';
+      };
+    }
+  }
 
-// When the user clicks anywhere outside of any modal, close it
-window.onclick = function(event) {
-if (event.target == inboxModal) {
-  inboxModal.style.display = 'none';
-}
-if (event.target == userModal) {
-  userModal.style.display = 'none';
-}
-if (event.target == profileModal) {
-  profileModal.style.display = 'none';
-}
-if (event.target == createGroupModal) {
-  createGroupModal.style.display = 'none';
-}
-};
+  // Close the user modal
+  if (userModal) {
+    const userClose = userModal.querySelector('.close'); // Scoped to the user modal
+    if (userClose) {
+      userClose.onclick = function () {
+        userModal.style.display = 'none';
+      };
+    }
+  }
+
+  // Close the profile modal
+  if (profileModal) {
+    const profileClose = profileModal.querySelector('.close'); // Scoped to the profile modal
+    if (profileClose) {
+      profileClose.onclick = function () {
+        profileModal.style.display = 'none';
+      };
+    }
+  }
+
+  // Close the create group modal
+  if (createGroupModal) {
+    const createGroupClose = createGroupModal.querySelector('.close'); // Scoped to the create group modal
+    if (createGroupClose) {
+      createGroupClose.onclick = function () {
+        createGroupModal.style.display = 'none';
+      };
+    }
+  }
+
+  // Close modals when clicking outside
+  window.onclick = function (event) {
+    if (event.target === inboxModal) inboxModal.style.display = 'none';
+    if (event.target === userModal) userModal.style.display = 'none';
+    if (event.target === profileModal) profileModal.style.display = 'none';
+    if (event.target === createGroupModal) createGroupModal.style.display = 'none';
+  };
+});
 
 
 // Search functionality for finding users
@@ -245,17 +281,19 @@ function searchUsers(query, type) {
         data.forEach(function(user) {
           var li = document.createElement('li');
           li.textContent = user.username;
+          
+          // Add event listener to openSendMessageModal on click
           li.addEventListener('click', function() {
-            window.location.href = `/messages.html?participant=${encodeURIComponent(user.username)}`;
-
-        });
+            openSendMessageModal(user.username);
+          });
 
           searchResults.appendChild(li);
         });
       } else {
         searchResults.innerHTML = '<li>No users found</li>';
       }
-    });
+    })
+    .catch(error => console.error('Error searching users:', error));
 }
 
 function addContact(toUsername) {
@@ -559,9 +597,6 @@ function removeContact(contactUsername) {
   .catch(error => console.error('Error removing contact:', error));
 }
 
-function openSendMessageModal(toUsername) {
-  window.location.href = `/messages.html?participant=${encodeURIComponent(toUsername)}`;
-}
 
 
 // Modal script for Group Creation
@@ -703,7 +738,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 });
-
-
-
-

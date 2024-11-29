@@ -74,9 +74,15 @@ function loadConversations() {
           li.appendChild(img);
           li.appendChild(name);
 
-          li.addEventListener('click', () => {
-            loadChat(conversation.participant);
-          });
+          // Friend Request Handling
+          if (conversation.isFriendRequest && !conversation.isResolved) {
+            handleFriendRequestUI(conversation, li);
+          } else {
+            // Load conversation on click
+            li.addEventListener('click', () => {
+              loadChat(conversation.participant);
+            });
+          }
 
           conversationsList.appendChild(li);
         });
@@ -85,6 +91,54 @@ function loadConversations() {
       }
     })
     .catch(error => console.error('Error fetching conversations:', error));
+}
+
+// Function to handle friend request UI
+function handleFriendRequestUI(conversation, listItem) {
+  // Add Friend Request Buttons
+  const acceptBtn = document.createElement('button');
+  acceptBtn.textContent = 'Accept';
+  acceptBtn.classList.add('btn-accept');
+  acceptBtn.onclick = () => {
+    handleFriendRequest(conversation.participant, true, listItem);
+  };
+
+  const declineBtn = document.createElement('button');
+  declineBtn.textContent = 'Decline';
+  declineBtn.classList.add('btn-decline');
+  declineBtn.onclick = () => {
+    handleFriendRequest(conversation.participant, false, listItem);
+  };
+
+  listItem.appendChild(acceptBtn);
+  listItem.appendChild(declineBtn);
+}
+
+// Function to handle friend request response
+function handleFriendRequest(participant, accepted, listItem) {
+  fetch('/respond-to-friend-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fromUser: participant, toUser: username, accepted })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+
+        if (accepted) {
+          // Remove buttons and load chat if accepted
+          listItem.querySelectorAll('button').forEach(button => button.remove());
+          loadChat(participant);
+        } else {
+          // Remove the request from the UI if declined
+          listItem.remove();
+        }
+      } else {
+        console.error('Failed to respond to friend request:', data.message);
+      }
+    })
+    .catch(error => console.error('Error responding to friend request:', error));
 }
 
 // Function to load chat messages
