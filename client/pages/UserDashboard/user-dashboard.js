@@ -158,33 +158,54 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Close the inbox modal
-  const inboxClose = document.querySelector('.close'); // Adjust selector if needed
-  if (inboxClose) {
-    inboxClose.onclick = function () {
-      if (inboxModal) {
+  if (inboxModal) {
+    const inboxClose = inboxModal.querySelector('.close'); // Scoped to the inbox modal
+    if (inboxClose) {
+      inboxClose.onclick = function () {
         inboxModal.style.display = 'none';
-      }
-    };
+      };
+    }
   }
 
   // Close the user modal
-  const userClose = document.querySelector('.close'); // Adjust selector if needed
-  if (userClose) {
-    userClose.onclick = function () {
-      if (userModal) {
+  if (userModal) {
+    const userClose = userModal.querySelector('.close'); // Scoped to the user modal
+    if (userClose) {
+      userClose.onclick = function () {
         userModal.style.display = 'none';
-      }
-    };
+      };
+    }
+  }
+
+  // Close the profile modal
+  if (profileModal) {
+    const profileClose = profileModal.querySelector('.close'); // Scoped to the profile modal
+    if (profileClose) {
+      profileClose.onclick = function () {
+        profileModal.style.display = 'none';
+      };
+    }
+  }
+
+  // Close the create group modal
+  if (createGroupModal) {
+    const createGroupClose = createGroupModal.querySelector('.close'); // Scoped to the create group modal
+    if (createGroupClose) {
+      createGroupClose.onclick = function () {
+        createGroupModal.style.display = 'none';
+      };
+    }
   }
 
   // Close modals when clicking outside
   window.onclick = function (event) {
-    if (event.target == inboxModal) inboxModal.style.display = 'none';
-    if (event.target == userModal) userModal.style.display = 'none';
-    if (event.target == profileModal) profileModal.style.display = 'none';
-    if (event.target == createGroupModal) createGroupModal.style.display = 'none';
+    if (event.target === inboxModal) inboxModal.style.display = 'none';
+    if (event.target === userModal) userModal.style.display = 'none';
+    if (event.target === profileModal) profileModal.style.display = 'none';
+    if (event.target === createGroupModal) createGroupModal.style.display = 'none';
   };
 });
+
 
 // Search functionality for finding users
 var searchInput = document.getElementById('search-input');
