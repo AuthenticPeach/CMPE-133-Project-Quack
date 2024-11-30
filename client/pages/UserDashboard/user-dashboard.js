@@ -159,34 +159,53 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Close the inbox modal
-  const inboxClose = document.querySelector('.close'); // Adjust selector if needed
-  if (inboxClose) {
-    inboxClose.onclick = function () {
-      if (inboxModal) {
+  if (inboxModal) {
+    const inboxClose = inboxModal.querySelector('.close'); // Scoped to the inbox modal
+    if (inboxClose) {
+      inboxClose.onclick = function () {
         inboxModal.style.display = 'none';
-      }
-    };
+      };
+    }
   }
 
   // Close the user modal
-  const userClose = document.querySelector('.close'); // Adjust selector if needed
-  if (userClose) {
-    userClose.onclick = function () {
-      if (userModal) {
+  if (userModal) {
+    const userClose = userModal.querySelector('.close'); // Scoped to the user modal
+    if (userClose) {
+      userClose.onclick = function () {
         userModal.style.display = 'none';
-      }
-    };
+      };
+    }
+  }
+
+  // Close the profile modal
+  if (profileModal) {
+    const profileClose = profileModal.querySelector('.close'); // Scoped to the profile modal
+    if (profileClose) {
+      profileClose.onclick = function () {
+        profileModal.style.display = 'none';
+      };
+    }
+  }
+
+  // Close the create group modal
+  if (createGroupModal) {
+    const createGroupClose = createGroupModal.querySelector('.close'); // Scoped to the create group modal
+    if (createGroupClose) {
+      createGroupClose.onclick = function () {
+        createGroupModal.style.display = 'none';
+      };
+    }
   }
 
   // Close modals when clicking outside
   window.onclick = function (event) {
-    if (event.target == inboxModal) inboxModal.style.display = 'none';
-    if (event.target == userModal) userModal.style.display = 'none';
-    if (event.target == profileModal) profileModal.style.display = 'none';
-    if (event.target == createGroupModal) createGroupModal.style.display = 'none';
+    if (event.target === inboxModal) inboxModal.style.display = 'none';
+    if (event.target === userModal) userModal.style.display = 'none';
+    if (event.target === profileModal) profileModal.style.display = 'none';
+    if (event.target === createGroupModal) createGroupModal.style.display = 'none';
   };
 });
-
 
 
 // Search functionality for finding users
@@ -263,17 +282,19 @@ function searchUsers(query, type) {
         data.forEach(function(user) {
           var li = document.createElement('li');
           li.textContent = user.username;
+          
+          // Add event listener to openSendMessageModal on click
           li.addEventListener('click', function() {
-            window.location.href = `/messages?participant=${encodeURIComponent(user.username)}`;
-
-        });
+            openSendMessageModal(user.username);
+          });
 
           searchResults.appendChild(li);
         });
       } else {
         searchResults.innerHTML = '<li>No users found</li>';
       }
-    });
+    })
+    .catch(error => console.error('Error searching users:', error));
 }
 
 function addContact(toUsername) {
@@ -577,10 +598,6 @@ function removeContact(contactUsername) {
   .catch(error => console.error('Error removing contact:', error));
 }
 
-function openSendMessageModal(toUsername) {
-  window.location.href = `/messages?participant=${encodeURIComponent(toUsername)}`;
-}
-
 
 // Modal script for Group Creation
 document.addEventListener('DOMContentLoaded', () => {
@@ -590,7 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
   var searchResults = document.getElementById('invite-results');
   var friendsList = document.getElementById('friends-list');
   var createGroupBtn = document.getElementById('create-group-chat');
-  var selectedUsers = [];
+  var selectedUsers = new Set();
 
   // Open the Group Creation Modal
   createGroupBtn.onclick = function() {
@@ -653,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.innerHTML = `<span>${user.username}</span>`;
 
-            // Testing add button for searching users
+            // Add button for searching users
             var addButton = document.createElement('button');
             addButton.textContent = 'Add';
             addButton.onclick = function() {
@@ -676,8 +693,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Function to add a user to the selected users list
   function addUser(username) {
-    if (!selectedUsers.includes(username)) {
-      selectedUsers.push(username);
+    if (!selectedUsers.has(username)) {
+      selectedUsers.add(username);
       updateSelectedUsersDisplay();
 
       const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
@@ -711,8 +728,10 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Remove a user from the selected users list
   function removeUser(username) {
-    selectedUsers = selectedUsers.filter(user => user !== username);
-    updateSelectedUsersDisplay();
+    if (selectedUsers.has(username)) {
+      selectedUsers.delete(username);
+      updateSelectedUsersDisplay();
+    }
 
     const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
     if (friendCheckbox) {
@@ -720,8 +739,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  createGroupForm.addEventListener('submit', function (e) {
+    e.preventDefault(); 
+
+    // Collect form data
+    const groupName = document.getElementById('group-name').value.trim();
+    const groupDescription = document.getElementById('group-description').value.trim();
+    const selectedFromCheckbox = Array.from(
+      document.querySelectorAll('#friends-list input[type="checkbox"]:checked')
+    ).map((input) => input.value);
+
+    const allSelectedUsers = Array.from(new Set([...selectedUsers, ...selectedFromCheckbox]));
+
+    if (!groupName) {
+      alert('Group Name is required!');
+      return;
+    }
+
+    const groupData = {
+      groupName,
+      groupDescription,
+      invitedUsers: allSelectedUsers,
+    };
+
+    fetch('/create-group', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(groupData),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to create the group');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        alert('Group created successfully!');
+        createGroupModal.style.display = 'none'; 
+        window.location.href = `/chat?group=${data.groupId}`; 
+      })
+      .catch((error) => {
+        console.error('Error creating group:', error);
+        alert('An error occurred while creating the group. Please try again.');
+      });
+  });
+
 });
-
-
-
-

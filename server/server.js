@@ -69,7 +69,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-let usersCollection, messagesCollection, inboxCollection, reportsCollection;
+let usersCollection, messagesCollection, inboxCollection, reportsCollection, groupCollection;
 
 // Multer upload middleware
 const upload = multer({ storage: storage, fileFilter: fileFilter });
@@ -238,6 +238,62 @@ app.post('/upload-profile-pic', upload.single('profilePic'), async (req, res) =>
   } catch (error) {
     console.error('Error uploading profile picture:', error);
     res.status(500).json({ success: false, message: 'Failed to upload profile picture.' });
+  }
+});
+
+// Uploading a background image
+app.post('/upload-background', upload.single('backgroundImg'), async (req, res) => {
+  const username = req.body.username;
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded.' });
+  }
+
+  try {
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: 'image',
+      folder: 'backgroundImg' // Optional: organize files
+    });
+
+    const backgroundImgUrl = result.secure_url;
+
+    // Delete the temporary file
+    fs.unlinkSync(req.file.path);
+
+    // Update the user's profile picture in MongoDB
+    await usersCollection.updateOne(
+      { username: username },
+      { $set: { backgroundImg: backgroundImgUrl } }
+    );
+
+    res.json({ success: true, backgroundImg: backgroundImgUrl });
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload profile picture.' });
+  }
+});
+
+// Reset background image
+app.post('/reset-background', async (req, res) => {
+  const { username, backgroundImg } = req.body;
+
+  try {
+    const result = await usersCollection.updateOne(
+      { username },
+      { $set: { backgroundImg: backgroundImg } }
+    );
+
+    if (result.modifiedCount === 1 || result.upsertedCount === 1) {
+      console.log(`Background image has been reset: ${username}`);
+      res.json({ success: true });
+    } else {
+      console.error(`Failed to reset background image for user: ${username}`);
+      res.json({ success: false, message: 'Failed to reset background image.' });
+    }
+  } catch (error) {
+    console.error('Error reseting background image:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while reseting background image.' });
   }
 });
 
@@ -445,6 +501,8 @@ app.get('/get-conversations', (req, res) => {
         fromUser: 1,
         toUser: 1,
         message: 1,
+        isFriendRequest: 1,
+        isResolved: 1, // Include the resolved state
         timestamp: 1,
         participant: {
           $cond: [
@@ -459,6 +517,8 @@ app.get('/get-conversations', (req, res) => {
       $group: {
         _id: "$participant",
         lastMessage: { $last: "$message" },
+        isFriendRequest: { $last: "$isFriendRequest" },
+        isResolved: { $last: "$isResolved" }, // Include the latest resolved state
         lastTimestamp: { $last: "$timestamp" }
       }
     },
@@ -480,6 +540,8 @@ app.get('/get-conversations', (req, res) => {
       $project: {
         participant: "$_id",
         lastMessage: 1,
+        isFriendRequest: 1,
+        isResolved: 1, // Include resolved status in response
         lastTimestamp: 1,
         profilePic: { $ifNull: ["$participantInfo.profilePic", "/uploads/default-avatar.png"] }
       }
@@ -490,6 +552,8 @@ app.get('/get-conversations', (req, res) => {
       const conversations = results.map(result => ({
         participant: result.participant,
         lastMessage: result.lastMessage,
+        isFriendRequest: result.isFriendRequest || false,
+        isResolved: result.isResolved || false, // Default to false if not present
         lastTimestamp: result.lastTimestamp,
         profilePic: result.profilePic
       }));
@@ -501,8 +565,6 @@ app.get('/get-conversations', (req, res) => {
     });
 });
 
-
-// server.js
 // server.js
 
 app.get('/get-messages', async (req, res) => {
@@ -701,7 +763,8 @@ app.get('/get-user-profile', checkUserStatus, async (req, res) => {
       phoneNumber: user.phoneNumber,
       bio: user.bio,
       profilePic: user.profilePic || '/uploads/default-avatar.png',
-      connectedAccounts: user.connectedAccounts || {}
+      connectedAccounts: user.connectedAccounts || {},
+      backgroundImg: user.backgroundImg || 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1729122093/base/t2laawx0hmk39czdqqgk.png'
     });
   } catch (error) {
     console.error('Error fetching user profile:', error);
@@ -930,29 +993,37 @@ app.post('/respond-to-friend-request', async (req, res) => {
   const { fromUser, toUser, accepted } = req.body;
 
   try {
+    // Mark the friend request as resolved
+    await inboxCollection.updateOne(
+      { fromUser, toUser, isFriendRequest: true },
+      { $set: { isResolved: true } }
+    );
+
     if (accepted) {
-      // Add `fromUser` to `toUser`'s contact list
+      // Add each user to the other's contact list
       await usersCollection.updateOne(
         { username: toUser },
         { $addToSet: { contacts: { username: fromUser, isFavorite: false } } }
       );
-
-      // Add `toUser` to `fromUser`'s contact list
       await usersCollection.updateOne(
         { username: fromUser },
         { $addToSet: { contacts: { username: toUser, isFavorite: false } } }
       );
+    } else {
+      // Remove the friend request from the inbox
+      await inboxCollection.deleteOne({ fromUser, toUser, isFriendRequest: true });
     }
 
-    // Remove the friend request from inbox
-    await inboxCollection.deleteOne({ fromUser, toUser, isFriendRequest: true });
-
-    res.json({ success: true, message: accepted ? 'Friend added!' : 'Friend request declined.' });
+    res.json({
+      success: true,
+      message: accepted ? 'Friend request accepted!' : 'Friend request declined.',
+    });
   } catch (error) {
     console.error('Error responding to friend request:', error);
     res.status(500).json({ success: false, message: 'Error responding to friend request.' });
   }
 });
+
 
 
 
@@ -1094,12 +1165,31 @@ app.post('/remove-contact', async (req, res) => {
       { $pull: { contacts: { username: contactUsername } } } // Pull removes the matching contact
     );
 
-    res.json({ success: true, message: `Removed ${contactUsername} from your contacts.` });
+    // Delete conversations between the two users
+    const deleteMessagesResult = await inboxCollection.deleteMany({
+      $or: [
+        { fromUser: username, toUser: contactUsername },
+        { fromUser: contactUsername, toUser: username }
+      ]
+    });
+
+    const deleteChatMessagesResult = await messagesCollection.deleteMany({
+      $or: [
+        { fromUser: username, toUser: contactUsername },
+        { fromUser: contactUsername, toUser: username }
+      ]
+    });
+
+    res.json({
+      success: true,
+      message: `Removed ${contactUsername} from your contacts and deleted ${deleteMessagesResult.deletedCount + deleteChatMessagesResult.deletedCount} messages.`,
+    });
   } catch (error) {
     console.error('Error removing contact:', error);
     res.status(500).json({ success: false, message: 'An error occurred while removing the contact.' });
   }
 });
+
 
 // Modify the /inbox route to return all messages grouped by sender
 app.get('/inbox', async (req, res) => {
@@ -1826,6 +1916,32 @@ app.post('/admin/initialize-user-status', async (req, res) => {
   }
 });
 
+// Route to create groups
+app.post('/create-group', async (req, res) => {
+  const { groupName, groupDescription, invitedUsers } = req.body;
+  console.log("Group data:", req.body);
+
+  if (!groupName || invitedUsers.length === 0) {
+    return res.status(400).json({ message: 'Group name and invited users are required.' });
+  }
+  
+  try {
+    // Logic for creating the group and saving it to the database
+    const newGroup = await groupCollection.insertOne({
+      groupName,
+      groupDescription,
+      invitedUsers,
+      createdAt: new Date(),
+    });
+
+    // Return the group ID
+    res.status(201).json({ groupId: newGroup.insertedId });
+  } catch (error) {
+    console.error('Error creating group:', error);
+    res.status(500).json({ message: 'An error occurred while creating the group.' });
+  }
+
+});
 
 // Middleware to check if user is banned or muted
 async function checkUserStatus(req, res, next) {
@@ -1876,6 +1992,8 @@ async function connectDB() {
     messagesCollection = db.collection('messages');
     inboxCollection = db.collection('inbox');
     reportsCollection = db.collection('reports'); // Initialize reports collection
+    groupCollection = db.collection('groups');
+
     console.log('Connected to MongoDB and collections initialized');
 
     // Start the server after the database is connected
