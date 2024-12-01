@@ -297,6 +297,47 @@ app.post('/reset-background', async (req, res) => {
   }
 });
 
+app.post("/save-frame-customization", (req, res) => {
+  const { username, frameSettings } = req.body;
+  // Save frame settings to the database or file
+  updateUserFrameSettings(username, frameSettings)
+    .then(() => res.json({ success: true }))
+    .catch((error) => res.json({ success: false, message: error.message }));
+});
+app.get("/get-frame-customization", (req, res) => {
+  const { username } = req.query;
+  getUserFrameSettings(username)
+    .then((frameSettings) => res.json({ success: true, frameSettings }))
+    .catch((error) => res.json({ success: false, message: error.message }));
+});
+app.post("/reset-frame-customization", (req, res) => {
+  const { username } = req.body;
+  // Reset to default settings
+  resetUserFrameSettings(username)
+    .then(() => res.json({ success: true }))
+    .catch((error) => res.json({ success: false, message: error.message }));
+});
+const updateUserFrameSettings = async (username, frameSettings) => {
+  return User.findOneAndUpdate(
+    { username },
+    { $set: { frameSettings } },
+    { upsert: true } // Create a document if one doesn't exist
+  ).exec();
+};
+
+const getUserFrameSettings = async (username) => {
+  const user = await User.findOne({ username }).exec();
+  return user ? user.frameSettings : null; // Return null if no settings are found
+};
+
+const resetUserFrameSettings = async (username) => {
+  return User.findOneAndUpdate(
+    { username },
+    { $unset: { frameSettings: 1 } } // Remove frameSettings field
+  ).exec();
+};
+
+
 app.post('/upload-chat', upload.single('image'), async (req, res) => {
   const message = req.body.message || '';
   const username = req.body.username || 'Unknown User';

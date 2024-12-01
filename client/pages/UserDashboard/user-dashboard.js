@@ -430,6 +430,9 @@ contactsBtn.addEventListener('click', function() {
   }
 });
 
+document.getElementById('ai-chat-button').addEventListener('click', () => {
+  window.location.href = `/messages.html?participant=AI_Assistant`;
+});
 
 // Display the favorite contacts list when clicking "Favorites"
 var favoritesBtn = document.getElementById('favorites-button');

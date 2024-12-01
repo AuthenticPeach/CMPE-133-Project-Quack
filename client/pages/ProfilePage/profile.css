@@ -1055,3 +1055,21 @@ h5 {
     width: auto;
   }
 }
+
+
+.profile-container {
+  border: 3px solid #000; /* Default frame style */
+  border-radius: 50%; /* For rounded frames */
+  transition: all 0.3s ease-in-out;
+}
+
+#frameCustomization {
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#frameCustomization h3 {
+  margin-bottom: 10px;
+}

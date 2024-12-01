@@ -179,6 +179,93 @@ uploadBackgroundForm.addEventListener("submit", function (event) {
     });
 });
 
+fetch(`/get-user-profile?username=${username}`)
+  .then((response) => response.json())
+  .then((data) => {
+    if (data.frameSettings) {
+      const { color, style } = data.frameSettings;
+      profileContainer.style.borderColor = color;
+      profileContainer.style.borderStyle = style;
+    }
+  })
+  .catch((error) => {
+    console.error("Error fetching frame settings:", error);
+  });
+
+
+// Elements for frame customization
+const frameCustomizationSection = document.getElementById("frameCustomization");
+const frameColorPicker = document.getElementById("frame-color-picker");
+const frameStyleSelect = document.getElementById("frame-style-select");
+const applyFrameBtn = document.getElementById("applyFrameBtn");
+const resetFrameBtn = document.getElementById("resetFrameBtn");
+
+// Profile container element
+const profileContainer = document.querySelector(".profile-container");
+
+// Open the frame customization section
+settingsBtn.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    frameCustomizationSection.style.display = "block";
+  });
+});
+
+// Apply selected frame styles
+applyFrameBtn.addEventListener("click", () => {
+  const selectedColor = frameColorPicker.value;
+  const selectedStyle = frameStyleSelect.value;
+
+  profileContainer.style.borderColor = selectedColor;
+  profileContainer.style.borderStyle = selectedStyle;
+
+  // Save the customization to the server or localStorage
+  const frameSettings = {
+    color: selectedColor,
+    style: selectedStyle,
+  };
+
+  fetch("/save-frame-customization", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username, frameSettings }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        alert("Frame customization applied successfully!");
+      } else {
+        alert("Failed to save frame customization.");
+      }
+    })
+    .catch((error) => console.error("Error saving frame customization:", error));
+});
+
+// Reset frame customization
+resetFrameBtn.addEventListener("click", () => {
+  profileContainer.style.borderColor = "#000";
+  profileContainer.style.borderStyle = "solid";
+
+  // Optionally reset server data
+  fetch("/reset-frame-customization", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ username }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        alert("Frame customization reset to default.");
+      } else {
+        alert("Failed to reset frame customization.");
+      }
+    })
+    .catch((error) => console.error("Error resetting frame customization:", error));
+});
+
 // Event listener for file selection
 backgroundImg.addEventListener("change", function () {
   backgroundMessage.textContent = "";
@@ -197,6 +284,18 @@ backgroundImg.addEventListener("change", function () {
       saveSettingsBtn.style.display = "none";
   }
 });
+fetch(`/get-frame-customization?username=${username}`)
+  .then((response) => response.json())
+  .then((data) => {
+    if (data.success && data.frameSettings) {
+      const { color, style } = data.frameSettings;
+      profileContainer.style.borderColor = color;
+      profileContainer.style.borderStyle = style;
+      frameColorPicker.value = color;
+      frameStyleSelect.value = style;
+    }
+  })
+  .catch((error) => console.error("Error fetching frame settings:", error));
 
 toggle.addEventListener("click", () => {
   sidebar.classList.toggle("close");

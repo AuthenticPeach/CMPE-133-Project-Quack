@@ -391,6 +391,22 @@
             <button type="submit" class="normalButton" id="saveSettingsBtn">Save Changes</button>
           </form>
           <p id="background-message"></p>
+          <div id="frameCustomization" style="display: none;">
+            <h3>Customize Profile Frame</h3>
+            <label for="frame-color-picker">Select Frame Color:</label>
+            <input type="color" id="frame-color-picker" value="#000000" />
+            <label for="frame-style-select">Select Frame Style:</label>
+            <select id="frame-style-select">
+              <option value="solid">Solid</option>
+              <option value="dashed">Dashed</option>
+              <option value="dotted">Dotted</option>
+              <option value="double">Double</option>
+            </select>
+            <br />
+            <button id="applyFrameBtn" class="normalButton">Apply</button>
+            <button id="resetFrameBtn" class="normalButton">Reset</button>
+          </div>
+          
         </div>
       </div>
 
