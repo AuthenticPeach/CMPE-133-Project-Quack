@@ -526,86 +526,96 @@ app.get('/admin/get-users', async (req, res) => {
   }
 });
 
-app.get('/get-conversations', (req, res) => {
+app.get('/get-conversations', async (req, res) => {
   const username = req.query.username;
 
-  inboxCollection.aggregate([
-    {
-      $match: {
-        $or: [
-          { fromUser: username },
-          { toUser: username }
-        ]
-      }
-    },
-    {
-      $project: {
-        fromUser: 1,
-        toUser: 1,
-        message: 1,
-        isFriendRequest: 1,
-        isResolved: 1, // Include the resolved state
-        timestamp: 1,
-        participant: {
-          $cond: [
-            { $eq: ["$fromUser", username] },
-            "$toUser",
-            "$fromUser"
+  try {
+    const conversations = await inboxCollection.aggregate([
+      {
+        $match: {
+          $or: [
+            { fromUser: username },
+            { toUser: username }
           ]
         }
+      },
+      {
+        $addFields: {
+          participant: {
+            $cond: [
+              { $eq: ["$fromUser", username] },
+              "$toUser",
+              "$fromUser"
+            ]
+          },
+          isFriendRequestVisible: {
+            $cond: [
+              { $and: [{ $eq: ["$toUser", username] }, { $eq: ["$isFriendRequest", true] }] },
+              true,
+              false
+            ]
+          }
+        }
+      },
+      {
+        $match: {
+          $or: [
+            { isFriendRequestVisible: true },
+            { isFriendRequest: { $ne: true } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: "$participant",
+          lastMessage: { $last: "$message" },
+          isFriendRequest: { $last: "$isFriendRequest" },
+          isResolved: { $last: "$isResolved" },
+          lastTimestamp: { $last: "$timestamp" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: 'username',
+          as: 'participantInfo'
+        }
+      },
+      {
+        $unwind: "$participantInfo"
+      },
+      {
+        $sort: { lastTimestamp: -1 }
+      },
+      {
+        $project: {
+          participant: "$_id",
+          lastMessage: 1,
+          isFriendRequest: 1,
+          isResolved: 1,
+          lastTimestamp: 1,
+          profilePic: { $ifNull: ["$participantInfo.profilePic", "/uploads/default-avatar.png"] }
+        }
       }
-    },
-    {
-      $group: {
-        _id: "$participant",
-        lastMessage: { $last: "$message" },
-        isFriendRequest: { $last: "$isFriendRequest" },
-        isResolved: { $last: "$isResolved" }, // Include the latest resolved state
-        lastTimestamp: { $last: "$timestamp" }
-      }
-    },
-    {
-      $lookup: {
-        from: 'users', // The name of the users collection
-        localField: '_id', // Field from the previous stage (participant)
-        foreignField: 'username', // Field in users collection
-        as: 'participantInfo'
-      }
-    },
-    {
-      $unwind: "$participantInfo"
-    },
-    {
-      $sort: { lastTimestamp: -1 }
-    },
-    {
-      $project: {
-        participant: "$_id",
-        lastMessage: 1,
-        isFriendRequest: 1,
-        isResolved: 1, // Include resolved status in response
-        lastTimestamp: 1,
-        profilePic: { $ifNull: ["$participantInfo.profilePic", "/uploads/default-avatar.png"] }
-      }
-    }
-  ])
-    .toArray()
-    .then(results => {
-      const conversations = results.map(result => ({
-        participant: result.participant,
-        lastMessage: result.lastMessage,
-        isFriendRequest: result.isFriendRequest || false,
-        isResolved: result.isResolved || false, // Default to false if not present
-        lastTimestamp: result.lastTimestamp,
-        profilePic: result.profilePic
-      }));
-      res.json({ success: true, conversations });
-    })
-    .catch(error => {
-      console.error('Error fetching conversations:', error);
-      res.status(500).json({ success: false, message: 'Error fetching conversations' });
-    });
+    ]).toArray();
+
+    const result = conversations.map(conversation => ({
+      participant: conversation.participant,
+      lastMessage: conversation.lastMessage,
+      isFriendRequest: conversation.isFriendRequest || false,
+      isResolved: conversation.isResolved || false,
+      lastTimestamp: conversation.lastTimestamp,
+      profilePic: conversation.profilePic
+    }));
+
+    res.json({ success: true, conversations: result });
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    res.status(500).json({ success: false, message: 'Error fetching conversations' });
+  }
 });
+
 
 // server.js
 
@@ -1051,8 +1061,27 @@ app.post('/respond-to-friend-request', async (req, res) => {
         { username: fromUser },
         { $addToSet: { contacts: { username: toUser, isFavorite: false } } }
       );
+
+      // Check if a conversation already exists for the receiver
+      const existingConversation = await inboxCollection.findOne({
+        fromUser: toUser,
+        toUser: fromUser,
+        isFriendRequest: { $ne: true },
+      });
+
+      if (!existingConversation) {
+        // Create a conversation for the receiver if it doesn't exist
+        await inboxCollection.insertOne({
+          fromUser: toUser,
+          toUser: fromUser,
+          message: `You are now friends with ${fromUser}.`,
+          isFriendRequest: false,
+          isResolved: true,
+          timestamp: new Date(),
+        });
+      }
     } else {
-      // Remove the friend request from the inbox
+      // Remove the friend request from the inbox if declined
       await inboxCollection.deleteOne({ fromUser, toUser, isFriendRequest: true });
     }
 
@@ -1065,6 +1094,7 @@ app.post('/respond-to-friend-request', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error responding to friend request.' });
   }
 });
+
 
 
 
@@ -1194,41 +1224,35 @@ app.post('/remove-contact', async (req, res) => {
   const { username, contactUsername } = req.body;
 
   try {
-    // Find the user in the database
-    const user = await usersCollection.findOne({ username });
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    // Remove the contact from the user's contacts list
+    // Remove contact from both users
     await usersCollection.updateOne(
-      { username: username },
-      { $pull: { contacts: { username: contactUsername } } } // Pull removes the matching contact
+      { username },
+      { $pull: { contacts: { username: contactUsername } } }
+    );
+    await usersCollection.updateOne(
+      { username: contactUsername },
+      { $pull: { contacts: { username } } }
     );
 
-    // Delete conversations between the two users
-    const deleteMessagesResult = await inboxCollection.deleteMany({
+    // Remove associated messages
+    await inboxCollection.deleteMany({
       $or: [
         { fromUser: username, toUser: contactUsername },
         { fromUser: contactUsername, toUser: username }
       ]
     });
 
-    const deleteChatMessagesResult = await messagesCollection.deleteMany({
+    await messagesCollection.deleteMany({
       $or: [
         { fromUser: username, toUser: contactUsername },
         { fromUser: contactUsername, toUser: username }
       ]
     });
 
-    res.json({
-      success: true,
-      message: `Removed ${contactUsername} from your contacts and deleted ${deleteMessagesResult.deletedCount + deleteChatMessagesResult.deletedCount} messages.`,
-    });
+    res.json({ success: true, message: 'Contact removed for both users.' });
   } catch (error) {
     console.error('Error removing contact:', error);
-    res.status(500).json({ success: false, message: 'An error occurred while removing the contact.' });
+    res.status(500).json({ success: false, message: 'Error removing contact.' });
   }
 });
 
