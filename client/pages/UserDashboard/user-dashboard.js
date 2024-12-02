@@ -3,6 +3,7 @@ var socket = io();
 
 // Get the username from localStorage
 var username = localStorage.getItem('username');
+
 if (!username) {
   window.location.href = '/signin';
 } else {
@@ -601,7 +602,6 @@ function removeContact(contactUsername) {
 }
 
 
-
 // Modal script for Group Creation
 document.addEventListener('DOMContentLoaded', () => {
   var createGroupModal = document.getElementById('createGroupModal');
@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
   var searchResults = document.getElementById('invite-results');
   var friendsList = document.getElementById('friends-list');
   var createGroupBtn = document.getElementById('create-group-chat');
-  var selectedUsers = [];
+  var selectedUsers = new Set();
 
   // Open the Group Creation Modal
   createGroupBtn.onclick = function() {
@@ -673,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
             li.innerHTML = `<span>${user.username}</span>`;
 
-            // Testing add button for searching users
+            // Add button for searching users
             var addButton = document.createElement('button');
             addButton.textContent = 'Add';
             addButton.onclick = function() {
@@ -696,8 +696,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Function to add a user to the selected users list
   function addUser(username) {
-    if (!selectedUsers.includes(username)) {
-      selectedUsers.push(username);
+    if (!selectedUsers.has(username)) {
+      selectedUsers.add(username);
       updateSelectedUsersDisplay();
 
       const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
@@ -731,13 +731,70 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Remove a user from the selected users list
   function removeUser(username) {
-    selectedUsers = selectedUsers.filter(user => user !== username);
-    updateSelectedUsersDisplay();
+    if (selectedUsers.has(username)) {
+      selectedUsers.delete(username);
+      updateSelectedUsersDisplay();
+    }
 
     const friendCheckbox = friendsList.querySelector(`input[type="checkbox"][value="${username}"]`);
     if (friendCheckbox) {
       friendCheckbox.checked = false;
     }
   }
+
+  createGroupForm.addEventListener('submit', function (e) {
+    e.preventDefault(); 
+
+    // Get username from localStorage
+    const currentUser = localStorage.getItem('username');
+    if (!currentUser) {
+      window.location.href = '/signin';
+      return;
+    }
+
+    // Collect form data
+    const groupName = document.getElementById('group-name').value.trim();
+    const groupDescription = document.getElementById('group-description').value.trim();
+    const selectedFromCheckbox = Array.from(
+      document.querySelectorAll('#friends-list input[type="checkbox"]:checked')
+    ).map((input) => input.value);
+
+    const allSelectedUsers = Array.from(new Set([...selectedUsers, ...selectedFromCheckbox]));
+
+    if (!groupName) {
+      alert('Group Name is required!');
+      return;
+    }
+
+    const groupData = {
+      groupName,
+      groupDescription,
+      invitedUsers: allSelectedUsers,
+      createdBy: currentUser
+    };
+
+    fetch('/create-group', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(groupData),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Failed to create the group');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        alert('Group created successfully!');
+        createGroupModal.style.display = 'none'; 
+        window.location.href = `/chat?group=${data.groupId}&groupname=${encodeURIComponent(data.displayName)}&username=${encodeURIComponent(currentUser)}`; 
+      })
+      .catch((error) => {
+        console.error('Error creating group:', error);
+        alert('An error occurred while creating the group. Please try again.');
+      });
+  });
 
 });

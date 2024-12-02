@@ -339,26 +339,47 @@ fetch(`/get-user-profile?username=${username}`)
 
 document.addEventListener("DOMContentLoaded", function () {
   var socket = io();
-  const defaultProfilePicUrl =
-    "https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png";
+  const defaultProfilePicUrl = "https://res.cloudinary.com/dzify5sdy/image/upload/v1728276760/profile_pics/default-avatar.png";
 
   // Extract the username from the URL query parameter
   var urlParams = new URLSearchParams(window.location.search);
-  var username = urlParams.get("username");
-  var roomName = urlParams.get("room");
-
-  document.getElementById('roomName').textContent = roomName.charAt(0).toUpperCase() + roomName.slice(1) + " Room";
+  var username = urlParams.get("username") || localStorage.getItem("username");
+  var groupId = urlParams.get("group");
+  var groupName = urlParams.get("groupname");
+  var roomName = urlParams.get("room") || groupId;
 
   if (!username) {
-    // If no username is found, redirect to sign-in page
     window.location.href = "/signin";
-  } else {
-    // Send the username to the server
-    socket.emit("set username", username);
-
-    // Join the specified room
-    socket.emit("join room", roomName);
+    return;
   }
+
+  if (!roomName) {
+    console.error("No room or group ID provided");
+    window.location.href = "/user-dashboard";
+    return;
+  }
+
+  if (!localStorage.getItem("username")) {
+    localStorage.setItem("username", username);
+  }
+
+  try {
+    const roomNameElement = document.getElementById('roomName');
+    if (groupName) {
+      // For group chats, use the decoded group name
+      roomNameElement.textContent = decodeURIComponent(groupName).replace(/-/g, ' ');
+    } else if (roomName) {
+      roomNameElement.textContent = roomName.charAt(0).toUpperCase() + roomName.slice(1) + " Room";
+    }
+    //document.getElementById('roomName').textContent = roomName.charAt(0).toUpperCase() + roomName.slice(1) + " Room";
+  } catch (error) {
+    console.error("Error setting rooom name:", error);
+  }
+
+  // Connect to the room
+  socket.emit("set username", username);
+  socket.emit("join room", roomName);
+
   let oldestTimestamp = null;
   const input = document.getElementById("input");
   const emojiButton = document.getElementById("emoji-button");

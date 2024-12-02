@@ -13,9 +13,84 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
     <link rel="stylesheet" href="/pages/ProfilePage/profile.css" />
   </head>
   <body>
+    <!-- Navbar for mobile version -->
+    <header id="mobileNavbar">
+      <a href="#"
+        ><img
+          src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png"
+          class="logo"
+          alt="logo"
+      /></a>
+
+      <input type="checkbox" id="menu_bar" />
+      <label for="menu_bar"><i class="bx bx-user"></i></label>
+
+      <div class="navbar">
+        <ul>
+          <li>
+            <a href="/profile">
+              <img
+                src=""
+                alt=""
+                class="profile-pic"
+                style="width: 40px; height: 40px; object-fit: cover"
+              />
+              <p class="full-name"></p>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="settings-btn">
+              <i class="bx bx-cog icon"></i>
+              <span>Settings</span>
+            </a>
+          </li>
+          <li>
+            <a href="/signin" onclick="localStorage.removeItem('username')">
+              <i class="bx bx-log-out icon"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <header id="mobileNavbarBottom">
+      <div class="navbar">
+        <ul>
+          <li>
+            <a href="/user-dashboard">
+              <i class="bx bx-home-alt icon"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/messages">
+              <i class="bx bx-message-rounded icon"></i>
+              <span>Inbox</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="contact-btn">
+              <i class="bx bxs-contact icon"></i>
+              <span class="contactText">Contact</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="favorite-btn">
+              <i class="bx bx-heart icon"></i>
+              <span class="favoriteText">Favorites</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </header>
     <!-- Navbar for mobile version -->
     <header id="mobileNavbar">
       <a href="#"
@@ -96,6 +171,10 @@
               src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png"
               alt="Quack Logo"
             />
+            <img
+              src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png"
+              alt="Quack Logo"
+            />
           </span>
 
           <div class="text logo-text">
@@ -127,6 +206,7 @@
               <a href="#" class="contact-btn">
                 <i class="bx bxs-contact icon"></i>
                 <span class="text nav-text contactText">Contact</span>
+                <span class="text nav-text contactText">Contact</span>
               </a>
             </li>
 
@@ -134,10 +214,12 @@
               <a href="#" class="favorite-btn">
                 <i class="bx bx-heart icon"></i>
                 <span class="text nav-text favoriteText">Favorites</span>
+                <span class="text nav-text favoriteText">Favorites</span>
               </a>
             </li>
           </ul>
         </div>
+
 
         <div class="bottom-content">
           <!-- Settings option -->
@@ -155,7 +237,9 @@
             </a>
           </li>
 
+
           <li class="">
+            <a href="/profile">
             <a href="/profile">
               <img
                 src=""
@@ -191,9 +275,33 @@
           overflow-x: hidden;
         "
       ></ul>
+      <ul
+        class="contactList"
+        style="
+          display: none;
+          overflow-y: auto;
+          max-height: calc(100vh - 90px);
+          overflow-x: hidden;
+        "
+      ></ul>
+      <ul
+        class="favoriteList"
+        style="
+          display: none;
+          overflow-y: auto;
+          max-height: calc(100vh - 90px);
+          overflow-x: hidden;
+        "
+      ></ul>
     </nav>
 
     <section class="home">
+      <button
+        type="button"
+        class="normalButton"
+        id="deleteAccountBtn"
+        style="display: none"
+      >
       <button
         type="button"
         class="normalButton"
@@ -207,8 +315,17 @@
           <div class="profile-container" id="profile-button">
             <img class="profile-pic" src="" alt="Profile Picture" />
             <span class="pencil-icon"><i class="bx bxs-pencil"></i></span>
+            <span class="pencil-icon"><i class="bx bxs-pencil"></i></span>
           </div>
           <h5 class="full-name"></h5>
+          <div
+            id="connected-accounts-display"
+            style="margin-bottom: 10px"
+          ></div>
+          <!-- Display Connected Accounts -->
+          <button id="edit-accounts-btn" class="normalButton">
+            Edit Connected Accounts
+          </button>
           <div
             id="connected-accounts-display"
             style="margin-bottom: 10px"
@@ -279,6 +396,8 @@
             </button>
           </form>
           <form class="profile-form">
+          </form>
+          <form class="profile-form">
             <div id="password-change-section" style="display: none">
               <p>
                 <label>Current Password:</label>
@@ -327,6 +446,7 @@
           <textarea
             id="bio"
             maxlength="1500"
+            maxlength="1500"
             placeholder="Tell us something about yourself... (Max 1500 characters)"
           ></textarea>
           <!-- Add Emoji Button for Bio -->
@@ -335,6 +455,7 @@
           <button id="edit-bio-btn" class="normalButton">Edit Bio</button>
           <!-- Changed to 'Edit Profile' -->
           <br />
+          <br />
           <button id="save-bio-btn" class="hidden normalButton">
             Save Bio
           </button>
@@ -342,11 +463,23 @@
           <p id="bio-message"></p>
         </div>
       </div>
+      </div>
 
       <div id="deleteAccountModal" class="modal">
         <div class="modal-content">
           <span class="closeBtn">&times;</span>
           <h3>Deleting Account</h3>
+          <p>
+            Delete your account will remove all of your information from our
+            database. This action cannot be undone.
+          </p>
+          <label for="currentPassword"
+            >Please enter your password to confirm:</label
+          >
+          <input type="password" id="currentPassword" required />
+          <button id="confirmDelete" class="normalButton">
+            Delete Account
+          </button>
           <p>
             Delete your account will remove all of your information from our
             database. This action cannot be undone.
@@ -425,7 +558,28 @@
                 src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png"
                 id="imagePreview"
               />
+          <form
+            id="upload-form"
+            enctype="multipart/form-data"
+            style="text-align: center"
+          >
+            <label for="profilePic" style="margin-right: 0">
+              <img
+                src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png"
+                id="imagePreview"
+              />
             </label>
+            <input
+              type="file"
+              name="profilePic"
+              id="profilePic"
+              required
+              accept="image/*"
+              style="display: none; visibility: none"
+            />
+            <br /><button type="submit" class="normalButton" id="uploadBtn">
+              Upload Image
+            </button>
             <input
               type="file"
               name="profilePic"
@@ -444,7 +598,11 @@
 
       <!-- Connected Accounts Section -->
       <div id="connectedAccountModal" class="modal">
+      <div id="connectedAccountModal" class="modal">
         <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h3>Connected Account</h3>
+
           <span class="closeBtn">&times;</span>
           <h3>Connected Account</h3>
 
@@ -452,6 +610,12 @@
           <form id="connected-accounts-form" class="profile-form">
             <p>
               <label>YouTube:</label>
+              <input
+                type="url"
+                name="youtube"
+                id="youtube"
+                placeholder="https://www.youtube.com/..."
+              />
               <input
                 type="url"
                 name="youtube"
@@ -467,9 +631,21 @@
                 id="twitch"
                 placeholder="https://www.twitch.tv/..."
               />
+              <input
+                type="url"
+                name="twitch"
+                id="twitch"
+                placeholder="https://www.twitch.tv/..."
+              />
             </p>
             <p>
               <label>Twitter:</label>
+              <input
+                type="url"
+                name="twitter"
+                id="twitter"
+                placeholder="https://twitter.com/..."
+              />
               <input
                 type="url"
                 name="twitter"
@@ -485,9 +661,21 @@
                 id="instagram"
                 placeholder="https://www.instagram.com/..."
               />
+              <input
+                type="url"
+                name="instagram"
+                id="instagram"
+                placeholder="https://www.instagram.com/..."
+              />
             </p>
             <p>
               <label>TikTok:</label>
+              <input
+                type="url"
+                name="tiktok"
+                id="tiktok"
+                placeholder="https://www.tiktok.com/@"
+              />
               <input
                 type="url"
                 name="tiktok"
@@ -503,9 +691,21 @@
                 id="whatsapp"
                 placeholder="Enter your phone number"
               />
+              <input
+                type="tel"
+                name="whatsapp"
+                id="whatsapp"
+                placeholder="Enter your phone number"
+              />
             </p>
             <p>
               <label>Snapchat:</label>
+              <input
+                type="text"
+                name="snapchat"
+                id="snapchat"
+                placeholder="Your Snapchat username"
+              />
               <input
                 type="text"
                 name="snapchat"
@@ -524,16 +724,28 @@
               <button type="button" class="normalButton" id="save-accounts-btn">
                 Save Accounts
               </button>
+              <button
+                type="button"
+                class="normalButton"
+                id="cancel-accounts-btn"
+              >
+                Cancel
+              </button>
+              <button type="button" class="normalButton" id="save-accounts-btn">
+                Save Accounts
+              </button>
             </div>
           </form>
           <p id="accounts-message"></p>
         </div>
+      </div>
       </div>
     </section>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/emoji-button@latest"></script>
     <script src="/pages/ProfilePage/profile.js"></script>
+    <script src="/client/sidebar.js"></script>
     <script src="/client/sidebar.js"></script>
   </body>
 </html>
