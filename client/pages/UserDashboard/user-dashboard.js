@@ -742,6 +742,13 @@ document.addEventListener('DOMContentLoaded', () => {
   createGroupForm.addEventListener('submit', function (e) {
     e.preventDefault(); 
 
+    // Get username from localStorage
+    const currentUser = localStorage.getItem('username');
+    if (!currentUser) {
+      window.location.href = '/signin';
+      return;
+    }
+
     // Collect form data
     const groupName = document.getElementById('group-name').value.trim();
     const groupDescription = document.getElementById('group-description').value.trim();
@@ -760,6 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
       groupName,
       groupDescription,
       invitedUsers: allSelectedUsers,
+      createdBy: currentUser
     };
 
     fetch('/create-group', {
@@ -778,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then((data) => {
         alert('Group created successfully!');
         createGroupModal.style.display = 'none'; 
-        window.location.href = `/chat?group=${data.groupId}`; 
+        window.location.href = `/chat?group=${data.groupId}&groupname=${encodeURIComponent(data.displayName)}&username=${encodeURIComponent(currentUser)}`; 
       })
       .catch((error) => {
         console.error('Error creating group:', error);

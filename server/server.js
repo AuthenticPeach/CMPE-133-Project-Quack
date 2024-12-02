@@ -349,6 +349,7 @@ app.post('/upload-chat', upload.single('image'), async (req, res) => {
     username: username,
     message: message,
     roomName: roomName,
+    groupId: roomName,
     fileUrl: fileUrl,
     fileType: fileType,
     fileName: fileName,
@@ -1632,6 +1633,22 @@ io.on('connection', (socket) => {
     // Log when a user joins a room
     console.log(`${users[socket.id]?.username || 'Unknown User'} is joining room ${roomName}`);
     socket.join(roomName);
+
+    try {
+      // Fetch messages using either room or group ID
+      const messages = await messagesCollection.find({ 
+        $or: [
+          { roomName: roomName },
+          { groupId: roomName }
+        ]
+      })
+      .sort({ timestamp: -1 })
+      .limit(25)
+      .toArray();
+  
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+    }
   
     // Fetch the most recent 25 messages from the database
     const messages = await messagesCollection.find({ roomName: roomName })
@@ -1918,27 +1935,41 @@ app.post('/admin/initialize-user-status', async (req, res) => {
 
 // Route to create groups
 app.post('/create-group', async (req, res) => {
-  const { groupName, groupDescription, invitedUsers } = req.body;
+  const { groupName, groupDescription, invitedUsers, createdBy } = req.body;
   console.log("Group data:", req.body);
 
-  if (!groupName || invitedUsers.length === 0) {
-    return res.status(400).json({ message: 'Group name and invited users are required.' });
+  if (!groupName || !createdBy || invitedUsers.length === 0) {
+    return res.status(400).json({ success: false, message: 'Group name, creator, and invited users are required.' });
   }
   
   try {
+    // Add creator to invited users if not already included
+    if (!invitedUsers.includes(createdBy)) {
+      invitedUsers.push(createdBy);
+    }
+
+    const urlSafeGroupName = groupName.trim().replace(/\s+/g, '-');
+    
     // Logic for creating the group and saving it to the database
     const newGroup = await groupCollection.insertOne({
-      groupName,
+      groupName:  groupName.trim(),
+      urlSafeGroupName,
       groupDescription,
       invitedUsers,
+      createdBy,
       createdAt: new Date(),
     });
 
-    // Return the group ID
-    res.status(201).json({ groupId: newGroup.insertedId });
+    // Return both group ID and name
+    res.status(201).json({
+      success: true, 
+      groupId: newGroup.insertedId,
+      groupName: urlSafeGroupName,
+      displayName: groupName.trim()
+     });
   } catch (error) {
     console.error('Error creating group:', error);
-    res.status(500).json({ message: 'An error occurred while creating the group.' });
+    res.status(500).json({ success: false, message: 'An error occurred while creating the group.' });
   }
 
 });

@@ -4,6 +4,7 @@
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
   text-decoration: none;
+  text-decoration: none;
 }
 
 :root {
@@ -180,9 +181,14 @@ header .image-text .profession {
 
 .sidebar li a:hover,
 #mobileNavbarBottom li a:hover {
+.sidebar li a:hover,
+#mobileNavbarBottom li a:hover {
   background-color: var(--primary-color);
 }
 .sidebar li a:hover .icon,
+.sidebar li a:hover .text,
+#mobileNavbarBottom li a:hover .icon,
+#mobileNavbarBottom li a:hover span {
 .sidebar li a:hover .text,
 #mobileNavbarBottom li a:hover .icon,
 #mobileNavbarBottom li a:hover span {
@@ -370,6 +376,139 @@ header .image-text .profession {
   padding: 5px;
 }
 
+#mobileNavbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  background-color: var(--sidebar-color);
+  display: none;
+}
+
+.bx-user {
+  font-size: 25px;
+  color: white;
+  border-radius: 50%;
+  border: 2px solid white;
+  padding: 5px;
+}
+
+#mobileNavbar .navbar {
+  position: absolute;
+  top: 100%;
+  left: calc(100% - 250px);
+  right: 0;
+  background: #e7e5e5;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+.logo {
+  height: 55px;
+}
+
+#mobileNavbar .navbar ul {
+  list-style: none;
+}
+
+#mobileNavbar .navbar ul li {
+  position: relative;
+  float: left;
+  width: 100%;
+}
+
+#mobileNavbar .navbar ul li a {
+  font-size: 20px;
+  padding: 20px;
+  display: block;
+  color: #333;
+  font-weight: bolder;
+  display: flex;
+}
+
+#mobileNavbar .navbar ul li a i {
+  padding: 0 10px;
+}
+
+#mobileNavbar .navbar ul li a p {
+  white-space: nowrap;
+  overflow: hidden;
+  margin: auto;
+  text-overflow: ellipsis;
+  margin-left: 15px;
+}
+
+#mobileNavbar .navbar ul li a span {
+  margin-left: 15px;
+}
+
+#mobileNavbar .navbar ul li a:hover {
+  background: #d2ebe6;
+}
+
+#menu_bar {
+  display: none;
+}
+
+#mobileNavbar label {
+  font-size: 20px;
+  color: #333;
+  cursor: pointer;
+  display: initial;
+  width: fit-content;
+}
+
+#menu_bar:checked ~ .navbar {
+  display: initial;
+}
+
+#mobileNavbarBottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  align-items: center;
+  z-index: 10;
+  background-color: var(--sidebar-color);
+  display: none;
+}
+
+#mobileNavbarBottom .navbar ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+}
+
+#mobileNavbarBottom .navbar ul li {
+  position: relative;
+  float: left;
+  width: 100px;
+}
+
+#mobileNavbarBottom .navbar ul li a {
+  font-size: 17px;
+  padding: 5px;
+  display: flex;
+  color: white;
+  font-weight: bolder;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px;
+  border-radius: 6px;
+}
+
+#mobileNavbarBottom .navbar ul li a i {
+  font-size: 25px;
+  padding: 5px;
+}
+
 .home {
   position: absolute;
   top: 0;
@@ -409,6 +548,7 @@ header .image-text .profession {
   max-width: 950px;
   margin: 1em auto;
   margin-top: 30px;
+  margin-top: 30px;
 }
 
 .grid-container > div {
@@ -423,6 +563,8 @@ header .image-text .profession {
 #Bio {
   grid-column: span 2;
   min-height: 150px;
+  padding: 20px;
+  margin-bottom: 70px;
   padding: 20px;
   margin-bottom: 70px;
 }
@@ -508,6 +650,7 @@ header .image-text .profession {
   width: 235px;
   margin-left: 20px;
   margin-right: auto;
+  margin-right: auto;
 }
 .favorite_list div img {
   height: 45px;
@@ -533,11 +676,15 @@ header .image-text .profession {
 .favoriteList::-webkit-scrollbar,
 .contactList::-webkit-scrollbar,
 .home::-webkit-scrollbar {
+.contactList::-webkit-scrollbar,
+.home::-webkit-scrollbar {
   width: 5px;
   border-radius: 50%;
 }
 
 .favoriteList::-webkit-scrollbar-track,
+.contactList::-webkit-scrollbar-track,
+.home::-webkit-scrollbar-track {
 .contactList::-webkit-scrollbar-track,
 .home::-webkit-scrollbar-track {
   background: #f0f0f0;
@@ -547,6 +694,8 @@ header .image-text .profession {
 .favoriteList::-webkit-scrollbar-thumb,
 .contactList::-webkit-scrollbar-thumb,
 .home::-webkit-scrollbar-thumb {
+.contactList::-webkit-scrollbar-thumb,
+.home::-webkit-scrollbar-thumb {
   background-color: #8ca39f;
   border-radius: 20px;
 }
@@ -554,11 +703,15 @@ header .image-text .profession {
 .favoriteList::-webkit-scrollbar-thumb:hover,
 .contactList::-webkit-scrollbar-thumb:hover,
 .home::-webkit-scrollbar-thumb:hover {
+.contactList::-webkit-scrollbar-thumb:hover,
+.home::-webkit-scrollbar-thumb:hover {
   background-color: #226c5c;
 }
 
 /* Below is for profile page */
 #bio {
+  width: 100%;
+  max-width: 880px;
   width: 100%;
   max-width: 880px;
   min-height: 160px;
@@ -595,6 +748,8 @@ header .image-text .profession {
   transform: translateY(-45px);
   float: right;
   margin-right: 30px;
+  float: right;
+  margin-right: 30px;
 }
 #emoji-button:hover {
   color: #ff5e00;
@@ -610,11 +765,17 @@ header .image-text .profession {
   width: 92px;
   margin: -20px 10px 0;
   float: right;
+  margin: -20px 10px 0;
+  float: right;
 }
 
 .profile-form {
   margin: 0 auto;
   text-align: left;
+  width: fit-content;
+}
+.profile-form p {
+  width: fit-content;
   width: fit-content;
 }
 .profile-form p {
@@ -627,6 +788,7 @@ label {
   text-align: right;
   margin-right: 10px;
   font-weight: bold;
+  width: 150px;
   width: 150px;
 }
 
@@ -659,6 +821,7 @@ h5 {
 
 #deleteAccountBtn {
   margin: 10px 20px 0 auto;
+  margin: 10px 20px 0 auto;
   background-color: red;
   width: 111px;
 }
@@ -688,6 +851,7 @@ h5 {
   gap: 10px;
   margin-bottom: 10px;
   justify-content: flex-end;
+  justify-content: flex-end;
 }
 
 #bio-message {
@@ -700,7 +864,9 @@ h5 {
   background-color: #f4a62a;
   position: relative;
   top: -20px;
+  top: -20px;
   width: 149px;
+  float: right;
   float: right;
 }
 
@@ -736,6 +902,7 @@ h5 {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 .modal-content {
   background-color: white;
@@ -747,6 +914,7 @@ h5 {
 }
 .modal-content h3 {
   margin: 2px 0 10px;
+  font-size: 24px;
   font-size: 24px;
 }
 .modal-content p {
@@ -770,6 +938,7 @@ h5 {
 .modal-content button {
   width: 40%;
   margin-top: 0;
+  margin-top: 0;
   background-color: red;
   padding: 7.5px;
   margin-left: 8px;
@@ -788,6 +957,15 @@ h5 {
   color: black;
   text-decoration: none;
   cursor: pointer;
+}
+
+#profilePictureModal .modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  width: 350px;
 }
 
 #profilePictureModal .modal-content {
@@ -819,17 +997,20 @@ h5 {
 }
 
 #connected-accounts-form p {
+#connected-accounts-form p {
   margin-right: 0px;
   text-align: right;
 }
 
 #connected-accounts-form label {
   width: 90px;
+  width: 90px;
   display: inline-block;
   font-size: 16px;
 }
 
 #connected-accounts-form input {
+  width: 480px;
   width: 480px;
   height: 30px;
   padding: 5px;
@@ -841,6 +1022,7 @@ h5 {
 
 #edit-accounts-btn {
   width: 155px;
+  width: 155px;
   background-color: #f4a62a;
   margin-top: 0;
 }
@@ -848,10 +1030,12 @@ h5 {
 #save-accounts-btn {
   background-color: var(--sidebar-color);
   width: 140px;
+  width: 140px;
 }
 
 #cancel-accounts-btn {
   background-color: red;
+  width: 80px;
   width: 80px;
 }
 
@@ -861,6 +1045,7 @@ h5 {
   text-align: center;
 }
 
+.iconImg {
 .iconImg {
   aspect-ratio: 1 / 1;
   height: 30px;
@@ -907,6 +1092,7 @@ h5 {
 .profile-container {
   position: relative;
   display: inline-block;
+  display: inline-block;
 }
 
 .pencil-icon {
@@ -914,6 +1100,11 @@ h5 {
   top: 47%;
   left: 49.8%;
   transform: translate(-50%, -50%);
+  font-size: 31px;
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: rgba(0, 0, 0, 0.3);
   font-size: 31px;
   color: #ffffff;
   opacity: 0;
