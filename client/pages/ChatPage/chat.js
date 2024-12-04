@@ -10,15 +10,14 @@ const body = document.querySelector("body"),
   sidebar = body.querySelector("nav"),
   sidebar2 = document.querySelector(".sidebar2"),
   toggle = body.querySelector(".toggle"),
-  contactsBtn = document.querySelector(".contact-btn"),
-  contactIcon = document.querySelector(".bxs-contact"),
-  contactText = document.getElementById("contactText");
-favoriteBtn = document.querySelector(".favorite-btn");
-(favoriteIcon = document.querySelector(".bx-heart")),
-  (favoriteText = document.getElementById("favoriteText"));
-
-const contactsList = document.getElementsByClassName("contactList")[0];
-const favoriteList = document.getElementsByClassName("favoriteList")[0];
+  contactsBtn = document.querySelectorAll(".contact-btn"),
+  contactIcon = document.querySelectorAll(".bxs-contact"),
+  contactText = document.querySelectorAll(".contactText"),
+  favoriteBtn = document.querySelectorAll(".favorite-btn"),
+  favoriteIcon = document.querySelectorAll(".bx-heart"),
+  favoriteText = document.querySelectorAll(".favoriteText"),
+  contactsList = document.getElementsByClassName("contactList")[0],
+  favoriteList = document.getElementsByClassName("favoriteList")[0];
 
 let isReply = false; // Check if the user click the reply button
 
@@ -27,105 +26,138 @@ toggle.addEventListener("click", () => {
   adjustSidebar2();
 });
 
-contactsBtn.addEventListener("click", () => {
-  document.getElementById("title").textContent = "CONTACT";
-  if (
-    sidebar2.classList.contains("open") &
-    (contactsList.style.display === "block")
-  ) {
-    contactsList.style.display = "none";
-    sidebar2.classList.toggle("open");
-    contactsBtn.style.backgroundColor = "";
-    contactIcon.style.color = "";
-    contactText.style.color = "";
-    adjustSidebar2(); // Adjust position of content
-  } else if (
-    sidebar2.classList.contains("open") &
-    (favoriteList.style.display === "block")
-  ) {
-    contactsList.style.display = "block";
-    favoriteList.style.display = "none";
-    contactsBtn.style.backgroundColor = "var(--text-color)";
-    contactIcon.style.color = "var(--sidebar-color)";
-    contactText.style.color = "var(--sidebar-color)";
-    favoriteBtn.style.backgroundColor = "";
-    favoriteIcon.style.color = "";
-    favoriteText.style.color = "";
-    adjustSidebar2();
-  } else {
-    sidebar2.classList.toggle("open");
-    contactsList.style.display = "block";
-    favoriteList.style.display = "none";
-    contactsBtn.style.backgroundColor = "var(--text-color)";
-    contactIcon.style.color = "var(--sidebar-color)";
-    contactText.style.color = "var(--sidebar-color)";
-    adjustSidebar2();
-  }
+contactsBtn.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById("title").textContent = "CONTACT";
+    if (
+      sidebar2.classList.contains("open") &
+      (contactsList.style.display === "block")
+    ) {
+      searchInput.style.display = 'none';
+      searchInput.value = '';
+      contactsList.style.display = "none";
+      sidebar2.classList.toggle("open");
+      contactsBtn.forEach((button) => {
+        button.style.backgroundColor = "";
+      });
+      contactIcon.forEach((icon) => {
+        icon.style.color = "";
+      });
+      contactText.forEach((text) => {
+        text.style.color = "";
+      });
+      adjustSidebar2(); // Adjust position of content
+    } else if (
+      sidebar2.classList.contains("open") &
+      (favoriteList.style.display === "block")
+    ) {
+      searchInput.style.display = 'block';
+      searchInput.value = '';
+      contactsList.style.display = "block";
+      favoriteList.style.display = "none";
+      contactsBtn.forEach((button) => {
+        button.style.backgroundColor = "var(--text-color)";
+      });
+      contactIcon.forEach((icon) => {
+        icon.style.color = "var(--sidebar-color)";
+      });
+      contactText.forEach((text) => {
+        text.style.color = "var(--sidebar-color)";
+      });
+      favoriteBtn.forEach((button) => {
+        button.style.backgroundColor = "";
+      });
+      favoriteIcon.forEach((icon) => {
+        icon.style.color = "";
+      });
+      favoriteText.forEach((text) => {
+        text.style.color = "";
+      });
+      adjustSidebar2();
+    } else {
+      sidebar2.classList.toggle("open");
+      contactsList.style.display = "block";
+      favoriteList.style.display = "none";
+      searchInput.style.display = 'block';
+      searchInput.value = '';
+      contactsBtn.forEach((button) => {
+        button.style.backgroundColor = "var(--text-color)";
+      });
+      contactIcon.forEach((icon) => {
+        icon.style.color = "var(--sidebar-color)";
+      });
+      contactText.forEach((text) => {
+        text.style.color = "var(--sidebar-color)";
+      });
+      adjustSidebar2();
+    }
 
-  // Fetch and display the contacts list
-  fetch(`/get-contacts?username=${username}`)
-    .then((response) => response.json())
-    .then((data) => {
-      contactsList.innerHTML = ""; // Clear the previous list
+    // Fetch and display the contacts list
+    fetch(`/get-contacts?username=${username}`)
+      .then((response) => response.json())
+      .then((data) => {
+        contactsList.innerHTML = ""; // Clear the previous list
 
-      if (data.contacts.length === 0) {
-        // Display a message if contacts list is empty
-        var emptyMessage = document.createElement("li");
-        emptyMessage.textContent = "Your contacts list is empty.";
-        emptyMessage.style.fontStyle = "italic";
-        contactsList.appendChild(emptyMessage);
-      } else {
-        data.contacts.forEach(function (contact) {
-          var div1 = document.createElement("div");
-          var profileImg = document.createElement("img");
-          profileImg.src = contact.profilePic || "/uploads/default-avatar.png";
-          var name = document.createElement("p");
-          name.textContent = contact.username;
-          div1.appendChild(profileImg);
-          div1.appendChild(name);
+        if (data.contacts.length === 0) {
+          // Display a message if contacts list is empty
+          var emptyMessage = document.createElement("li");
+          emptyMessage.textContent = "Your contacts list is empty.";
+          emptyMessage.style.fontStyle = "italic";
+          contactsList.appendChild(emptyMessage);
+        } else {
+          data.contacts.forEach(function (contact) {
+            var div1 = document.createElement("div");
+            var profileImg = document.createElement("img");
+            profileImg.src =
+              contact.profilePic || "/uploads/default-avatar.png";
+            var name = document.createElement("p");
+            name.textContent = contact.username;
+            div1.appendChild(profileImg);
+            div1.appendChild(name);
 
-          var div2 = document.createElement("div");
-          div2.style.marginRight = "9px";
-          var favoriteImg = document.createElement("img");
-          favoriteImg.src = contact.isFavorite
-            ? "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990835/base/kislo9bww6jfnvoagsgz.jpg"
-            : "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990834/base/g9e7wjf9lc2gnqpizlsd.jpg";
-          var deleteBtn = document.createElement("i");
-          deleteBtn.className = "bx bxs-x-circle";
-          deleteBtn.addEventListener("click", function () {
-            removeContact(contact.username);
+            var div2 = document.createElement("div");
+            div2.style.marginRight = "9px";
+            var favoriteImg = document.createElement("img");
+            favoriteImg.src = contact.isFavorite
+              ? "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990835/base/kislo9bww6jfnvoagsgz.jpg"
+              : "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990834/base/g9e7wjf9lc2gnqpizlsd.jpg";
+            var deleteBtn = document.createElement("i");
+            deleteBtn.className = "bx bxs-x-circle";
+            deleteBtn.addEventListener("click", function () {
+              removeContact(contact.username);
+            });
+            div2.appendChild(favoriteImg);
+            div2.appendChild(deleteBtn);
+
+            var div3 = document.createElement("div");
+            div3.className = "contact_list";
+            div3.appendChild(div1);
+            div3.appendChild(div2);
+
+            var li = document.createElement("li");
+            li.style.marginTop = "30px";
+
+            li.appendChild(div3);
+
+            // Handle adding/removing from favorites
+            favoriteImg.addEventListener("click", function () {
+              if (contact.isFavorite) {
+                removeFavorite(contact.username);
+              } else {
+                addFavorite(contact.username);
+              }
+            });
+
+            contactsList.appendChild(li);
           });
-          div2.appendChild(favoriteImg);
-          div2.appendChild(deleteBtn);
-
-          var div3 = document.createElement("div");
-          div3.className = "contact_list";
-          div3.appendChild(div1);
-          div3.appendChild(div2);
-
-          var li = document.createElement("li");
-          li.style.marginTop = "30px";
-
-          li.appendChild(div3);
-
-          // Handle adding/removing from favorites
-          favoriteImg.addEventListener("click", function () {
-            if (contact.isFavorite) {
-              removeFavorite(contact.username);
-            } else {
-              addFavorite(contact.username);
-            }
-          });
-
-          contactsList.appendChild(li);
-        });
-      }
-    })
-    .catch((error) => console.error("Error fetching contacts:", error));
+        }
+      })
+      .catch((error) => console.error("Error fetching contacts:", error));
+  });
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  contactsBtn.click();
+  contactsBtn[1].click();
 });
 
 function addFavorite(contactUsername) {
@@ -143,9 +175,10 @@ function addFavorite(contactUsername) {
     .then((data) => {
       if (data.success) {
         alert(`${contactUsername} has been added to your favorites.`);
-        contactsBtn.click(); // Refresh contacts
-        favoriteBtn.click(); // Open favorites
-        favoriteBtn.click(); // Close favorites to trigger refresh
+        contactsBtn.forEach((button) => {
+          button.click(); // Refresh contacts
+        });
+      
       } else {
         alert("Failed to add to favorites.");
       }
@@ -168,9 +201,9 @@ function removeFavorite(contactUsername) {
     .then((data) => {
       if (data.success) {
         alert(`${contactUsername} has been removed from your favorites.`);
-        contactsBtn.click(); // Refresh contacts
-        favoriteBtn.click(); // Open favorites
-        favoriteBtn.click(); // Close favorites to trigger refresh
+        favoriteBtn.forEach((button) => {
+          button.click(); // Refresh contacts
+        });
       } else {
         alert("Failed to remove from favorites.");
       }
@@ -202,93 +235,126 @@ function removeContact(contactUsername) {
     .catch((error) => console.error("Error removing contact:", error));
 }
 
-favoriteBtn.addEventListener("click", () => {
-  document.getElementById("title").textContent = "FAVORITE";
-  if (
-    sidebar2.classList.contains("open") &
-    (favoriteList.style.display === "block")
-  ) {
-    favoriteList.style.display = "none";
-    sidebar2.classList.toggle("open");
-    favoriteBtn.style.backgroundColor = "";
-    favoriteIcon.style.color = "";
-    favoriteText.style.color = "";
-    adjustSidebar2(); // Adjust position of content
-  } else if (
-    sidebar2.classList.contains("open") &
-    (contactsList.style.display === "block")
-  ) {
-    contactsList.style.display = "none";
-    favoriteList.style.display = "block";
-    favoriteBtn.style.backgroundColor = "var(--text-color)";
-    favoriteIcon.style.color = "var(--sidebar-color)";
-    favoriteText.style.color = "var(--sidebar-color";
-    contactsBtn.style.backgroundColor = "";
-    contactIcon.style.color = "";
-    contactText.style.color = "";
-    adjustSidebar2();
-  } else {
-    sidebar2.classList.toggle("open");
-    contactsList.style.display = "none";
-    favoriteList.style.display = "block";
-    favoriteBtn.style.backgroundColor = "var(--text-color)";
-    favoriteIcon.style.color = "var(--sidebar-color)";
-    favoriteText.style.color = "var(--sidebar-color";
-    adjustSidebar2();
-  }
+favoriteBtn.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById("title").textContent = "FAVORITE";
+    if (
+      sidebar2.classList.contains("open") &
+      (favoriteList.style.display === "block")
+    ) {
+      searchInput.style.display = 'none';
+      searchInput.value = '';
+      favoriteList.style.display = "none";
+      sidebar2.classList.toggle("open");
+      favoriteBtn.forEach((button) => {
+        button.style.backgroundColor = "";
+      });
+      favoriteIcon.forEach((icon) => {
+        icon.style.color = "";
+      });
+      favoriteText.forEach((text) => {
+        text.style.color = "";
+      });
+      adjustSidebar2(); // Adjust position of content
+    } else if (
+      sidebar2.classList.contains("open") &
+      (contactsList.style.display === "block")
+    ) {
+      searchInput.style.display = 'none';
+      searchInput.value = '';
+      contactsList.style.display = "none";
+      favoriteList.style.display = "block";
+      favoriteBtn.forEach((button) => {
+        button.style.backgroundColor = "var(--text-color)";
+      });
+      favoriteIcon.forEach((icon) => {
+        icon.style.color = "var(--sidebar-color)";
+      });
+      favoriteText.forEach((text) => {
+        text.style.color = "var(--sidebar-color)";
+      });
+      contactsBtn.forEach((button) => {
+        button.style.backgroundColor = "";
+      });
+      contactIcon.forEach((icon) => {
+        icon.style.color = "";
+      });
+      contactText.forEach((text) => {
+        text.style.color = "";
+      });
+      adjustSidebar2();
+    } else {
+      sidebar2.classList.toggle("open");
+      contactsList.style.display = "none";
+      favoriteList.style.display = "block";
+      searchInput.style.display = 'none';
+      searchInput.value = '';
+      favoriteBtn.forEach((button) => {
+        button.style.backgroundColor = "var(--text-color)";
+      });
+      favoriteIcon.forEach((icon) => {
+        icon.style.color = "var(--sidebar-color)";
+      });
+      favoriteText.forEach((text) => {
+        text.style.color = "var(--sidebar-color)";
+      });
+      adjustSidebar2();
+    }
 
-  // Fetch and display the favorites list
-  fetch(`/get-contacts?username=${username}`)
-    .then((response) => response.json())
-    .then((data) => {
-      favoriteList.innerHTML = ""; // Clear the previous list
+    // Fetch and display the favorites list
+    fetch(`/get-contacts?username=${username}`)
+      .then((response) => response.json())
+      .then((data) => {
+        favoriteList.innerHTML = ""; // Clear the previous list
 
-      // Filter contacts to get favorites
-      var favoriteContacts = data.contacts.filter(
-        (contact) => contact.isFavorite
-      );
+        // Filter contacts to get favorites
+        var favoriteContacts = data.contacts.filter(
+          (contact) => contact.isFavorite
+        );
 
-      if (favoriteContacts.length === 0) {
-        // Display a message if favorites list is empty
-        var emptyMessage = document.createElement("li");
-        emptyMessage.textContent = "Your favorites list is empty.";
-        emptyMessage.style.fontStyle = "italic";
-        favoriteList.appendChild(emptyMessage);
-      } else {
-        favoriteContacts.forEach(function (contact) {
-          var div1 = document.createElement("div");
-          div1.style.display = "flex";
-          var profileImg = document.createElement("img");
-          profileImg.src = contact.profilePic || "/uploads/default-avatar.png";
-          var name = document.createElement("p");
-          name.textContent = contact.username;
-          div1.appendChild(profileImg);
-          div1.appendChild(name);
+        if (favoriteContacts.length === 0) {
+          // Display a message if favorites list is empty
+          var emptyMessage = document.createElement("li");
+          emptyMessage.textContent = "Your favorites list is empty.";
+          emptyMessage.style.fontStyle = "italic";
+          favoriteList.appendChild(emptyMessage);
+        } else {
+          favoriteContacts.forEach(function (contact) {
+            var div1 = document.createElement("div");
+            div1.style.display = "flex";
+            var profileImg = document.createElement("img");
+            profileImg.src =
+              contact.profilePic || "/uploads/default-avatar.png";
+            var name = document.createElement("p");
+            name.textContent = contact.username;
+            div1.appendChild(profileImg);
+            div1.appendChild(name);
 
-          var unfavoriteBtn = document.createElement("img");
-          unfavoriteBtn.src =
-            "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990835/base/kislo9bww6jfnvoagsgz.jpg";
-          unfavoriteBtn.style.cursor = "pointer";
-          unfavoriteBtn.addEventListener("click", function () {
-            removeFavorite(contact.username);
+            var unfavoriteBtn = document.createElement("img");
+            unfavoriteBtn.src =
+              "https://res.cloudinary.com/dxseoqcpb/image/upload/v1728990835/base/kislo9bww6jfnvoagsgz.jpg";
+            unfavoriteBtn.style.cursor = "pointer";
+            unfavoriteBtn.addEventListener("click", function () {
+              removeFavorite(contact.username);
+            });
+
+            var div2 = document.createElement("div");
+            div2.className = "favorite_list";
+            div2.appendChild(unfavoriteBtn);
+            div2.appendChild(div1);
+
+            var li = document.createElement("li");
+            li.appendChild(div2);
+            li.style.marginTop = "30px";
+
+            favoriteList.appendChild(li);
           });
-
-          var div2 = document.createElement("div");
-          div2.className = "favorite_list";
-          div2.appendChild(unfavoriteBtn);
-          div2.appendChild(div1);
-
-          var li = document.createElement("li");
-          li.appendChild(div2);
-          li.style.marginTop = "30px";
-
-          favoriteList.appendChild(li);
-        });
-      }
-    })
-    .catch((error) =>
-      console.error("Error fetching favorite contacts:", error)
-    );
+        }
+      })
+      .catch((error) =>
+        console.error("Error fetching favorite contacts:", error)
+      );
+  });
 });
 
 function adjustSidebar2() {
@@ -318,6 +384,7 @@ function adjustSidebar2() {
       document.querySelector(".home").style.width = "calc(100% - 250px)";
     }
   }
+  checkHomeWidth();
 }
 
 // Load the existing profile picture
@@ -327,14 +394,19 @@ fetch(`/get-user-profile?username=${username}`)
   .then((data) => {
     if (data.profilePic) {
       profilePicElement[0].src = data.profilePic;
+      profilePicElement[1].src = data.profilePic;
     } else {
       profilePicElement[0].src = "/uploads/default-avatar.png";
+      profilePicElement[1].src = "/uploads/default-avatar.png";
     }
 
     // Display the user's full name
     document.getElementsByClassName(
       "full-name"
     )[0].textContent = `${data.firstName} ${data.lastName}`;
+    document.getElementsByClassName(
+      "full-name"
+    )[1].textContent = `${data.firstName} ${data.lastName}`;
   });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -365,11 +437,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   try {
     const roomNameElement = document.getElementById('roomName');
+    const roomNameMobileElement = document.getElementById('roomNameMobile');
     if (groupName) {
       // For group chats, use the decoded group name
       roomNameElement.textContent = decodeURIComponent(groupName).replace(/-/g, ' ');
+      roomNameMobileElement.textContent = decodeURIComponent(groupName).replace(/-/g, ' ');
     } else if (roomName) {
       roomNameElement.textContent = roomName.charAt(0).toUpperCase() + roomName.slice(1) + " Room";
+      roomNameMobileElement.textContent = roomName.charAt(0).toUpperCase() + roomName.slice(1) + " Room";
     }
     //document.getElementById('roomName').textContent = roomName.charAt(0).toUpperCase() + roomName.slice(1) + " Room";
   } catch (error) {
@@ -1377,6 +1452,88 @@ function viewUserProfile(contactUsername) {
     .catch(error => console.error('Error fetching profile:', error));
 }
 
+// Search functionality for finding users
+var searchInput = document.getElementById('search-input');
+searchInput.addEventListener('input', function() {
+  var query = searchInput.value.trim();
+
+  // Check if the input is a phone number
+  var isPhoneNumber = /^[0-9+()-\s]{7,15}$/.test(query);
+
+  if (isPhoneNumber) {
+    // If it's a phone number and length is sufficient, perform search
+    // Only search when the length matches your phone number format
+    searchUsers(query, 'phoneNumber');
+  } else if (query.length > 0) {
+    // Assume it's a username search
+    searchUsers(query, 'username');
+  } else {
+    document.getElementById('search-results').innerHTML = '';
+  }
+});
+
+  // Show the search-results when input is clicked
+  searchInput.addEventListener('focus', () => {
+    document.getElementById('search-results').style.display = 'block';
+  });
+
+  // Hide the search-results when clicking outside the search container
+  document.addEventListener('click', (event) => {
+      const isClickInside = document.getElementById('search-container').contains(event.target);
+      if (!isClickInside) {
+        document.getElementById('search-results').style.display = 'none';
+      }
+  });
+
+function searchUsers(query, type) {
+  fetch(`/search-users?query=${encodeURIComponent(query)}&type=${type}`)
+    .then(response => response.json())
+    .then(data => {
+      var searchResults = document.getElementById('search-results');
+      searchResults.innerHTML = '';
+
+      if (data.length > 0) {
+        data.forEach(function(user) {
+          var li = document.createElement('li');
+          li.textContent = user.username;
+          
+          // Add event listener to profile on click
+          li.addEventListener('click', function() {
+            viewUserProfile(user.username);
+          });
+          
+          // Add event listener to add friend button
+          var addFriendBtn = document.getElementById('addFriendBtn');
+          addFriendBtn.onclick = function() { addContact(user.username); };
+
+          searchResults.appendChild(li);
+        });
+      } else {
+        searchResults.innerHTML = '<li>No users found</li>';
+      }
+    })
+    .catch(error => console.error('Error searching users:', error));
+}
+
+// Add New Friend
+function addContact(toUsername) {
+  fetch('/send-friend-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fromUser: username, toUser: toUsername })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Friend request sent!');
+      profileClose.onclick();
+    } else {
+      alert('Failed to send friend request.');
+    }
+  })
+  .catch(error => console.error('Error sending friend request:', error));
+}
+
 // Close the profile modal when clicking x
 var profileModal = document.getElementById('profileModal');
 var profileClose = document.getElementsByClassName('closeBtn')[0];
@@ -1392,3 +1549,43 @@ window.onclick = function(event) {
     document.getElementById('social_media').innerHTML = "";
   }
 };
+
+function checkHomeWidth() {
+  const homeElement = document.querySelector(".home");
+
+  if (window.innerWidth <= 1000) {
+    homeElement.style.width = "100%";
+    document.getElementsByClassName("sidebar2")[0].style.left = "0";
+  } else {
+    if (sidebar.classList.contains("close")) {
+      sidebar2.style.left = "88px";
+      document.querySelector(".home").style.left = sidebar2.classList.contains(
+        "open"
+      )
+        ? "388px"
+        : "88px";
+      if (sidebar2.classList.contains("open")) {
+        document.querySelector(".home").style.width = "calc(100% - 390px)";
+      } else {
+        document.querySelector(".home").style.width = "calc(100% - 88px)";
+      }
+    } else {
+      sidebar2.style.left = "250px";
+      document.querySelector(".home").style.left = sidebar2.classList.contains(
+        "open"
+      )
+        ? "550px"
+        : "250px";
+      if (sidebar2.classList.contains("open")) {
+        document.querySelector(".home").style.width = "calc(100% - 550px)";
+        document.querySelector(".home").style.overflowX = "hidden";
+      } else {
+        document.querySelector(".home").style.width = "calc(100% - 250px)";
+      }
+    }
+  }
+}
+
+// Run on load and on resize
+window.addEventListener("resize", checkHomeWidth);
+window.addEventListener("load", checkHomeWidth);

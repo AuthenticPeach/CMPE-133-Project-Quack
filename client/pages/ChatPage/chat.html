@@ -15,6 +15,74 @@
     />
   </head>
   <body>
+    <!-- Navbar for mobile version -->
+    <header id="mobileNavbar">
+      <a href="#"
+        ><img
+          src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png"
+          class="logo"
+          alt="logo"
+      /></a>
+
+      <h2 id="roomNameMobile"></h2>
+
+      <input type="checkbox" id="menu_bar" />
+      <label for="menu_bar"><i class="bx bx-user"></i></label>
+
+      <div class="navbar">
+        <ul>
+          <li>
+            <a href="/profile">
+              <img
+                src=""
+                alt=""
+                class="profile-pic"
+                style="width: 40px; height: 40px; object-fit: cover"
+              />
+              <p class="full-name"></p>
+            </a>
+          </li>
+          <li>
+            <a href="/signin" onclick="localStorage.removeItem('username')">
+              <i class="bx bx-log-out icon"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <header id="mobileNavbarBottom">
+      <div class="navbar">
+        <ul>
+          <li>
+            <a href="/user-dashboard">
+              <i class="bx bx-home-alt icon"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a href="/messages">
+              <i class="bx bx-message-rounded icon"></i>
+              <span>Inbox</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="contact-btn">
+              <i class="bx bxs-contact icon"></i>
+              <span class="contactText">Contact</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="favorite-btn">
+              <i class="bx bx-heart icon"></i>
+              <span class="favoriteText">Favorites</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </header>
+
     <nav class="sidebar close">
       <header>
         <div class="image-text">
@@ -53,14 +121,14 @@
             <li class="nav-link">
               <a href="#" class="contact-btn">
                 <i class="bx bxs-contact icon"></i>
-                <span class="text nav-text" id="contactText">Contact</span>
+                <span class="text nav-text contactText">Contact</span>
               </a>
             </li>
 
             <li class="nav-link">
               <a href="#" class="favorite-btn">
                 <i class="bx bx-heart icon"></i>
-                <span class="text nav-text" id="favoriteText">Favorites</span>
+                <span class="text nav-text favoriteText">Favorites</span>
               </a>
             </li>
           </ul>
@@ -92,6 +160,10 @@
     <!-- New Sidebar (Hidden Initially) -->
     <nav class="sidebar2">
       <h1 id="title">CONTACT</h1>
+      <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search users">
+        <ul id="search-results"></ul>
+      </div>
       <ul
         class="contactList"
         style="
