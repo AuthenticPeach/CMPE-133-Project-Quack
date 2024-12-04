@@ -90,6 +90,7 @@ function openSendMessageModal(toUsername) {
   var modalUsername = document.getElementById('modal-username');
   var addFriendBtn = document.getElementById('add-friend-btn');
   var startChatBtn = document.getElementById('start-chat-btn');
+  var buttonContainer = document.getElementById('button-container'); // Wrap both buttons in a container
 
   modalUsername.textContent = toUsername;
 
@@ -98,11 +99,13 @@ function openSendMessageModal(toUsername) {
     .then(response => response.json())
     .then(data => {
       if (data.isFriend) {
-        // Hide the Add Friend button if already friends
+        // Hide the Add Friend button and center Start Chat button
         addFriendBtn.style.display = 'none';
+        startChatBtn.style.margin = '0 auto'; // Center Start Chat button
       } else {
-        // Show the Add Friend button if not friends
-        addFriendBtn.style.display = 'block';
+        // Show the Add Friend button and align both buttons properly
+        addFriendBtn.style.display = 'inline-block';
+        startChatBtn.style.margin = '0'; // Reset margin to default
         addFriendBtn.onclick = function() { addContact(toUsername); };
       }
     })
@@ -120,6 +123,8 @@ function openSendMessageModal(toUsername) {
   // Display the modal
   document.getElementById('userModal').style.display = 'block';
 }
+
+
 
 
 function viewUserProfile(contactUsername) {
