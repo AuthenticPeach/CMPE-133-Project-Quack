@@ -309,6 +309,8 @@ contactsBtn.forEach((btn) => {
       sidebar2.classList.contains("open") &
       (contactsList.style.display === "block")
     ) {
+      searchInput.style.display = 'none';
+      searchInput.value = '';
       contactsList.style.display = "none";
       sidebar2.classList.toggle("open");
       contactsBtn.forEach((button) => {
@@ -325,6 +327,8 @@ contactsBtn.forEach((btn) => {
       sidebar2.classList.contains("open") &
       (favoriteList.style.display === "block")
     ) {
+      searchInput.style.display = 'block';
+      searchInput.value = '';
       contactsList.style.display = "block";
       favoriteList.style.display = "none";
       contactsBtn.forEach((button) => {
@@ -350,6 +354,8 @@ contactsBtn.forEach((btn) => {
       sidebar2.classList.toggle("open");
       contactsList.style.display = "block";
       favoriteList.style.display = "none";
+      searchInput.style.display = 'block';
+      searchInput.value = '';
       contactsBtn.forEach((button) => {
         button.style.backgroundColor = "var(--text-color)";
       });
@@ -650,9 +656,9 @@ function addFavorite(contactUsername) {
     .then((data) => {
       if (data.success) {
         alert(`${contactUsername} has been added to your favorites.`);
-        contactsBtn.click(); // Refresh contacts
-        favoriteBtn.click(); // Open favorites
-        favoriteBtn.click(); // Close favorites to trigger refresh
+        contactsBtn.forEach((button) => {
+          button.click(); // Refresh contacts
+        });
       } else {
         alert("Failed to add to favorites.");
       }
@@ -675,9 +681,9 @@ function removeFavorite(contactUsername) {
     .then((data) => {
       if (data.success) {
         alert(`${contactUsername} has been removed from your favorites.`);
-        contactsBtn.click(); // Refresh contacts
-        favoriteBtn.click(); // Open favorites
-        favoriteBtn.click(); // Close favorites to trigger refresh
+        favoriteBtn.forEach((button) => {
+          button.click(); // Refresh favorites 
+        });
       } else {
         alert("Failed to remove from favorites.");
       }
@@ -716,6 +722,8 @@ favoriteBtn.forEach((btn) => {
       sidebar2.classList.contains("open") &
       (favoriteList.style.display === "block")
     ) {
+      searchInput.style.display = 'none';
+      searchInput.value = '';
       favoriteList.style.display = "none";
       sidebar2.classList.toggle("open");
       favoriteBtn.forEach((button) => {
@@ -732,6 +740,8 @@ favoriteBtn.forEach((btn) => {
       sidebar2.classList.contains("open") &
       (contactsList.style.display === "block")
     ) {
+      searchInput.style.display = 'none';
+      searchInput.value = '';
       contactsList.style.display = "none";
       favoriteList.style.display = "block";
       favoriteBtn.forEach((button) => {
@@ -757,6 +767,8 @@ favoriteBtn.forEach((btn) => {
       sidebar2.classList.toggle("open");
       contactsList.style.display = "none";
       favoriteList.style.display = "block";
+      searchInput.style.display = 'none';
+      searchInput.value = '';
       favoriteBtn.forEach((button) => {
         button.style.backgroundColor = "var(--text-color)";
       });
@@ -1318,6 +1330,9 @@ window.onclick = function (event) {
     backgroundImg.value = "";
     saveSettingsBtn.style.display = "none";
     backgroundMessage.textContent = "";
+  } else if (event.target == profileModal) {
+    profileModal.style.display = 'none';
+    document.getElementById('social_media').innerHTML = "";
   }
 };
 
@@ -1349,6 +1364,244 @@ confirmDeleteBtn.addEventListener("click", function () {
       console.error("Error deleting account:", error);
     });
 });
+
+// Search functionality for finding users
+var searchInput = document.getElementById('search-input');
+searchInput.addEventListener('input', function() {
+  var query = searchInput.value.trim();
+
+  // Check if the input is a phone number
+  var isPhoneNumber = /^[0-9+()-\s]{7,15}$/.test(query);
+
+  if (isPhoneNumber) {
+    // If it's a phone number and length is sufficient, perform search
+    // Only search when the length matches your phone number format
+    searchUsers(query, 'phoneNumber');
+  } else if (query.length > 0) {
+    // Assume it's a username search
+    searchUsers(query, 'username');
+  } else {
+    document.getElementById('search-results').innerHTML = '';
+  }
+});
+
+  // Show the search-results when input is clicked
+  searchInput.addEventListener('focus', () => {
+    document.getElementById('search-results').style.display = 'block';
+  });
+
+  // Hide the search-results when clicking outside the search container
+  document.addEventListener('click', (event) => {
+      const isClickInside = document.getElementById('search-container').contains(event.target);
+      if (!isClickInside) {
+        document.getElementById('search-results').style.display = 'none';
+      }
+  });
+
+function searchUsers(query, type) {
+  fetch(`/search-users?query=${encodeURIComponent(query)}&type=${type}`)
+    .then(response => response.json())
+    .then(data => {
+      var searchResults = document.getElementById('search-results');
+      searchResults.innerHTML = '';
+
+      if (data.length > 0) {
+        data.forEach(function(user) {
+          var li = document.createElement('li');
+          li.textContent = user.username;
+          
+          // Add event listener to profile on click
+          li.addEventListener('click', function() {
+            viewUserProfile(user.username);
+          });
+          
+          // Add event listener to add friend button
+          var addFriendBtn = document.getElementById('addFriendBtn');
+          addFriendBtn.onclick = function() { addContact(user.username); };
+
+          searchResults.appendChild(li);
+        });
+      } else {
+        searchResults.innerHTML = '<li>No users found</li>';
+      }
+    })
+    .catch(error => console.error('Error searching users:', error));
+}
+
+// Add New Friend
+function addContact(toUsername) {
+  fetch('/send-friend-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fromUser: username, toUser: toUsername })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Friend request sent!');
+      profileClose.onclick();
+    } else {
+      alert('Failed to send friend request.');
+    }
+  })
+  .catch(error => console.error('Error sending friend request:', error));
+}
+
+// View User Profile
+function viewUserProfile(contactUsername) {
+  // Fetch the user's profile data
+  fetch(`/get-user-profile?username=${encodeURIComponent(contactUsername)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Populate the modal with the user's data
+        document.getElementById('profile-modal-username').textContent = `${data.firstName} ${data.lastName}`;
+        document.getElementById('profile-modal-pic').src = data.profilePic || '/uploads/default-avatar.png';
+        document.getElementById('profile-modal-bio').textContent = data.bio || 'No bio available.';
+
+        const social_media = document.getElementById('social_media');
+        if (data.connectedAccounts.youtube) {
+          // Create a link element
+          const youtubeLink = document.createElement('a');
+          youtubeLink.href = data.connectedAccounts.youtube; // Set the YouTube link
+          youtubeLink.target = "_blank"; // Open the link in a new tab
+      
+          // Create the image element
+          const iconImg = document.createElement('img');
+          iconImg.classList.add("iconImg");
+          iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMGMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnptNC40NDEgMTYuODkyYy0yLjEwMi4xNDQtNi43ODQuMTQ0LTguODgzIDAtMi4yNzYtLjE1Ni0yLjU0MS0xLjI3LTIuNTU4LTQuODkyLjAxNy0zLjYyOS4yODUtNC43MzYgMi41NTgtNC44OTIgMi4wOTktLjE0NCA2Ljc4Mi0uMTQ0IDguODgzIDAgMi4yNzcuMTU2IDIuNTQxIDEuMjcgMi41NTkgNC44OTItLjAxOCAzLjYyOS0uMjg1IDQuNzM2LTIuNTU5IDQuODkyem0tNi40NDEtNy4yMzRsNC45MTcgMi4zMzgtNC45MTcgMi4zNDZ2LTQuNjg0eiIvPjwvc3ZnPg==';
+      
+          // Append the image inside the link element
+          youtubeLink.appendChild(iconImg);
+      
+          // Append the link to the social media container
+          social_media.appendChild(youtubeLink);
+        } 
+        
+        if (data.connectedAccounts.twitch) {
+          // Create a link element
+          const twitchLink = document.createElement('a');
+          twitchLink.href = data.connectedAccounts.twitch;
+          twitchLink.target = "_blank";
+
+          // Create the image elemment
+          const iconImg = document.createElement('img');
+          iconImg.classList.add("iconImg");
+          iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTAuMjI0IDE3LjgwNmwxLjc3Ni0xLjc3NmgzLjM0M2wyLjA5LTIuMDl2LTYuNjg2aC0xMC4wM3Y4Ljc3NmgyLjgyMXYxLjc3NnptMy44NjYtOC4xNDloMS4yNTR2My42NTNoLTEuMjU0di0zLjY1M3ptLTMuMzQ0IDBoMS4yNTR2My42NTNoLTEuMjU0di0zLjY1M3ptMS4yNTQtOS42NTdjLTYuNjI3IDAtMTIgNS4zNzMtMTIgMTJzNS4zNzMgMTIgMTIgMTIgMTItNS4zNzMgMTItMTItNS4zNzMtMTItMTItMTJ6bTYuNjg3IDE0LjU2N2wtMy42NTcgMy42NTdoLTIuNzE2bC0xLjc3NyAxLjc3NmgtMS44OHYtMS43NzZoLTMuMzQ0di05LjgyMWwuOTQxLTIuNDAzaDEyLjQzM3Y4LjU2N3oiLz48L3N2Zz4=';
+
+          // Append the image inside the link element
+          twitchLink.appendChild(iconImg);
+
+          // Append the link to the social media container
+          social_media.appendChild(twitchLink);
+        }
+
+        if (data.connectedAccounts.twitter) {
+          // Create a link element
+          const twitterLink = document.createElement('a');
+          twitterLink.href = data.connectedAccounts.twitch;
+          twitterLink.target = "_blank";
+
+          // Create the image elemment
+          const iconImg = document.createElement('img');
+          iconImg.classList.add("iconImg");
+          iconImg.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730918882/twitter_1_wiijlx.png';
+
+          // Append the image inside the link element
+          twitterLink.appendChild(iconImg);
+
+          // Append the link to the social media container
+          social_media.appendChild(twitterLink);
+        }
+
+        if (data.connectedAccounts.instagram) {
+          // Create a link element
+          const instagramLink = document.createElement('a');
+          instagramLink.href = data.connectedAccounts.twitch;
+          instagramLink.target = "_blank";
+
+          // Create the image elemment
+          const iconImg = document.createElement('img');
+          iconImg.classList.add("iconImg");
+          iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTQuODI5IDYuMzAyYy0uNzM4LS4wMzQtLjk2LS4wNC0yLjgyOS0uMDRzLTIuMDkuMDA3LTIuODI4LjA0Yy0xLjg5OS4wODctMi43ODMuOTg2LTIuODcgMi44Ny0uMDMzLjczOC0uMDQxLjk1OS0uMDQxIDIuODI4cy4wMDggMi4wOS4wNDEgMi44MjljLjA4NyAxLjg3OS45NjcgMi43ODMgMi44NyAyLjg3LjczNy4wMzMuOTU5LjA0MSAyLjgyOC4wNDEgMS44NyAwIDIuMDkxLS4wMDcgMi44MjktLjA0MSAxLjg5OS0uMDg2IDIuNzgyLS45ODggMi44Ny0yLjg3LjAzMy0uNzM4LjA0LS45Ni4wNC0yLjgyOXMtLjAwNy0yLjA5LS4wNC0yLjgyOGMtLjA4OC0xLjg4My0uOTczLTIuNzgzLTIuODctMi44N3ptLTIuODI5IDkuMjkzYy0xLjk4NSAwLTMuNTk1LTEuNjA5LTMuNTk1LTMuNTk1IDAtMS45ODUgMS42MS0zLjU5NCAzLjU5NS0zLjU5NHMzLjU5NSAxLjYwOSAzLjU5NSAzLjU5NGMwIDEuOTg1LTEuNjEgMy41OTUtMy41OTUgMy41OTV6bTMuNzM3LTYuNDkxYy0uNDY0IDAtLjg0LS4zNzYtLjg0LS44NCAwLS40NjQuMzc2LS44NC44NC0uODQuNDY0IDAgLjg0LjM3Ni44NC44NCAwIC40NjMtLjM3Ni44NC0uODQuODR6bS0xLjQwNCAyLjg5NmMwIDEuMjg5LTEuMDQ1IDIuMzMzLTIuMzMzIDIuMzMzcy0yLjMzMy0xLjA0NC0yLjMzMy0yLjMzM2MwLTEuMjg5IDEuMDQ1LTIuMzMzIDIuMzMzLTIuMzMzczIuMzMzIDEuMDQ0IDIuMzMzIDIuMzMzem0tMi4zMzMtMTJjLTYuNjI3IDAtMTIgNS4zNzMtMTIgMTJzNS4zNzMgMTIgMTIgMTIgMTItNS4zNzMgMTItMTItNS4zNzMtMTItMTItMTJ6bTYuOTU4IDE0Ljg4NmMtLjExNSAyLjU0NS0xLjUzMiAzLjk1NS00LjA3MSA0LjA3Mi0uNzQ3LjAzNC0uOTg2LjA0Mi0yLjg4Ny4wNDJzLTIuMTM5LS4wMDgtMi44ODYtLjA0MmMtMi41NDQtLjExNy0zLjk1NS0xLjUyOS00LjA3Mi00LjA3Mi0uMDM0LS43NDYtLjA0Mi0uOTg1LS4wNDItMi44ODYgMC0xLjkwMS4wMDgtMi4xMzkuMDQyLTIuODg2LjExNy0yLjU0NCAxLjUyOS0zLjk1NSA0LjA3Mi00LjA3MS43NDctLjAzNS45ODUtLjA0MyAyLjg4Ni0uMDQzczIuMTQuMDA4IDIuODg3LjA0M2MyLjU0NS4xMTcgMy45NTcgMS41MzIgNC4wNzEgNC4wNzEuMDM0Ljc0Ny4wNDIuOTg1LjA0MiAyLjg4NiAwIDEuOTAxLS4wMDggMi4xNC0uMDQyIDIuODg2eiIvPjwvc3ZnPg==';
+
+          // Append the image inside the link element
+          instagramLink.appendChild(iconImg);
+
+          // Append the link to the social media container
+          social_media.appendChild(instagramLink);
+        }
+
+        if (data.connectedAccounts.tiktok) {
+          // Create a link element
+          const tiktokLink = document.createElement('a');
+          tiktokLink.href = data.connectedAccounts.twitch;
+          tiktokLink.target = "_blank";
+
+          // Create the image elemment
+          const iconImg = document.createElement('img');
+          iconImg.classList.add("iconImg");
+          iconImg.src = 'https://res.cloudinary.com/dxseoqcpb/image/upload/v1730918291/tiktok_qipjuq.png';
+
+          // Append the image inside the link element
+          tiktokLink.appendChild(iconImg);
+
+          // Append the link to the social media container
+          social_media.appendChild(tiktokLink);
+        }
+
+        if (data.connectedAccounts.whatsapp) {
+          // Create a link element
+          const whatsappLink = document.createElement('a');
+          whatsappLink.href = data.connectedAccounts.twitch;
+          whatsappLink.target = "_blank";
+
+          // Create the image elemment
+          const iconImg = document.createElement('img');
+          iconImg.classList.add("iconImg");
+          iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIuMDMxIDYuMTcyYy0zLjE4MSAwLTUuNzY3IDIuNTg2LTUuNzY4IDUuNzY2LS4wMDEgMS4yOTguMzggMi4yNyAxLjAxOSAzLjI4N2wtLjU4MiAyLjEyOCAyLjE4Mi0uNTczYy45NzguNTggMS45MTEuOTI4IDMuMTQ1LjkyOSAzLjE3OCAwIDUuNzY3LTIuNTg3IDUuNzY4LTUuNzY2LjAwMS0zLjE4Ny0yLjU3NS01Ljc3LTUuNzY0LTUuNzcxem0zLjM5MiA4LjI0NGMtLjE0NC40MDUtLjgzNy43NzQtMS4xNy44MjQtLjI5OS4wNDUtLjY3Ny4wNjMtMS4wOTItLjA2OS0uMjUyLS4wOC0uNTc1LS4xODctLjk4OC0uMzY1LTEuNzM5LS43NTEtMi44NzQtMi41MDItMi45NjEtMi42MTctLjA4Ny0uMTE2LS43MDgtLjk0LS43MDgtMS43OTNzLjQ0OC0xLjI3My42MDctMS40NDZjLjE1OS0uMTczLjM0Ni0uMjE3LjQ2Mi0uMjE3bC4zMzIuMDA2Yy4xMDYuMDA1LjI0OS0uMDQuMzkuMjk4LjE0NC4zNDcuNDkxIDEuMi41MzQgMS4yODcuMDQzLjA4Ny4wNzIuMTg4LjAxNC4zMDQtLjA1OC4xMTYtLjA4Ny4xODgtLjE3My4yODlsLS4yNi4zMDRjLS4wODcuMDg2LS4xNzcuMTgtLjA3Ni4zNTQuMTAxLjE3NC40NDkuNzQxLjk2NCAxLjIwMS42NjIuNTkxIDEuMjIxLjc3NCAxLjM5NC44NnMuMjc0LjA3Mi4zNzYtLjA0M2MuMTAxLS4xMTYuNDMzLS41MDYuNTQ5LS42OC4xMTYtLjE3My4yMzEtLjE0NS4zOS0uMDg3czEuMDExLjQ3NyAxLjE4NC41NjQuMjg5LjEzLjMzMi4yMDJjLjA0NS4wNzIuMDQ1LjQxOS0uMS44MjR6bS0zLjQyMy0xNC40MTZjLTYuNjI3IDAtMTIgNS4zNzMtMTIgMTJzNS4zNzMgMTIgMTIgMTIgMTItNS4zNzMgMTItMTItNS4zNzMtMTItMTItMTJ6bS4wMjkgMTguODhjLTEuMTYxIDAtMi4zMDUtLjI5Mi0zLjMxOC0uODQ0bC0zLjY3Ny45NjQuOTg0LTMuNTk1Yy0uNjA3LTEuMDUyLS45MjctMi4yNDYtLjkyNi0zLjQ2OC4wMDEtMy44MjUgMy4xMTMtNi45MzcgNi45MzctNi45MzcgMS44NTYuMDAxIDMuNTk4LjcyMyA0LjkwNyAyLjAzNCAxLjMxIDEuMzExIDIuMDMxIDMuMDU0IDIuMDMgNC45MDgtLjAwMSAzLjgyNS0zLjExMyA2LjkzOC02LjkzNyA2LjkzOHoiLz48L3N2Zz4=';
+
+          // Append the image inside the link element
+          whatsappLink.appendChild(iconImg);
+
+          // Append the link to the social media container
+          social_media.appendChild(whatsappLink);
+        }
+
+        if (data.connectedAccounts.snapchat) {
+          // Create a link element
+          const snapchatLink = document.createElement('a');
+          snapchatLink.href = data.connectedAccounts.twitch;
+          snapchatLink.target = "_blank";
+
+          // Create the image elemment
+          const iconImg = document.createElement('img');
+          iconImg.classList.add("iconImg");
+          iconImg.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTIgMGMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnptNS4xMjYgMTYuNDc1Yy0uMDU3LjA3Ny0uMTAzLjQtLjE3OC42NTUtLjA4Ni4yOTUtLjM1Ni4yNjItLjY1Ni4yMDMtLjQzNy0uMDg1LS44MjctLjEwOS0xLjI4MS0uMDM0LS43ODUuMTMxLTEuNjAxIDEuMjkyLTIuOTY5IDEuMjkyLTEuNDcyIDAtMi4yMzgtMS4xNTYtMy4wNTQtMS4yOTItLjgzMi0uMTM4LTEuMzEuMDg0LTEuNTk3LjA4NC0uMjIxIDAtLjMwNy0uMTM1LS4zNC0uMjQ3LS4wNzQtLjI1MS0uMTItLjU4MS0uMTc4LS42Ni0uNTY1LS4wODctMS44NC0uMzA5LTEuODczLS44NzgtLjAwOC0uMTQ4LjA5Ni0uMjc5LjI0My0uMzAzIDEuODcyLS4zMDggMy4wNjMtMi40MTkgMi44NjktMi44NzctLjEzOC0uMzI1LS43MzUtLjQ0Mi0uOTg2LS41NDEtLjY0OC0uMjU2LS43MzktLjU1LS43LS43NTIuMDUzLS4yOC4zOTUtLjQ2OC42OC0uNDY4LjI3NSAwIC43Ni4zNjcgMS4xMzguMTU4LS4wNTUtLjk4Mi0uMTk0LTIuMzg3LjE1Ni0zLjE3MS42NjctMS40OTYgMi4xMjktMi4yMzYgMy41OTItMi4yMzYgMS40NzMgMCAyLjk0Ni43NSAzLjYwOCAyLjIzNS4zNDkuNzgzLjIxMiAyLjE4MS4xNTYgMy4xNzIuMzU3LjE5Ny43OTktLjE2NyAxLjEwNy0uMTY3LjMwMiAwIC43MTIuMjA0LjcxOS41NDUuMDA1LjI2Ny0uMjMzLjQ5Ny0uNzA4LjY4NC0uMjU1LjEwMS0uODQ4LjIxNy0uOTg2LjU0MS0uMTk4LjQ2OCAxLjAzIDIuNTczIDIuODY5IDIuODc2LjE0Ni4wMjQuMjUxLjE1NC4yNDMuMzAzLS4wMzMuNTY5LTEuMzE0Ljc5MS0xLjg3NC44Nzh6Ii8+PC9zdmc+';
+
+          // Append the image inside the link element
+          snapchatLink.appendChild(iconImg);
+
+          // Append the link to the social media container
+          social_media.appendChild(snapchatLink);
+        }
+
+        // Display the modal
+        document.getElementById('profileModal').style.display = 'block';
+      } else {
+        alert('Failed to load profile.');
+      }
+    })
+    .catch(error => console.error('Error fetching profile:', error));
+}
+
+// Close the profile modal when clicking x
+var profileModal = document.getElementById('profileModal');
+var profileClose = document.getElementsByClassName('closeBtn')[4];
+profileClose.onclick = function() {
+  profileModal.style.display = 'none';
+  document.getElementById('social_media').innerHTML = "";
+};
 
 function checkHomeWidth() {
   const homeElement = document.querySelector(".home");

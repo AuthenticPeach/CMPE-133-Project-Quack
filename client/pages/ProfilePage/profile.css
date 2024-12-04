@@ -569,7 +569,7 @@ header .image-text .profession {
   overflow-y: auto;
 }
 
-.normalButton {
+.normalButton, #addFriendBtn, #reportBtn {
   background-color: #226c5c;
   color: white;
   border: none;
@@ -580,10 +580,17 @@ header .image-text .profession {
   margin-top: 20px;
   font-weight: bolder;
   transition: background-color 0.3s, transform 0.3s;
-  width: 30%;
 }
-.normalButton:hover {
+.normalButton:hover, #addFriendBtn:hover {
   background-color: #1a5548;
+  transform: scale(1.05);
+}
+
+#reportBtn {
+  background-color: #f4a62a;
+}
+#reportBtn:hover {
+  background-color: #c79500;
   transform: scale(1.05);
 }
 
@@ -739,11 +746,16 @@ h5 {
 }
 .modal-content {
   background-color: white;
-  margin: 15% auto;
   padding: 20px;
   border-radius: 10px;
   width: 400px;
   font-size: large;
+
+  /* Centering styles */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 .modal-content h3 {
   margin: 2px 0 10px;
@@ -768,7 +780,6 @@ h5 {
   margin-top: 5px;
 }
 .modal-content button {
-  width: 40%;
   margin-top: 0;
   background-color: red;
   padding: 7.5px;
@@ -791,21 +802,11 @@ h5 {
 }
 
 #profilePictureModal .modal-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
   width: 350px;
 }
 
 /* Connected Accounts Styling */
 #connectedAccountModal .modal-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
   width: 750px;
 }
 
@@ -942,13 +943,35 @@ h5 {
   margin-top: 10px;
 }
 
-#settingsModal .modal-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+#search-input {
+  padding: 10px;
+  margin-top: 20px;
+  width: 270px;
+  border-radius: 3px;
+  display: none;
+}
+
+#search-results li {
+  padding: 10px;
+  background-color: #e0e0e0;
+  cursor: pointer;
   margin: 0;
-  width: 400px;
+  width: 270px;
+}
+
+#profileModal .modal-content {
+  text-align: center;
+  width: 600px;
+}
+
+#profile-modal-pic {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  margin: 0 auto 10px auto; /* Center the image and add bottom margin */
+  border: 0.5px solid #ccc;
 }
 
 @media screen and (max-width: 1000px) {
@@ -1020,9 +1043,13 @@ h5 {
     height: calc(100% - 65px);
   }
 
-  .contactList,
+  .contactList {
+    padding-bottom: 70px;
+  }
+
   .favoriteList {
     padding-bottom: 70px;
+    margin-top: 22px;
   }
 
   #settingsModal .modal-content {
@@ -1040,6 +1067,19 @@ h5 {
   #backgroundPreview {
     width: 240px;
     height: 150px;
+  }
+
+  #search-input {
+    margin-top: 40px;
+    width: 100%;
+  }
+
+  #search-results li {
+    width: 100%;
+  }
+
+  #profileModal .modal-content{
+    width: 400px;
   }
 
 }

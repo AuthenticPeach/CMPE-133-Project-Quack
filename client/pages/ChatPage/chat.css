@@ -3,6 +3,7 @@
   padding: 0;
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
+  text-decoration: none;
 }
 
 :root {
@@ -234,6 +235,139 @@ header .image-text .profession {
   left: 20px;
 }
 
+#mobileNavbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  background-color: var(--sidebar-color);
+  display: none;
+}
+
+.bx-user {
+  font-size: 25px;
+  color: white;
+  border-radius: 50%;
+  border: 2px solid white;
+  padding: 5px;
+}
+
+#mobileNavbar .navbar {
+  position: absolute;
+  top: 100%;
+  left: calc(100% - 250px);
+  right: 0;
+  background: #e7e5e5;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+.logo {
+  height: 55px;
+}
+
+#mobileNavbar .navbar ul {
+  list-style: none;
+}
+
+#mobileNavbar .navbar ul li {
+  position: relative;
+  float: left;
+  width: 100%;
+}
+
+#mobileNavbar .navbar ul li a {
+  font-size: 20px;
+  padding: 20px;
+  display: block;
+  color: #333;
+  font-weight: bolder;
+  display: flex;
+}
+
+#mobileNavbar .navbar ul li a i {
+  padding: 0 10px;
+}
+
+#mobileNavbar .navbar ul li a p {
+  white-space: nowrap;
+  overflow: hidden;
+  margin: auto;
+  text-overflow: ellipsis;
+  margin-left: 15px;
+}
+
+#mobileNavbar .navbar ul li a span {
+  margin-left: 15px;
+}
+
+#mobileNavbar .navbar ul li a:hover {
+  background: #d2ebe6;
+}
+
+#menu_bar {
+  display: none;
+}
+
+#mobileNavbar label {
+  font-size: 20px;
+  color: #333;
+  cursor: pointer;
+  display: initial;
+  width: fit-content;
+}
+
+#menu_bar:checked ~ .navbar {
+  display: initial;
+}
+
+#mobileNavbarBottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: block;
+  align-items: center;
+  z-index: 10;
+  background-color: var(--sidebar-color);
+  display: none;
+}
+
+#mobileNavbarBottom .navbar ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+}
+
+#mobileNavbarBottom .navbar ul li {
+  position: relative;
+  float: left;
+  width: 100px;
+}
+
+#mobileNavbarBottom .navbar ul li a {
+  font-size: 17px;
+  padding: 5px;
+  display: flex;
+  color: white;
+  font-weight: bolder;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px;
+  border-radius: 6px;
+}
+
+#mobileNavbarBottom .navbar ul li a i {
+  font-size: 25px;
+  padding: 5px;
+}
+
 .home {
   position: relative;
   top: 0;
@@ -386,6 +520,7 @@ header .image-text .profession {
 .favorite_list div {
   width: 235px;
   margin-left: 20px;
+  margin-right: auto;
 }
 .favorite_list div img {
   height: 45px;
@@ -745,6 +880,10 @@ a.download-button:hover {
   border-bottom: solid #ccc 0.5px;
 }
 
+#roomNameMobile {
+  color: white;
+}
+
 #messages,
 #form {
   padding-left: 20px;
@@ -815,8 +954,6 @@ a.download-button:hover {
   border-radius: 5px;
   font-weight: 600;
   padding: 4px;
-  cursor: pointer;
-  margin-left: 10px;
   font-size: 14px;
 }
 
@@ -956,17 +1093,109 @@ a.download-button:hover {
 .users:hover {
   background-color: #d2ebe6;
 }
+
+#search-input {
+  padding: 10px;
+  margin-top: 20px;
+  width: 270px;
+  border-radius: 3px;
+  display: none;
+}
+
+#search-results li {
+  padding: 10px;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  margin: 0;
+  width: 270px;
+}
 /* Responsive adjustments */
 @media (max-width: 600px) {
   #chat-section {
     margin: 20px;
     padding: 10px;
   }
-  input {
-    width: calc(100% - 20px);
-  }
   /* Adjust the message container for smaller screens */
   .content-div {
     max-width: calc(100% - 50px);
+  }
+}
+
+@media screen and (max-width: 1000px) {
+  .sidebar {
+    display: none;
+  }
+
+  .sidebar2 {
+    display: none;
+  }
+
+  .home {
+    position: static;
+    width: 100%;
+  }
+
+  .sidebar.close ~ .home {
+    width: 100%;
+  }
+
+  .grid-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 110px;
+  }
+
+  .grid-container > div {
+    width: 100%;
+  }
+
+  #mobileNavbar {
+    display: flex;
+  }
+
+  #mobileNavbarBottom {
+    display: block;
+  }
+
+  .sidebar2 {
+    left: 0;
+    width: 100%;
+    padding-right: 14px;
+    height: calc(100% - 65px);
+  }
+
+  .contactList {
+    padding-bottom: 70px;
+  }
+
+  .favoriteList {
+    padding-bottom: 70px;
+    margin-top: 22px;
+  }
+
+  .col2 {
+    display: none;
+  }
+
+  .home .col1 {
+    flex: 0 1 100%;
+  }
+
+  #message_container {
+    height: calc(100% - 240px);
+  }
+
+  #search-input {
+    margin-top: 40px;
+    width: 100%;
+  }
+
+  #search-results li {
+    width: 100%;
+  }
+
+  #profileModal .modal-content{
+    width: 400px;
   }
 }

@@ -173,6 +173,10 @@
     <!-- New Sidebar (Hidden Initially) -->
     <nav class="sidebar2">
       <h1 id="title">CONTACT</h1>
+      <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search users">
+        <ul id="search-results"></ul>
+      </div>
       <ul
         class="contactList"
         style="
@@ -529,6 +533,24 @@
           <p id="accounts-message"></p>
         </div>
       </div>
+
+      <!-- Profile Modal -->
+      <div id="profileModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h2 style="text-align: left;">Profile</h2>
+          <img id="profile-modal-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
+          <h2 id="profile-modal-username">Username</h2>
+          <div id="social_media" style="margin-bottom: 10px;"></div>
+          <p id="profile-modal-bio">Bio</p>
+          <div>
+            <button id="addFriendBtn" style="margin-right: 5px;">Add Friend</button>
+            <button id="reportBtn">Report</button>
+          </div>
+          <!-- Add other profile fields as needed -->
+        </div>
+      </div>
+      
     </section>
 
     <script src="/socket.io/socket.io.js"></script>
