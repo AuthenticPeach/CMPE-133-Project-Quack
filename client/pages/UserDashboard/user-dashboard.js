@@ -86,25 +86,41 @@ function joinRoom(roomName) {
 }
 
 function openSendMessageModal(toUsername) {
-// Set the username for modal
-var modalUsername = document.getElementById('modal-username');
-var addFriendBtn = document.getElementById('add-friend-btn');
-var startChatBtn = document.getElementById('start-chat-btn');
+  // Set the username for modal
+  var modalUsername = document.getElementById('modal-username');
+  var addFriendBtn = document.getElementById('add-friend-btn');
+  var startChatBtn = document.getElementById('start-chat-btn');
 
-modalUsername.textContent = toUsername;
-addFriendBtn.onclick = function() { addContact(toUsername); };
-startChatBtn.onclick = function() { startPrivateChat(toUsername); };
+  modalUsername.textContent = toUsername;
 
-// Set up the send message button
-var sendMessageBtn = document.getElementById('send-message-btn');
-sendMessageBtn.onclick = function() {
-var messageText = document.getElementById('message-text').value;
-sendMessage(toUsername, messageText);
-};
+  // Check if the user is already a friend
+  fetch(`/is-friend?username=${encodeURIComponent(username)}&friend=${encodeURIComponent(toUsername)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.isFriend) {
+        // Hide the Add Friend button if already friends
+        addFriendBtn.style.display = 'none';
+      } else {
+        // Show the Add Friend button if not friends
+        addFriendBtn.style.display = 'block';
+        addFriendBtn.onclick = function() { addContact(toUsername); };
+      }
+    })
+    .catch(error => console.error('Error checking friendship status:', error));
 
-// Display the modal
-document.getElementById('userModal').style.display = 'block';
+  startChatBtn.onclick = function() { startPrivateChat(toUsername); };
+
+  // Set up the send message button
+  var sendMessageBtn = document.getElementById('send-message-btn');
+  sendMessageBtn.onclick = function() {
+    var messageText = document.getElementById('message-text').value;
+    sendMessage(toUsername, messageText);
+  };
+
+  // Display the modal
+  document.getElementById('userModal').style.display = 'block';
 }
+
 
 function viewUserProfile(contactUsername) {
 // Fetch the profile data including profile picture
@@ -127,6 +143,9 @@ fetch(`/get-user-profile?username=${encodeURIComponent(username)}`)
   .then(data => {
     if (data && data.success) {
       document.getElementById('profile-pic').src = data.profilePic;
+
+      // Redirect to the profile page with the contact's username
+      window.location.href = `/profile?username=${encodeURIComponent(contactUsername)}`;      
     }
   })
   .catch(error => console.error('Error fetching profile:', error));
@@ -253,6 +272,7 @@ function sendMessage(toUser, message) {
   })
   .catch(error => console.error('Error sending message:', error));
 }
+
 function handleFriendRequest(fromUser, toUser, accepted) {
   fetch('/respond-to-friend-request', {
     method: 'POST',

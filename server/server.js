@@ -1095,6 +1095,17 @@ app.post('/respond-to-friend-request', async (req, res) => {
   }
 });
 
+app.get('/is-friend', async (req, res) => {
+  const { username, friend } = req.query;
+
+  try {
+    const user = await usersCollection.findOne({ username, 'contacts.username': friend });
+    res.json({ isFriend: !!user });
+  } catch (error) {
+    console.error('Error checking friendship status:', error);
+    res.status(500).json({ success: false, message: 'Error checking friendship status.' });
+  }
+});
 
 
 
