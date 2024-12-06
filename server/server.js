@@ -470,6 +470,11 @@ app.get('/user-dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/pages/UserDashboard/user-dashboard.html'));
 });
 
+// Serve the user view page
+app.get('/Sidebar', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/pages/Sidebar/Sidebar.html'));
+});
+
 
 // Serve the admin dashboard page
 app.get('/admin-dashboard', (req, res) => {
@@ -2048,6 +2053,32 @@ app.post('/create-group', async (req, res) => {
     res.status(500).json({ success: false, message: 'An error occurred while creating the group.' });
   }
 
+});
+
+// Route to fetch groups where a specific user is invited
+app.get('/get-invited-groups', checkUserStatus, async (req, res) => {
+  const username = req.query.username;
+
+  try {
+    if (!username) {
+      return res.status(400).json({ success: false, message: 'Username is required' });
+    }
+
+    // Find groups where the user is in the invitedUsers array
+    const groups = await groupCollection
+      .find({ invitedUsers: username })
+      .project({ _id: 1, groupName: 1 }) // Only fetch _id and groupName
+      .toArray();
+
+    if (groups.length === 0) {
+      return res.status(404).json({ success: false, message: 'No groups found for this user' });
+    }
+
+    res.json({ success: true, groups });
+  } catch (error) {
+    console.error('Error fetching invited groups:', error);
+    res.status(500).json({ success: false, message: 'An error occurred' });
+  }
 });
 
 // Middleware to check if user is banned or muted
