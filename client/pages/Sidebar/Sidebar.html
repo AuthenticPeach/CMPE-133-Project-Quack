@@ -13,7 +13,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
     />
-    <link rel="stylesheet" href="/pages/UserDashboard/user-dashboard.css" />
+    <link rel="stylesheet" href="/pages/Sidebar/Sidebar.css" />
   </head>
   <body>
     <!-- Navbar for mobile version -->
@@ -199,109 +199,60 @@
 
     <section class="home">
 
-        <div id="container">
-            <h2 id="welcome"></h2>
-            <h2 class="groupTitle">Quack with us:</h2>
-            <div class="groupChat">
-                <div class="panel" id="aiChat">
-                    <p>Duck AI</p>
-                </div>
-                <div class="panel" id="generalRoom" onclick="joinRoom('general')">
-                    <p>General Room</p>
-                </div>
-                <div class="panel" id="randomRoom" onclick="joinRoom('random')">
-                    <p>Random Room</p>
-                </div>
-            </div>
-            <h2 class="groupTitle">Your Group:</h2>
-            <div class="groupChat" id="invitedGroup">
-                <div class="panel" id="newGroup" onclick="openGroupModal()">
-                    <p>+ New</p>
-                </div>
-                       
-            </div>
+      <!-- Settings Modal -->
+      <div id="settingsModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h3>Select Background Image</h3>
+          <form
+            id="upload-background-form"
+            enctype="multipart/form-data"
+            style="text-align: center"
+          >
+            <label for="backgroundImg" style="margin-right: 0">
+              <img
+                src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png"
+                id="backgroundPreview"
+              />
+            </label>
+            <input
+              type="file"
+              name="backgroundImg"
+              id="backgroundImg"
+              required
+              accept="image/*"
+              style="display: none; visibility: none"
+            />
+            <br />
+            <button type="button" class="normalButton" id="resetBackgroundBtn" style="width: 75px;">Reset</button>
+            <button type="submit" class="normalButton" id="saveSettingsBtn">Save Changes</button>
+          </form>
+          <p id="background-message"></p>
         </div>
+      </div>
 
-        <!-- Settings Modal -->
-        <div id="settingsModal" class="modal">
-            <div class="modal-content">
-            <span class="closeBtn">&times;</span>
-            <h3>Select Background Image</h3>
-            <form
-                id="upload-background-form"
-                enctype="multipart/form-data"
-                style="text-align: center"
-            >
-                <label for="backgroundImg" style="margin-right: 0">
-                <img
-                    src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png"
-                    id="backgroundPreview"
-                />
-                </label>
-                <input
-                type="file"
-                name="backgroundImg"
-                id="backgroundImg"
-                required
-                accept="image/*"
-                style="display: none; visibility: none"
-                />
-                <br />
-                <button type="button" class="normalButton" id="resetBackgroundBtn" style="width: 75px;">Reset</button>
-                <button type="submit" class="normalButton" id="saveSettingsBtn">Save Changes</button>
-            </form>
-            <p id="background-message"></p>
-            </div>
+      <!-- Profile Modal -->
+      <div id="profileModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h2 style="text-align: left;">Profile</h2>
+          <img id="profile-modal-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
+          <h2 id="profile-modal-username">Username</h2>
+          <div id="social_media" style="margin-bottom: 10px;"></div>
+          <p id="profile-modal-bio">Bio</p>
+          <div>
+            <button id="addFriendBtn" style="margin-right: 5px;">Add Friend</button>
+            <button id="reportBtn">Report</button>
+          </div>
+          <!-- Add other profile fields as needed -->
         </div>
-
-        <!-- Profile Modal -->
-        <div id="profileModal" class="modal">
-            <div class="modal-content">
-            <span class="closeBtn">&times;</span>
-            <h2 style="text-align: left;">Profile</h2>
-            <img id="profile-modal-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
-            <h2 id="profile-modal-username">Username</h2>
-            <div id="social_media" style="margin-bottom: 10px;"></div>
-            <p id="profile-modal-bio">Bio</p>
-            <div>
-                <button id="addFriendBtn" style="margin-right: 5px;">Add Friend</button>
-                <button id="reportBtn">Report</button>
-            </div>
-            <!-- Add other profile fields as needed -->
-            </div>
-        </div>
-
-        <!-- Group Creation Modal -->
-        <div id="createGroupModal" class="modal">
-            <div class="modal-content">
-            <span class="closeBtn">&times;</span>
-            <h3>Create a New Group Chat</h3>
-            <form id="create-group-form">
-                <label for="group-name">Group Name</label>
-                <input type="text" id="group-name" required>
-                
-                <label for="group-description">Group Description (Optional)</label>
-                <textarea id="group-description"></textarea>
-                
-                <label for="invite-users">Invite Users</label>
-                <input type="text" id="invite-users" placeholder="Search by username">
-                <ul id="invite-results" ></ul>
-                <div class="selected-users"></div>
-                
-                <label>Invite from Friends</label>
-                <ul id="friends-list">
-                <!-- Dynamically populated with contacts -->
-                </ul>
-                <button type="submit" id="createGroupBtn">Create Group</button>
-            </form>
-            </div>
-        </div>
+      </div>
       
     </section>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/emoji-button@latest"></script>
-    <script src="/pages/UserDashboard/user-dashboard.js"></script>
+    <script src="/pages/Sidebar/Sidebar.js"></script>
     <script src="/client/sidebar.js"></script>
   </body>
 </html>

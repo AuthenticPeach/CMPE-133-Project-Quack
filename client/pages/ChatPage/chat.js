@@ -737,21 +737,6 @@ document.addEventListener("DOMContentLoaded", function () {
       div1.appendChild(deleteButton);
     }
 
-    // Add Delete Button if the message belongs to the current user
-    if (msg.username == username){
-      const deleteButton = document.createElement('button');
-      deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-      deleteButton.classList.add('delete-button');
-  
-      // Add event listener for deleting
-      deleteButton.addEventListener('click', () => {
-        deleteMessage(msg._id, item);
-      });
-  
-      // Append deleteButton to messageContainer
-      messageContainer.appendChild(deleteButton);
-    }
-
     // **Add a Reply button**
     const replyButton = document.createElement("button");
     replyButton.innerHTML = '<i class="fas fa-reply"></i>';
@@ -1450,6 +1435,23 @@ function viewUserProfile(contactUsername) {
       }
     })
     .catch(error => console.error('Error fetching profile:', error));
+
+
+    var addFriendBtn = document.getElementById('addFriendBtn');
+    // Check if the user is already a friend
+    fetch(`/is-friend?username=${encodeURIComponent(username)}&friend=${encodeURIComponent(contactUsername)}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.isFriend) {
+        // Hide the Add Friend button and center Start Chat button
+        addFriendBtn.style.display = 'none';
+      } else {
+        // Show the Add Friend button and add event listener
+        addFriendBtn.style.display = 'inline-block';
+        addFriendBtn.onclick = function() { addContact(contactUsername); };
+      }
+    })
+    .catch(error => console.error('Error checking friendship status:', error));
 }
 
 // Search functionality for finding users
@@ -1501,10 +1503,6 @@ function searchUsers(query, type) {
           li.addEventListener('click', function() {
             viewUserProfile(user.username);
           });
-          
-          // Add event listener to add friend button
-          var addFriendBtn = document.getElementById('addFriendBtn');
-          addFriendBtn.onclick = function() { addContact(user.username); };
 
           searchResults.appendChild(li);
         });
