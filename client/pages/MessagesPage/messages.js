@@ -21,12 +21,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // Emoji Picker Setup
   const picker = new EmojiButton();
   const emojiButton = document.getElementById('emoji-button');
-  emojiButton.addEventListener('click', () => {
-    picker.showPicker(emojiButton);
+
+  let pickerVisible = false; // Track the visibility of the picker
+
+  emojiButton.addEventListener('click', (event) => {
+    event.stopPropagation(); // Prevent click from propagating to document
+    if (pickerVisible) {
+      picker.hidePicker();
+      pickerVisible = false;
+    } else {
+      picker.showPicker(emojiButton);
+      pickerVisible = true;
+    }
   });
 
-  picker.on('emoji', emoji => {
+  picker.on('emoji', (emoji) => {
     document.getElementById('chat-input').value += emoji;
+    picker.hidePicker(); // Hide picker after selecting an emoji
+    pickerVisible = false;
+  });
+
+  // Hide the picker when clicking outside
+  document.addEventListener('click', () => {
+    if (pickerVisible) {
+      picker.hidePicker();
+      pickerVisible = false;
+    }
   });
 
   // File Upload
