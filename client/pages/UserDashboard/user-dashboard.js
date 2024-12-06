@@ -592,10 +592,10 @@ searchInput.addEventListener('input', function() {
   if (isPhoneNumber) {
     // If it's a phone number and length is sufficient, perform search
     // Only search when the length matches your phone number format
-    searchUsers(query, 'phoneNumber');
+    search_users(query, 'phoneNumber');
   } else if (query.length > 0) {
     // Assume it's a username search
-    searchUsers(query, 'username');
+    search_users(query, 'username');
   } else {
     document.getElementById('search-results').innerHTML = '';
   }
@@ -614,7 +614,7 @@ searchInput.addEventListener('input', function() {
       }
   });
 
-function searchUsers(query, type) {
+function search_users(query, type) {
   fetch(`/search-users?query=${encodeURIComponent(query)}&type=${type}`)
     .then(response => response.json())
     .then(data => {
