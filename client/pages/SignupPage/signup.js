@@ -76,12 +76,6 @@ inputs.forEach((input) => {
       case 'phoneNumber':
         input.setCustomValidity('Phone Number must contain 7-15 digits and may include +, (), -, or spaces.');
         break;
-      case 'password':
-        input.setCustomValidity('Password must be 8-50 characters long and meet the strength requirements.');
-        break;
-      case 'confirmPassword':
-        input.setCustomValidity('Passwords must match.');
-        break;
       default:
         input.setCustomValidity('This field is invalid.');
     }
