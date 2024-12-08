@@ -52,6 +52,47 @@ signupForm.addEventListener('submit', function(e) {
   });
 });
 
+// Add custom validation messages for each input field
+const inputs = signupForm.querySelectorAll('input');
+
+// Attach custom error handlers to all input fields
+inputs.forEach((input) => {
+  input.addEventListener('invalid', (event) => {
+
+    // Custom messages for specific fields
+    switch (input.id) {
+      case 'firstName':
+        input.setCustomValidity('First Name should only contain letters and spaces, up to 50 characters.');
+        break;
+      case 'lastName':
+        input.setCustomValidity('Last Name should only contain letters and spaces, up to 50 characters.');
+        break;
+      case 'username':
+        input.setCustomValidity('Username must be 3-30 characters long and contain only letters and numbers.');
+        break;
+      case 'email':
+        input.setCustomValidity('Please enter a valid email address (e.g., example@mail.com).');
+        break;
+      case 'phoneNumber':
+        input.setCustomValidity('Phone Number must contain 7-15 digits and may include +, (), -, or spaces.');
+        break;
+      case 'password':
+        input.setCustomValidity('Password must be 8-50 characters long and meet the strength requirements.');
+        break;
+      case 'confirmPassword':
+        input.setCustomValidity('Passwords must match.');
+        break;
+      default:
+        input.setCustomValidity('This field is invalid.');
+    }
+  });
+
+  // Clear the custom validity message when the user starts editing
+  input.addEventListener('input', () => {
+    input.setCustomValidity('');
+  });
+});
+
 const passwordInput = document.getElementById('password');
 const passwordStrength = document.getElementById('password-strength');
 
