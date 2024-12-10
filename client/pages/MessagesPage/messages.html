@@ -1,144 +1,311 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Messages</title>
-  <!-- Include external stylesheets -->
-  <link href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css" rel="stylesheet" />
-  <!-- Include profile.css for sidebar styles -->
-  <link rel="stylesheet" href="/pages/ProfilePage/profile.css">
-  <!-- Include your own messages CSS -->
-  <link rel="stylesheet" href="/pages/MessagesPage/messages.css">
-</head>
-<body>
-  <!-- Sidebar Navigation -->
-  <nav class="sidebar close">
-    <header>
-      <div class="image-text">
-        <span class="image">
-          <img src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png" alt="Quack Logo" />
-        </span>
-        <div class="text logo-text">
-          <span class="name">QUACK.</span>
-        </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      href="https://unpkg.com/boxicons@2.1.1/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/pages/MessagesPage/messages.css" />
+  </head>
+  <body>
+    <!-- Navbar for mobile version -->
+    <header id="mobileNavbar">
+      <a href="#"
+        ><img
+          src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png"
+          class="logo"
+          alt="logo"
+      /></a>
+
+      <input type="checkbox" id="menu_bar" />
+      <label for="menu_bar"><i class="bx bx-user"></i></label>
+
+      <div class="navbar">
+        <ul>
+          <li>
+            <a href="/profile">
+              <img
+                src=""
+                alt=""
+                class="profile-pic"
+                style="width: 40px; height: 40px; object-fit: cover"
+              />
+              <p class="full-name"></p>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="settings-btn">
+              <i class="bx bx-cog icon"></i>
+              <span>Settings</span>
+            </a>
+          </li>
+          <li>
+            <a href="/signin" onclick="localStorage.removeItem('username')">
+              <i class="bx bx-log-out icon"></i>
+              <span>Logout</span>
+            </a>
+          </li>
+        </ul>
       </div>
-      <i class="bx bx-chevron-right toggle"></i>
     </header>
 
-    <div class="menu-bar">
-      <div class="menu">
-        <ul class="menu-links">
-          <!-- Sidebar links -->
-          <li class="nav-link">
-            <a href="/pages/UserDashboard/user-dashboard.html">
+    <header id="mobileNavbarBottom">
+      <div class="navbar">
+        <ul>
+          <li>
+            <a href="/user-dashboard">
               <i class="bx bx-home-alt icon"></i>
-              <span class="text nav-text">Dashboard</span>
+              <span>Dashboard</span>
             </a>
           </li>
-          <li class="nav-link">
-            <a href="/pages/MessagesPage/messages.html">
-              <i class="bx bx-message icon"></i>
-              <span class="text nav-text">Messages</span>
+          <li>
+            <a href="/messages">
+              <i class="bx bx-message-rounded icon"></i>
+              <span>Inbox</span>
             </a>
           </li>
-          <li class="nav-link">
+          <li>
             <a href="#" class="contact-btn">
               <i class="bx bxs-contact icon"></i>
-              <span class="text nav-text" id="contactText">Contact</span>
+              <span class="contactText">Contact</span>
             </a>
           </li>
-
-          <li class="nav-link">
+          <li>
             <a href="#" class="favorite-btn">
               <i class="bx bx-heart icon"></i>
-              <span class="text nav-text" id="favoriteText">Favorites</span>
+              <span class="favoriteText">Favorites</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <nav class="sidebar close">
+      <header>
+        <div class="image-text">
+          <span class="image">
+            <img
+              src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1729235477/base/s2oml4n1wafnfoa650gi.png"
+              alt="Quack Logo"
+            />
+          </span>
+
+          <div class="text logo-text">
+            <span class="name">QUACK.</span>
+          </div>
+        </div>
+
+        <i class="bx bx-chevron-right toggle"></i>
+      </header>
+
+      <div class="menu-bar">
+        <div class="menu">
+          <ul class="menu-links">
+            <li class="nav-link">
+              <a href="/user-dashboard">
+                <i class="bx bx-home-alt icon"></i>
+                <span class="text nav-text">Dashboard</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="/messages">
+                <i class="bx bx-message-rounded icon"></i>
+                <span class="text nav-text">Inbox</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#" class="contact-btn">
+                <i class="bx bxs-contact icon"></i>
+                <span class="text nav-text contactText">Contact</span>
+              </a>
+            </li>
+
+            <li class="nav-link">
+              <a href="#" class="favorite-btn">
+                <i class="bx bx-heart icon"></i>
+                <span class="text nav-text favoriteText">Favorites</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="bottom-content">
+          <!-- Settings option -->
+          <li class="nav-link">
+            <a href="#" class="settings-btn">
+              <i class="bx bx-cog icon"></i>
+              <span class="text nav-text">Settings</span>
             </a>
           </li>
 
-        </ul>
-      </div>
+          <li class="">
+            <a href="/signin" onclick="localStorage.removeItem('username')">
+              <i class="bx bx-log-out icon"></i>
+              <span class="text nav-text">Logout</span>
+            </a>
+          </li>
 
-      <div class="bottom-content">
-        <li class="">
-          <a href="/signin" onclick="localStorage.removeItem('username')">
-            <i class="bx bx-log-out icon"></i>
-            <span class="text nav-text">Logout</span>
-          </a>
-        </li>
+          <li class="">
+            <a href="/profile">
+              <img
+                src=""
+                alt=""
+                class="profile-pic"
+                style="width: 40px; margin: 10px; height: auto"
+              />
+              <p class="text nav-text full-name"></p>
+            </a>
+          </li>
+        </div>
+      </div>
+    </nav>
+
+    <!-- New Sidebar (Hidden Initially) -->
+    <nav class="sidebar2">
+      <h1 id="title">CONTACT</h1>
+      <div id="search-container">
+        <input type="text" id="search-input" placeholder="Search users">
+        <ul id="search-results"></ul>
+      </div>
+      <ul
+        class="contactList"
+        style="
+          display: none;
+          overflow-y: auto;
+          max-height: calc(100vh - 90px);
+          overflow-x: hidden;
+        "
+      ></ul>
+      <ul
+        class="favoriteList"
+        style="
+          display: none;
+          overflow-y: auto;
+          max-height: calc(100vh - 90px);
+          overflow-x: hidden;
+        "
+      ></ul>
+    </nav>
+
+    <section class="home">
+      <div id="" class="col1" style="overflow: hidden;">
+
+        <div class="messages-container">
+          <div class="conversations-list">
+            <h2>Your Conversations</h2>
+            <ul id="conversations">
+              <!-- Conversations will be populated here -->
+            </ul>
+          </div>
     
-        <li>
-          <a href="/profile">
-            <img src="" alt="" class="profile-pic" style="width: 40px; margin: 10px; height: auto" />
-            <p class="text nav-text full-name"></p>
-          </a>
-        </li>
-      </div>
-  </nav>
-
-  <!-- Main Content Section -->
-  <section class="home" style="overflow-y: hidden;">
-    <div id="" class="col1" style="overflow: hidden;">
-
-    <div class="messages-container">
-      <div class="conversations-list">
-        <h2>Your Conversations</h2>
-        <ul id="conversations">
-          <!-- Conversations will be populated here -->
-        </ul>
-      </div>
-
-      <div class="chat-window">
-        <!-- The chat window will display messages from a selected conversation -->
-        <div id="chat-header">
-          <h2 id="chat-with">Select a conversation</h2>
-        </div>
-        <div id="chat-messages">
-          <!-- Messages will be populated here -->
-        </div>
-        <form id="chat-form">
-          <div style="display: flex; align-items: center;">
-            <label for="image-input" style="margin: auto 10px auto 0"
-            ><i class="bx bxs-plus-circle" id="uploadFileBtn"></i
-          ></label>
-          <input
-            type="file"
-            id="image-input"
-            accept="image/*,.txt,.pdf"
-            style="display: none; visibility: none"
-            onchange="getFile(this.value)"
-          />
-          <div style="display: grid; grid-template-columns: 1fr; width: 100%">
-            <div id="display-file" style="display: none">
-              <p id="file-name" style="margin: auto"></p>
-              <button
-                type="button"
-                id="cancel-upload"
-                onclick="cancelFileUpload()"
-              >
-                <i class="bx bxs-x-circle"></i>
-              </button>
+          <div class="chat-window">
+            <!-- The chat window will display messages from a selected conversation -->
+            <div id="chat-header">
+              <h2 id="chat-with">Select a conversation</h2>
             </div>
-            <div id="reply-preview" style="display: none;"></div>
-            <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
-            <button id="emoji-button" type="button">😀</button>
+            <div id="chat-messages">
+              <!-- Messages will be populated here -->
+            </div>
+            <form id="chat-form">
+              <div style="display: flex; align-items: center;">
+                <label for="image-input" style="margin: auto 10px auto 0"
+                ><i class="bx bxs-plus-circle" id="uploadFileBtn"></i
+              ></label>
+              <input
+                type="file"
+                id="image-input"
+                accept="image/*,.txt,.pdf"
+                style="display: none; visibility: none"
+                onchange="getFile(this.value)"
+              />
+              <div style="display: grid; grid-template-columns: 1fr; width: 100%">
+                <div id="display-file" style="display: none">
+                  <p id="file-name" style="margin: auto"></p>
+                  <button
+                    type="button"
+                    id="cancel-upload"
+                    onclick="cancelFileUpload()"
+                  >
+                    <i class="bx bxs-x-circle"></i>
+                  </button>
+                </div>
+                <div id="reply-preview" style="display: none;"></div>
+                <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off">
+                <button id="emoji-button" type="button">😀</button>
+              </div>
+                
+                <button type="submit" id="sendBtn">
+                  <i class="bx bxs-send"></i>
+                </button>
+              </div>
+            </form>
           </div>
-            
-            <button type="submit" id="sendBtn">
-              <i class="bx bxs-send"></i>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </section>
+        </div>
 
-  <!-- Include Scripts -->
-  <script src="/socket.io/socket.io.js"></script>
-  <!-- Include EmojiButton library -->
-  <script src="https://unpkg.com/emoji-button@latest"></script>
-  <script src="/pages/MessagesPage/messages.js"></script>
-  <!-- Include profile.js for sidebar functionality -->
-  <script src="/pages/ProfilePage/profile.js"></script>
-</body>
+      <!-- Settings Modal -->
+      <div id="settingsModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h3>Select Background Image</h3>
+          <form
+            id="upload-background-form"
+            enctype="multipart/form-data"
+            style="text-align: center"
+          >
+            <label for="backgroundImg" style="margin-right: 0">
+              <img
+                src="https://res.cloudinary.com/dxseoqcpb/image/upload/v1731477138/imageUpload_jgwzeb.png"
+                id="backgroundPreview"
+              />
+            </label>
+            <input
+              type="file"
+              name="backgroundImg"
+              id="backgroundImg"
+              required
+              accept="image/*"
+              style="display: none; visibility: none"
+            />
+            <br />
+            <button type="button" class="normalButton" id="resetBackgroundBtn" style="width: 75px;">Reset</button>
+            <button type="submit" class="normalButton" id="saveSettingsBtn">Save Changes</button>
+          </form>
+          <p id="background-message"></p>
+        </div>
+      </div>
+
+      <!-- Profile Modal -->
+      <div id="profileModal" class="modal">
+        <div class="modal-content">
+          <span class="closeBtn">&times;</span>
+          <h2 style="text-align: left;">Profile</h2>
+          <img id="profile-modal-pic" src="/uploads/default-avatar.png" alt="Profile Picture">
+          <h2 id="profile-modal-username">Username</h2>
+          <div id="social_media" style="margin-bottom: 10px;"></div>
+          <p id="profile-modal-bio">Bio</p>
+          <div>
+            <button id="addFriendBtn" style="margin-right: 5px;">Add Friend</button>
+            <button id="reportBtn">Report</button>
+          </div>
+          <!-- Add other profile fields as needed -->
+        </div>
+      </div>
+      
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/emoji-button@latest"></script>
+    <script src="/pages/MessagesPage/messages.js"></script>
+    <script src="/client/sidebar.js"></script>
+  </body>
 </html>
