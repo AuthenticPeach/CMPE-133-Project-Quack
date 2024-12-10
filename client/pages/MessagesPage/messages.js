@@ -879,6 +879,7 @@ const replyPreview = document.getElementById('reply-preview');
 let replyToMessage = null;
 let isReply = false;
 let isFile = false;
+let userProfilePic = ''; // Store profile picture globally
 
 document.addEventListener('DOMContentLoaded', () => {
   loadConversations();
@@ -914,6 +915,15 @@ document.addEventListener('DOMContentLoaded', () => {
       pickerVisible = false;
     }
   });
+  
+    // Fetch the user's profile picture
+    fetch(`/get-user-profile?username=${username}`)
+    .then((response) => response.json())
+    .then((data) => {
+      userProfilePic = data.profilePic || '/uploads/default-avatar.png';
+    })
+    .catch((error) => console.error('Error fetching profile:', error))
+
 });
 
 // Function to load conversations
@@ -1136,19 +1146,20 @@ function sendMessage(toUser) {
       body: JSON.stringify({
         fromUser: username,
         toUser: toUser,
-        message: message
-      })
+        message: message,
+      }),
     })
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         if (data.success) {
           chatInput.value = '';
+
           // Append the message to the chat window
           const chatMessages = document.getElementById('chat-messages');
           const messageDiv = createMessageElement({
             fromUser: username,
             message: message,
-            profilePic: '/uploads/default-avatar.png'
+            profilePic: userProfilePic, // Use the globally stored profile picture
           });
           chatMessages.appendChild(messageDiv);
 
@@ -1187,7 +1198,11 @@ socket.on('new inbox message', (data) => {
     (data.fromUser === username && data.toUser === currentChatWith)
   ) {
     const chatMessages = document.getElementById('chat-messages');
-    const messageDiv = createMessageElement(data);
+    const messageDiv = createMessageElement({
+      fromUser: data.fromUser,
+      message: data.message,
+      profilePic: data.profilePic || '/uploads/default-avatar.png', // Ensure profilePic is passed with each message
+    });
     chatMessages.appendChild(messageDiv);
 
     // Scroll to the bottom
@@ -1197,6 +1212,7 @@ socket.on('new inbox message', (data) => {
     loadConversations();
   }
 });
+
 
 function getFile(input) {
   isFile = true;
