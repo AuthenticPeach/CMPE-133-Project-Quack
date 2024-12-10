@@ -349,10 +349,4 @@ socket.on('new inbox message', (data) => {
   }
 });
 
-// Sidebar toggle functionality (if not included in profile.js)
-const sidebar = document.querySelector('.sidebar');
-const toggle = document.querySelector('.toggle');
 
-toggle.addEventListener('click', () => {
-  sidebar.classList.toggle('close');
-});
